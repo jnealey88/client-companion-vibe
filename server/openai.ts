@@ -1366,28 +1366,23 @@ We also recommend the following GoDaddy products for this project: ${productsTex
 
 Format the proposal as a professional HTML business proposal with clear sections, styling, and visual elements. Make it visually appealing with a professional design. 
 
-1. **Cover Page:**
-   - [Agency Logo]
-   - Web Design Proposal for ${clientInfo.name}
-   - Prepared by [Your Name] on [Date], Proposal # [ID]
-
-2. **Executive Summary:**
+1. **Executive Summary:**
    - Brief overview of the project and client needs (≤ 75 words)
 
 
-3. **Objectives & Success Metrics:**
+2. **Objectives & Success Metrics:**
    - Objective, KPI & Target, Business Impact
      
 
-4. **Project Scope & Deliverables:**
+3. **Project Scope & Deliverables:**
    - Phase, Key Activities, Tangible Deliverables
  
 
-5. **Timeline & Milestones:**
+4. **Timeline & Milestones:**
    - Week, Milestone
 
 
-6. **Investment & Pricing:**
+5. **Investment & Pricing:**
    - Must provide a quote/dollar amounts based on the client's industry and project needs in the following items.
    - Total Project Fee: $ 
    - Stage, % Due, Amount
@@ -1397,21 +1392,14 @@ Format the proposal as a professional HTML business proposal with clear sections
    - Optional Care Plan: $ – hosting, updates, backups, SEO tweaks.
    - ROI Snapshot: Example: One extra sale per week at $  pays for the site in  months.
 
-7. **Why Choose Us:**
+6. **Why Choose Us:**
    - Our unique value proposition.
 
-8. **GoDaddy Product Recommendations:**
+7. **GoDaddy Product Recommendations:**
    - List of recommended GoDaddy products with descriptions and pricing
 
-9. **Social Proof:**
-
-
-10. **Next Steps:**
-    - Sign the acceptance below.
-    - Pay the 50% deposit (secure link).
-    - Book the kickoff call (calendar link).
-    - We’ll hold your start date for seven days.
-
+8. Closing
+  - By paying the deposit, you agree to our contract terms and conditions.
 
 # Output Format
 

@@ -278,8 +278,12 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     deleteMutation.mutate(taskToDelete.id);
     
     // If this was a proposal task, make sure to reset the proposal task state
+    // and close any open dialogs
     if (taskToDelete.type === 'proposal' && proposalTask?.id === taskToDelete.id) {
       setProposalTask(undefined);
+      setIsProposalDialogOpen(false);
+    } else if (taskToDelete.type === 'schedule_discovery') {
+      setIsDiscoveryDialogOpen(false);
     }
     
     // Close dialog and reset taskToDelete

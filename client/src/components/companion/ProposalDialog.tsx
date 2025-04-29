@@ -49,6 +49,7 @@ export default function ProposalDialog({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [generatedTask, setGeneratedTask] = useState<CompanionTask | undefined>(undefined);
 
   // Fetch the task content and metadata if an existing task was provided
   useEffect(() => {
@@ -94,6 +95,9 @@ export default function ProposalDialog({
         
         // Make sure we have valid data and content
         if (data && typeof data === 'object' && data.content) {
+          // Store the newly generated task ID as the existing task
+          setExistingTask(data);
+          
           // Set the proposal content for display
           setProposalContent(data.content);
           setEditedContent(data.content);
