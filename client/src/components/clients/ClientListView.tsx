@@ -116,7 +116,7 @@ export default function ClientListView({
                     </Avatar>
                     <div className="ml-4">
                       <Link href={`/clients/${client.id}`}>
-                        <a className="font-medium text-gray-900 hover:text-accent">{client.name}</a>
+                        {client.name}
                       </Link>
                       <div className="text-gray-500 text-sm">{client.contactName} - {client.contactTitle}</div>
                     </div>

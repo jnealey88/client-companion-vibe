@@ -20,19 +20,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, formatDate, getStatusClass } from "@/lib/utils";
-import { ClientWithProjects, Project } from "@shared/schema";
+import { Client } from "@shared/schema";
 
 export default function ClientDetail() {
   const [, params] = useRoute("/clients/:id");
   const clientId = params?.id ? parseInt(params.id) : null;
   
-  const { data: client, isLoading, isError } = useQuery<ClientWithProjects>({
+  const { data: client, isLoading, isError } = useQuery<Client>({
     queryKey: [`/api/clients/${clientId}`],
-    enabled: !!clientId,
-  });
-  
-  const { data: projects = [], isLoading: isLoadingProjects } = useQuery<Project[]>({
-    queryKey: [`/api/projects?clientId=${clientId}`],
     enabled: !!clientId,
   });
   
@@ -73,12 +68,6 @@ export default function ClientDetail() {
       </div>
     );
   }
-  
-  // Grouping projects by status
-  const activeProjects = projects.filter(p => p.status === 'active');
-  const completedProjects = projects.filter(p => p.status === 'completed');
-  const pendingProjects = projects.filter(p => p.status === 'pending');
-  const onHoldProjects = projects.filter(p => p.status === 'on hold');
   
   return (
     <div className="flex h-screen overflow-hidden">
@@ -157,8 +146,8 @@ export default function ClientDetail() {
                     <div className="flex items-center">
                       <DollarSign className="h-4 w-4 text-gray-500 mr-2" />
                       <div>
-                        <p className="text-sm text-gray-500">Total Value</p>
-                        <p className="font-medium">{formatCurrency(client.totalValue)}</p>
+                        <p className="text-sm text-gray-500">Project Value</p>
+                        <p className="font-medium">{formatCurrency(client.projectValue)}</p>
                       </div>
                     </div>
                     
@@ -190,74 +179,44 @@ export default function ClientDetail() {
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
-                      <CardTitle>Projects</CardTitle>
-                      <CardDescription>Manage client projects</CardDescription>
+                      <CardTitle>Project</CardTitle>
+                      <CardDescription>Client's project details</CardDescription>
                     </div>
                     <Button>
-                      <Briefcase className="mr-2 h-4 w-4" />
-                      Add Project
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Project
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Tabs defaultValue="all">
-                    <TabsList className="mb-4">
-                      <TabsTrigger value="all">All ({projects.length})</TabsTrigger>
-                      <TabsTrigger value="active">Active ({activeProjects.length})</TabsTrigger>
-                      <TabsTrigger value="completed">Completed ({completedProjects.length})</TabsTrigger>
-                      <TabsTrigger value="pending">Pending ({pendingProjects.length})</TabsTrigger>
-                    </TabsList>
+                  <div className="border rounded-md p-4 bg-white">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-medium text-lg">{client.projectName}</h3>
+                        <p className="text-sm text-gray-500 mt-1">{client.projectDescription}</p>
+                      </div>
+                      <Badge className={getStatusClass(client.projectStatus)}>
+                        {client.projectStatus}
+                      </Badge>
+                    </div>
                     
-                    <TabsContent value="all">
-                      {isLoadingProjects ? (
-                        <p className="text-center py-4">Loading projects...</p>
-                      ) : projects.length === 0 ? (
-                        <p className="text-center py-4 text-gray-500">No projects found for this client.</p>
-                      ) : (
-                        <div className="grid gap-4">
-                          {projects.map((project) => (
-                            <ProjectCard key={project.id} project={project} />
-                          ))}
+                    <div className="grid grid-cols-3 gap-4 mt-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Start Date</p>
+                        <p className="font-medium">{formatDate(client.projectStartDate)}</p>
+                      </div>
+                      {client.projectEndDate && (
+                        <div>
+                          <p className="text-sm text-gray-500">End Date</p>
+                          <p className="font-medium">{formatDate(client.projectEndDate)}</p>
                         </div>
                       )}
-                    </TabsContent>
-                    
-                    <TabsContent value="active">
-                      {activeProjects.length === 0 ? (
-                        <p className="text-center py-4 text-gray-500">No active projects found.</p>
-                      ) : (
-                        <div className="grid gap-4">
-                          {activeProjects.map((project) => (
-                            <ProjectCard key={project.id} project={project} />
-                          ))}
-                        </div>
-                      )}
-                    </TabsContent>
-                    
-                    <TabsContent value="completed">
-                      {completedProjects.length === 0 ? (
-                        <p className="text-center py-4 text-gray-500">No completed projects found.</p>
-                      ) : (
-                        <div className="grid gap-4">
-                          {completedProjects.map((project) => (
-                            <ProjectCard key={project.id} project={project} />
-                          ))}
-                        </div>
-                      )}
-                    </TabsContent>
-                    
-                    <TabsContent value="pending">
-                      {pendingProjects.length === 0 ? (
-                        <p className="text-center py-4 text-gray-500">No pending projects found.</p>
-                      ) : (
-                        <div className="grid gap-4">
-                          {pendingProjects.map((project) => (
-                            <ProjectCard key={project.id} project={project} />
-                          ))}
-                        </div>
-                      )}
-                    </TabsContent>
-                  </Tabs>
+                      <div>
+                        <p className="text-sm text-gray-500">Value</p>
+                        <p className="font-medium">{formatCurrency(client.projectValue)}</p>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -268,43 +227,4 @@ export default function ClientDetail() {
   );
 }
 
-interface ProjectCardProps {
-  project: Project;
-}
 
-function ProjectCard({ project }: ProjectCardProps) {
-  return (
-    <div className="border rounded-md p-4 bg-white hover:bg-gray-50 transition-colors">
-      <div className="flex justify-between items-start">
-        <div>
-          <h3 className="font-medium text-lg">{project.name}</h3>
-          <p className="text-sm text-gray-500 mt-1">{project.description}</p>
-        </div>
-        <Badge className={getStatusClass(project.status)}>
-          {project.status}
-        </Badge>
-      </div>
-      
-      <div className="grid grid-cols-3 gap-4 mt-4">
-        <div>
-          <p className="text-sm text-gray-500">Start Date</p>
-          <p className="font-medium">{formatDate(project.startDate)}</p>
-        </div>
-        {project.endDate && (
-          <div>
-            <p className="text-sm text-gray-500">End Date</p>
-            <p className="font-medium">{formatDate(project.endDate)}</p>
-          </div>
-        )}
-        <div>
-          <p className="text-sm text-gray-500">Value</p>
-          <p className="font-medium">{formatCurrency(project.value)}</p>
-        </div>
-      </div>
-      
-      <div className="flex justify-end mt-4">
-        <Button variant="outline" size="sm">View Details</Button>
-      </div>
-    </div>
-  );
-}

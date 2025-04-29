@@ -115,7 +115,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Project data is now embedded in client objects
-
+  // Handle project requests for backward compatibility
+  app.get("/api/projects", async (req: Request, res: Response) => {
+    try {
+      // Return empty array for backward compatibility
+      return res.json([]);
+    } catch (error) {
+      console.error("Error handling projects request:", error);
+      return res.status(500).json({ message: "Failed to process request" });
+    }
+  });
+  
   return httpServer;
 }

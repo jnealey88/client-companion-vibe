@@ -113,4 +113,14 @@ async function seedDatabase() {
   }
 }
 
+// Run the seed function if this file is executed directly
+// For ESM, we can't use require.main === module, so we'll just export and run
+seedDatabase()
+  .then(() => {
+    console.log('Seed script completed');
+  })
+  .catch((error) => {
+    console.error('Seed script failed:', error);
+  });
+
 export { seedDatabase };
