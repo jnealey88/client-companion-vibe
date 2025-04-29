@@ -444,6 +444,32 @@ export default function ProposalDialog({
 
         {!existingTask?.content && !loading && (
           <div className="space-y-4 mb-4">
+            {/* Show stored recommendation if any */}
+            {localStorage.getItem('selectedRecommendation') && (
+              <div className="bg-slate-50 border border-slate-200 rounded-md p-4 mb-2">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-medium flex items-center">
+                    <FileText className="h-4 w-4 mr-2 text-primary" />
+                    {localStorage.getItem('recommendationType') === 'shortTerm' ? 'Short-term Recommendation' :
+                     localStorage.getItem('recommendationType') === 'mediumTerm' ? 'Medium-term Recommendation' :
+                     'Long-term Recommendation'}
+                  </h4>
+                  <span className="text-xs bg-slate-100 px-2 py-1 rounded-full">From Analysis</span>
+                </div>
+                <div className="text-sm text-slate-700 pl-6">
+                  {localStorage.getItem('selectedRecommendation')?.split('\n- ').map((item, index) => (
+                    <div key={index} className="flex items-start mb-1">
+                      {index > 0 && <CheckCircle2 className="h-3 w-3 mr-2 text-primary mt-1 flex-shrink-0" />}
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  This recommendation will be included in your proposal.
+                </p>
+              </div>
+            )}
+            
             <div>
               <Label htmlFor="discoveryNotes">Discovery Call Notes (Optional)</Label>
               <Textarea
