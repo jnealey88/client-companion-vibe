@@ -157,6 +157,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [selectedTask, setSelectedTask] = useState<CompanionTask | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
+  const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -267,6 +268,13 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   
   return (
     <Card className="h-full">
+      {/* Discovery call scheduling dialog */}
+      <ScheduleDiscoveryDialog 
+        open={isDiscoveryDialogOpen}
+        onOpenChange={setIsDiscoveryDialogOpen}
+        client={client}
+      />
+      
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -427,10 +435,22 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                 <div className="flex justify-end gap-2 mt-3">
                                   <Button 
                                     className="w-full" 
-                                    onClick={() => task?.content ? handleTaskSelect(task) : handleGenerate(type)}
+                                    onClick={() => {
+                                      if (type === 'schedule_discovery') {
+                                        setIsDiscoveryDialogOpen(true);
+                                      } else if (task?.content) {
+                                        handleTaskSelect(task);
+                                      } else {
+                                        handleGenerate(type);
+                                      }
+                                    }}
                                     disabled={generateMutation.isPending}
                                   >
-                                    {task?.content ? 'View Content' : 'Generate'}
+                                    {type === 'schedule_discovery' 
+                                      ? 'Schedule Call' 
+                                      : task?.content 
+                                        ? 'View Content' 
+                                        : 'Generate'}
                                     <ArrowRight className="h-4 w-4 ml-1" />
                                   </Button>
                                 </div>
@@ -504,12 +524,14 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     variant="ghost" 
                                     size="sm"
                                     onClick={() => {
-                                      if (task) {
+                                      if (type === 'schedule_discovery') {
+                                        setIsDiscoveryDialogOpen(true);
+                                      } else if (task) {
                                         setSelectedTask(task);
                                       }
                                     }}
                                   >
-                                    View
+                                    {type === 'schedule_discovery' ? 'Schedule' : 'View'}
                                   </Button>
                                 </div>
                               </div>

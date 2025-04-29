@@ -46,8 +46,8 @@ export default function ScheduleDiscoveryDialog({
     mutationFn: async ({ clientId }: { clientId: number }) => {
       return apiRequest("POST", `/api/clients/${clientId}/generate/schedule_discovery`);
     },
-    onSuccess: (data) => {
-      setEmailContent(data?.content);
+    onSuccess: (data: any) => {
+      setEmailContent(data.content);
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
     },
     onError: () => {
