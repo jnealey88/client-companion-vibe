@@ -184,99 +184,106 @@ Web Design Consultant`;
             </div>
           </div>
           
-          {/* WYSIWYG Controls */}
-          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-t-md border border-b-0">
-            <div className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => {
-                  const selectedText = window.getSelection()?.toString() || '';
-                  if (selectedText) {
-                    const updatedContent = emailContent.replace(
-                      selectedText,
-                      `**${selectedText}**`
-                    );
-                    setEmailContent(updatedContent);
-                  }
-                }}
-                title="Bold"
-              >
-                <span className="font-bold">B</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => {
-                  // Add bullet point at cursor position or to selection
-                  const textarea = document.querySelector('textarea');
-                  const selectionStart = textarea?.selectionStart || 0;
-                  const selectionEnd = textarea?.selectionEnd || 0;
-                  const selectedText = emailContent.substring(selectionStart, selectionEnd);
-                  
-                  if (selectedText) {
-                    // Add bullets to each line in selection
-                    const lines = selectedText.split('\n');
-                    const bulletedLines = lines.map(line => `• ${line}`).join('\n');
+          {/* Single Rich Email Editor */}
+          <div className="border rounded-md overflow-hidden">
+            {/* WYSIWYG Controls */}
+            <div className="flex items-center gap-2 bg-gray-50 p-2 border-b">
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => {
+                    const selectedText = window.getSelection()?.toString() || '';
+                    if (selectedText) {
+                      const updatedContent = emailContent.replace(
+                        selectedText,
+                        `**${selectedText}**`
+                      );
+                      setEmailContent(updatedContent);
+                    }
+                  }}
+                  title="Bold"
+                >
+                  <span className="font-bold">B</span>
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => {
+                    // Add bullet point at cursor position or to selection
+                    const textarea = document.querySelector('textarea');
+                    const selectionStart = textarea?.selectionStart || 0;
+                    const selectionEnd = textarea?.selectionEnd || 0;
+                    const selectedText = emailContent.substring(selectionStart, selectionEnd);
+                    
+                    if (selectedText) {
+                      // Add bullets to each line in selection
+                      const lines = selectedText.split('\n');
+                      const bulletedLines = lines.map(line => `• ${line}`).join('\n');
+                      const updatedContent = 
+                        emailContent.substring(0, selectionStart) + 
+                        bulletedLines + 
+                        emailContent.substring(selectionEnd);
+                      setEmailContent(updatedContent);
+                    } else {
+                      // Add a single bullet at cursor position
+                      const updatedContent = 
+                        emailContent.substring(0, selectionStart) + 
+                        '• ' + 
+                        emailContent.substring(selectionStart);
+                      setEmailContent(updatedContent);
+                    }
+                  }}
+                  title="Bullet List"
+                >
+                  <span>•</span>
+                </Button>
+                
+                <div className="w-px h-5 bg-gray-200 mx-1"></div>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={() => {
+                    const textarea = document.querySelector('textarea');
+                    const selectionStart = textarea?.selectionStart || 0;
                     const updatedContent = 
                       emailContent.substring(0, selectionStart) + 
-                      bulletedLines + 
-                      emailContent.substring(selectionEnd);
-                    setEmailContent(updatedContent);
-                  } else {
-                    // Add a single bullet at cursor position
-                    const updatedContent = 
-                      emailContent.substring(0, selectionStart) + 
-                      '• ' + 
+                      '[Analysis Report Link]' + 
                       emailContent.substring(selectionStart);
                     setEmailContent(updatedContent);
-                  }
-                }}
-                title="Bullet List"
-              >
-                <span>•</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2"
-                onClick={() => {
-                  const updatedContent = emailContent + '\n[Analysis Report Link]';
-                  setEmailContent(updatedContent);
-                }}
-                title="Insert Analysis Link"
-              >
-                <span className="text-xs">Analysis Link</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 px-2"
-                onClick={() => {
-                  const updatedContent = emailContent + '\n[Booking Calendar Link]';
-                  setEmailContent(updatedContent);
-                }}
-                title="Insert Booking Link"
-              >
-                <span className="text-xs">Booking Link</span>
-              </Button>
-            </div>
-            
-            <div className="ml-auto">
-              <div className="text-xs text-gray-500">
-                Live Preview
+                  }}
+                  title="Insert Analysis Link"
+                >
+                  <span className="text-xs">Analysis Link</span>
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={() => {
+                    const textarea = document.querySelector('textarea');
+                    const selectionStart = textarea?.selectionStart || 0;
+                    const updatedContent = 
+                      emailContent.substring(0, selectionStart) + 
+                      '[Booking Calendar Link]' + 
+                      emailContent.substring(selectionStart);
+                    setEmailContent(updatedContent);
+                  }}
+                  title="Insert Booking Link"
+                >
+                  <span className="text-xs">Booking Link</span>
+                </Button>
               </div>
             </div>
-          </div>
-          
-          {/* Combined Editor and Preview */}
-          <div className="border rounded-b-md bg-white overflow-hidden">
-            <div className="grid grid-cols-1 md:grid-cols-2">
+            
+            {/* Rich Content Editor */}
+            <div className="relative">
               <Textarea
                 value={emailContent}
                 onChange={(e) => {
@@ -323,12 +330,13 @@ Web Design Consultant`;
                     </div>
                   `);
                 }}
-                className="h-[350px] resize-none text-sm border-0 rounded-none border-r focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="min-h-[350px] resize-none text-sm p-4 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 opacity-20 absolute inset-0 z-10 caret-black"
                 placeholder="Type your email here..."
               />
               
+              {/* Preview is layered underneath for the WYSIWYG effect */}
               <div
-                className="h-[350px] overflow-y-auto p-4 border-l"
+                className="min-h-[350px] p-4 overflow-y-auto"
                 dangerouslySetInnerHTML={{ __html: emailHtml }}
               />
             </div>
