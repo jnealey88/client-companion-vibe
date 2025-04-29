@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { FileSearch, Copy, CheckCircle2, Send, AlertCircle, Trash2 } from "lucide-react";
+import { FileText, Copy, CheckCircle2, Send, AlertCircle, Trash2, FileSearch } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,9 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { EditorJs } from "@/components/ui/editor-js";
 
 interface CompanyAnalysisDialogProps {
   open: boolean;
@@ -32,15 +35,19 @@ export default function CompanyAnalysisDialog({
 }: CompanyAnalysisDialogProps) {
   // Core state
   const [analysisContent, setAnalysisContent] = useState<string>("");
+  const [editedContent, setEditedContent] = useState<string>("");
+  const [isEdited, setIsEdited] = useState<boolean>(false);
   
   // UI state
   const [loading, setLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
   
   // Loading state
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const [loadingStage, setLoadingStage] = useState<string>("");
+  
+  // Task data
+  const [generatedTask, setGeneratedTask] = useState<CompanionTask | undefined>(undefined);
   
   // Hooks
   const { toast } = useToast();
@@ -48,18 +55,22 @@ export default function CompanyAnalysisDialog({
   
   // Loading stage descriptions
   const loadingStages = [
-    "Analyzing client business...",
+    "Analyzing client information...",
     "Researching industry competitors...",
-    "Evaluating target audience...",
+    "Identifying target audience...",
     "Analyzing website performance...",
-    "Generating keyword recommendations...",
-    "Creating comprehensive analysis report..."
+    "Examining SEO positioning...",
+    "Generating business recommendations...",
+    "Finalizing company analysis..."
   ];
 
   // Fetch the task content if an existing task was provided
   useEffect(() => {
-    if (existingTask && existingTask.content) {
-      setAnalysisContent(existingTask.content);
+    if (existingTask) {
+      if (existingTask.content) {
+        setAnalysisContent(existingTask.content);
+        setEditedContent(existingTask.content);
+      }
     }
   }, [existingTask]);
 
@@ -114,6 +125,8 @@ export default function CompanyAnalysisDialog({
       return apiRequest("POST", `/api/clients/${clientId}/generate/company_analysis`);
     },
     onSuccess: (response: any) => {
+      console.log("Analysis response:", response);
+      
       // Finish the loading progress animation
       setLoadingProgress(100);
       setLoadingStage("Analysis complete!");
@@ -122,10 +135,22 @@ export default function CompanyAnalysisDialog({
       setTimeout(() => {
         // Get proper data from the response
         if (response) {
-          // Store the newly generated task for reference
-          // Set the content for the dialog
-          if (response.content) {
-            setAnalysisContent(response.content);
+          let data = response;
+          
+          // Make sure we have valid data and content
+          if (data && typeof data === 'object' && data.content) {
+            // Store the newly generated task for reference
+            setGeneratedTask(data);
+          } else if (typeof data === 'string') {
+            // If data is a string, it's just the content
+            // Do nothing special
+          } else {
+            console.error("Unexpected response format:", data);
+            toast({
+              title: "Warning",
+              description: "Received unexpected response format from server.",
+              variant: "destructive"
+            });
           }
         }
         
@@ -165,28 +190,59 @@ export default function CompanyAnalysisDialog({
     }
   });
 
+  // Save edited analysis mutation
+  const saveAnalysisMutation = useMutation({
+    mutationFn: async ({ taskId, content }: { taskId: number, content: string }) => {
+      setIsSaving(true);
+      return apiRequest("PATCH", `/api/companion-tasks/${taskId}`, { content });
+    },
+    onSuccess: () => {
+      setIsSaving(false);
+      setAnalysisContent(editedContent);
+      setIsEdited(false);
+      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
+      toast({
+        title: "Analysis saved",
+        description: "Your edits have been saved successfully.",
+      });
+    },
+    onError: () => {
+      setIsSaving(false);
+      toast({
+        title: "Save failed",
+        description: "Failed to save your changes. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
   // Handle form submission
   const handleGenerate = () => {
-    generateAnalysisMutation.mutate({ clientId: client.id });
+    generateAnalysisMutation.mutate({ 
+      clientId: client.id
+    });
   };
 
-  // Handle copy to clipboard
-  const handleCopy = () => {
-    // Get just the text content without HTML formatting
-    const tempElement = document.createElement("div");
-    tempElement.innerHTML = analysisContent;
-    const textContent = tempElement.textContent || tempElement.innerText || analysisContent;
-    
-    navigator.clipboard.writeText(textContent).then(() => {
-      setCopied(true);
-      toast({
-        title: "Analysis copied",
-        description: "The analysis has been copied to your clipboard.",
+  // Handle content editing
+  const handleEditorChange = (newContent: string) => {
+    setEditedContent(newContent);
+    setIsEdited(newContent !== analysisContent);
+  };
+
+  // Handle save edited content
+  const handleSaveEdit = () => {
+    if (existingTask?.id) {
+      saveAnalysisMutation.mutate({
+        taskId: existingTask.id,
+        content: editedContent
       });
-      
-      // Reset copied state after 2 seconds
-      setTimeout(() => setCopied(false), 2000);
-    });
+    }
+  };
+
+  // Handle cancel edit
+  const handleCancelEdit = () => {
+    setEditedContent(analysisContent);
+    setIsEdited(false);
   };
 
   // Handle sending the analysis (would connect to email provider in a real app)
@@ -222,15 +278,16 @@ export default function CompanyAnalysisDialog({
             Company Analysis for {client.name}
           </DialogTitle>
           <DialogDescription>
-            Comprehensive business and website analysis for {client.name}.
+            Comprehensive business analysis and website performance evaluation for {client.name}.
           </DialogDescription>
         </DialogHeader>
 
         {!existingTask?.content && !loading && (
           <div className="space-y-4 mb-4">
             <p className="text-sm text-muted-foreground">
-              Generate a comprehensive business analysis for {client.name} including 
-              industry position, competitors, target audience, and website performance.
+              We'll generate a detailed company analysis using available information about {client.name}. 
+              This includes business overview, competitor analysis, target audience, 
+              industry challenges, keyword analysis, website performance, and strategic recommendations.
             </p>
 
             <Button 
@@ -262,8 +319,8 @@ export default function CompanyAnalysisDialog({
             </div>
             
             <p className="text-sm text-center text-muted-foreground mt-2">
-              We're creating a comprehensive analysis of {client.name}. 
-              This may take a minute as we research the industry and analyze the business.
+              We're analyzing {client.name}'s business and creating a detailed report. 
+              This may take a minute as we research competitors and evaluate performance metrics.
             </p>
             
             <div className="text-center">
@@ -276,36 +333,73 @@ export default function CompanyAnalysisDialog({
 
         {((analysisContent || existingTask?.content) && !loading) && (
           <>
-            <div className="mt-2">
-              <div className="border rounded-md p-6 min-h-[450px]">
-                {/* Analysis Content */}
-                <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: analysisContent }} />
+            <div className="border rounded-md p-6 min-h-[450px] mt-2">
+              {isEdited && (
+                <Alert className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    You have unsaved changes. Click "Save Changes" when you're done editing.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {/* Analysis Content */}
+              <div>
+                <EditorJs
+                  content={editedContent}
+                  onChange={handleEditorChange}
+                  className="prose max-w-none"
+                />
               </div>
+              
+              {isEdited && (
+                <div className="flex gap-2 mt-6">
+                  <Button 
+                    onClick={handleSaveEdit}
+                    disabled={!isEdited || isSaving}
+                    className="flex-1"
+                  >
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={handleCancelEdit}
+                    disabled={!isEdited || isSaving}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
             </div>
-
-            <DialogFooter className="gap-2 sm:gap-0 mt-4">
-              <div className="flex flex-1 flex-col sm:flex-row gap-2">
-                <Button variant="outline" onClick={handleCopy} className="gap-1">
-                  {copied ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4" />
-                      Copy to Clipboard
-                    </>
-                  )}
-                </Button>
-                <Button onClick={handleSend} className="gap-1">
-                  <Send className="h-4 w-4" />
-                  Send to Client
-                </Button>
-              </div>
-            </DialogFooter>
           </>
         )}
+
+        <DialogFooter className="flex justify-between items-center">
+          <p className="text-sm text-muted-foreground">
+            This analysis will help identify opportunities for {client.name}'s website improvement.
+          </p>
+          
+          {!loading && existingTask?.content && (
+            <div className="flex gap-2">
+              {!isEdited && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleSend}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  Send to Client
+                </Button>
+              )}
+              
+              <Button 
+                onClick={() => onOpenChange(false)}
+              >
+                Close
+              </Button>
+            </div>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

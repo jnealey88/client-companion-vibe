@@ -601,6 +601,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                         // Open proposal dialog with existing task if available
                                         setProposalTask(task);
                                         setIsProposalDialogOpen(true);
+                                      } else if (type === 'company_analysis') {
+                                        // Open company analysis dialog with existing task if available
+                                        setCompanyAnalysisTask(task);
+                                        setIsCompanyAnalysisDialogOpen(true);
                                       } else if (task?.content) {
                                         handleTaskSelect(task);
                                       } else {
@@ -613,6 +617,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       ? 'Schedule Call'
                                       : type === 'proposal' && task?.content
                                         ? 'Edit Proposal'
+                                      : type === 'company_analysis' && task?.content
+                                        ? 'View Analysis'
                                       : task?.content 
                                         ? 'View Content' 
                                         : 'Generate'}
@@ -694,13 +700,21 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       } else if (type === 'proposal' && task) {
                                         setProposalTask(task);
                                         setIsProposalDialogOpen(true);
+                                      } else if (type === 'company_analysis' && task) {
+                                        setCompanyAnalysisTask(task);
+                                        setIsCompanyAnalysisDialogOpen(true);
                                       } else if (task) {
                                         setSelectedTask(task);
                                       }
                                     }}
                                   >
-                                    {type === 'schedule_discovery' ? 'Schedule' : 
-                                     type === 'proposal' ? 'Edit Proposal' : 'View'}
+                                    {type === 'schedule_discovery' 
+                                      ? 'Schedule' 
+                                      : type === 'proposal' 
+                                        ? 'Edit Proposal' 
+                                        : type === 'company_analysis' 
+                                          ? 'View Analysis' 
+                                          : 'View'}
                                   </Button>
                                 </div>
                               </div>
