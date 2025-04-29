@@ -7,7 +7,6 @@ import {
   Scroll, 
   FolderTree, 
   MessageCircle,
-  RotateCw,
   Loader2,
   CheckCircle,
   AlertCircle,
@@ -20,30 +19,40 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Client, CompanionTask } from "@shared/schema";
+import CompanionTaskCard from "./CompanionTaskCard";
 
-// Define task type icons
-const taskTypeIcons = {
-  market_research: <FileText className="h-5 w-5" />,
-  proposal: <Check className="h-5 w-5" />,
-  contract: <Scroll className="h-5 w-5" />,
-  site_map: <FolderTree className="h-5 w-5" />,
-  status_update: <MessageCircle className="h-5 w-5" />
-};
-
-// Define task type labels
-const taskTypeLabels = {
-  market_research: "Market Research",
-  proposal: "Project Proposal",
-  contract: "Contract",
-  site_map: "Site Map & Content",
-  status_update: "Status Update"
-};
-
-// Define task status badge variants
-const statusVariants = {
-  pending: "secondary",
-  in_progress: "warning",
-  completed: "success"
+// Define task type information
+const taskTypes = {
+  market_research: {
+    icon: <FileText className="h-5 w-5" />,
+    label: "Market Research",
+    description: "Industry insights and market analysis",
+    iconColor: "bg-blue-50 text-blue-600"
+  },
+  proposal: {
+    icon: <Check className="h-5 w-5" />,
+    label: "Project Proposal",
+    description: "Professional project proposal",
+    iconColor: "bg-green-50 text-green-600"
+  },
+  contract: {
+    icon: <Scroll className="h-5 w-5" />,
+    label: "Contract",
+    description: "Professional service agreement",
+    iconColor: "bg-purple-50 text-purple-600"
+  },
+  site_map: {
+    icon: <FolderTree className="h-5 w-5" />,
+    label: "Site Map & Content",
+    description: "Site structure and content plan",
+    iconColor: "bg-amber-50 text-amber-600"
+  },
+  status_update: {
+    icon: <MessageCircle className="h-5 w-5" />,
+    label: "Status Update",
+    description: "Client status update email",
+    iconColor: "bg-pink-50 text-pink-600"
+  }
 };
 
 interface ClientCompanionProps {
@@ -140,219 +149,64 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           <TabsContent value="tasks" className="mt-4">
             <div className="space-y-4">
               {/* Market Research task */}
-              <div className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-md bg-blue-50 text-blue-600">
-                    {taskTypeIcons.market_research}
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{taskTypeLabels.market_research}</h4>
-                    <p className="text-sm text-gray-500">Industry insights and market analysis</p>
-                  </div>
-                </div>
-                
-                {tasksByType.market_research ? (
-                  <>
-                    <Badge variant={statusVariants[tasksByType.market_research.status as keyof typeof statusVariants]}>
-                      {tasksByType.market_research.status}
-                    </Badge>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleTaskSelect(tasksByType.market_research!)}
-                      disabled={tasksByType.market_research.status !== "completed"}
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={generateMutation.isPending}
-                    onClick={() => handleGenerate("market_research")}
-                  >
-                    {generateMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <RotateCw className="h-4 w-4 mr-2" />
-                    )}
-                    Generate
-                  </Button>
-                )}
-              </div>
+              <CompanionTaskCard
+                title={taskTypes.market_research.label}
+                description={taskTypes.market_research.description}
+                icon={taskTypes.market_research.icon}
+                iconColor={taskTypes.market_research.iconColor}
+                task={tasksByType.market_research}
+                isGenerating={generateMutation.isPending}
+                onGenerate={() => handleGenerate("market_research")}
+                onSelect={handleTaskSelect}
+              />
               
               {/* Proposal task */}
-              <div className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-md bg-green-50 text-green-600">
-                    {taskTypeIcons.proposal}
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{taskTypeLabels.proposal}</h4>
-                    <p className="text-sm text-gray-500">Professional project proposal</p>
-                  </div>
-                </div>
-                
-                {tasksByType.proposal ? (
-                  <>
-                    <Badge variant={statusVariants[tasksByType.proposal.status as keyof typeof statusVariants]}>
-                      {tasksByType.proposal.status}
-                    </Badge>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleTaskSelect(tasksByType.proposal!)}
-                      disabled={tasksByType.proposal.status !== "completed"}
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={generateMutation.isPending}
-                    onClick={() => handleGenerate("proposal")}
-                  >
-                    {generateMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <RotateCw className="h-4 w-4 mr-2" />
-                    )}
-                    Generate
-                  </Button>
-                )}
-              </div>
+              <CompanionTaskCard
+                title={taskTypes.proposal.label}
+                description={taskTypes.proposal.description}
+                icon={taskTypes.proposal.icon}
+                iconColor={taskTypes.proposal.iconColor}
+                task={tasksByType.proposal}
+                isGenerating={generateMutation.isPending}
+                onGenerate={() => handleGenerate("proposal")}
+                onSelect={handleTaskSelect}
+              />
               
               {/* Contract task */}
-              <div className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-md bg-purple-50 text-purple-600">
-                    {taskTypeIcons.contract}
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{taskTypeLabels.contract}</h4>
-                    <p className="text-sm text-gray-500">Professional service agreement</p>
-                  </div>
-                </div>
-                
-                {tasksByType.contract ? (
-                  <>
-                    <Badge variant={statusVariants[tasksByType.contract.status as keyof typeof statusVariants]}>
-                      {tasksByType.contract.status}
-                    </Badge>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleTaskSelect(tasksByType.contract!)}
-                      disabled={tasksByType.contract.status !== "completed"}
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={generateMutation.isPending}
-                    onClick={() => handleGenerate("contract")}
-                  >
-                    {generateMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <RotateCw className="h-4 w-4 mr-2" />
-                    )}
-                    Generate
-                  </Button>
-                )}
-              </div>
+              <CompanionTaskCard
+                title={taskTypes.contract.label}
+                description={taskTypes.contract.description}
+                icon={taskTypes.contract.icon}
+                iconColor={taskTypes.contract.iconColor}
+                task={tasksByType.contract}
+                isGenerating={generateMutation.isPending}
+                onGenerate={() => handleGenerate("contract")}
+                onSelect={handleTaskSelect}
+              />
               
               {/* Site Map task */}
-              <div className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-md bg-amber-50 text-amber-600">
-                    {taskTypeIcons.site_map}
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{taskTypeLabels.site_map}</h4>
-                    <p className="text-sm text-gray-500">Site structure and content plan</p>
-                  </div>
-                </div>
-                
-                {tasksByType.site_map ? (
-                  <>
-                    <Badge variant={statusVariants[tasksByType.site_map.status as keyof typeof statusVariants]}>
-                      {tasksByType.site_map.status}
-                    </Badge>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleTaskSelect(tasksByType.site_map!)}
-                      disabled={tasksByType.site_map.status !== "completed"}
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={generateMutation.isPending}
-                    onClick={() => handleGenerate("site_map")}
-                  >
-                    {generateMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <RotateCw className="h-4 w-4 mr-2" />
-                    )}
-                    Generate
-                  </Button>
-                )}
-              </div>
+              <CompanionTaskCard
+                title={taskTypes.site_map.label}
+                description={taskTypes.site_map.description}
+                icon={taskTypes.site_map.icon}
+                iconColor={taskTypes.site_map.iconColor}
+                task={tasksByType.site_map}
+                isGenerating={generateMutation.isPending}
+                onGenerate={() => handleGenerate("site_map")}
+                onSelect={handleTaskSelect}
+              />
               
               {/* Status Update task */}
-              <div className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-md bg-pink-50 text-pink-600">
-                    {taskTypeIcons.status_update}
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{taskTypeLabels.status_update}</h4>
-                    <p className="text-sm text-gray-500">Client status update email</p>
-                  </div>
-                </div>
-                
-                {tasksByType.status_update ? (
-                  <>
-                    <Badge variant={statusVariants[tasksByType.status_update.status as keyof typeof statusVariants]}>
-                      {tasksByType.status_update.status}
-                    </Badge>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleTaskSelect(tasksByType.status_update!)}
-                      disabled={tasksByType.status_update.status !== "completed"}
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={generateMutation.isPending}
-                    onClick={() => handleGenerate("status_update")}
-                  >
-                    {generateMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <RotateCw className="h-4 w-4 mr-2" />
-                    )}
-                    Generate
-                  </Button>
-                )}
-              </div>
+              <CompanionTaskCard
+                title={taskTypes.status_update.label}
+                description={taskTypes.status_update.description}
+                icon={taskTypes.status_update.icon}
+                iconColor={taskTypes.status_update.iconColor}
+                task={tasksByType.status_update}
+                isGenerating={generateMutation.isPending}
+                onGenerate={() => handleGenerate("status_update")}
+                onSelect={handleTaskSelect}
+              />
             </div>
           </TabsContent>
           
@@ -362,10 +216,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
                     <div className="p-2 rounded-md bg-gray-100">
-                      {taskTypeIcons[selectedTask.type as keyof typeof taskTypeIcons]}
+                      {taskTypes[selectedTask.type as keyof typeof taskTypes]?.icon}
                     </div>
                     <h3 className="text-lg font-medium">
-                      {taskTypeLabels[selectedTask.type as keyof typeof taskTypeLabels]}
+                      {taskTypes[selectedTask.type as keyof typeof taskTypes]?.label}
                     </h3>
                   </div>
                   <Badge variant="outline">
@@ -385,10 +239,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                   </Button>
                   <Button onClick={() => {
                     if (selectedTask.content) {
-                      navigator.clipboard.writeText(selectedTask.content);
+                      navigator.clipboard.writeText(selectedTask.content || "");
                       toast({
                         title: "Content copied",
-                        description: "The content has been copied to your clipboard.",
+                        description: "The content has been copied to your clipboard."
                       });
                     }
                   }}>

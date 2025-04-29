@@ -193,50 +193,56 @@ export default function ClientDetail() {
             </div>
             
             <div className="lg:w-2/3">
-              <Card>
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle>Project</CardTitle>
-                      <CardDescription>Client's project details</CardDescription>
-                    </div>
-                    <Button>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit Project
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="border rounded-md p-4 bg-white">
-                    <div className="flex justify-between items-start">
+              <div className="space-y-6">
+                {/* Project Card */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
                       <div>
-                        <h3 className="font-medium text-lg">{client.projectName}</h3>
-                        <p className="text-sm text-gray-500 mt-1">{client.projectDescription}</p>
+                        <CardTitle>Project</CardTitle>
+                        <CardDescription>Client's project details</CardDescription>
                       </div>
-                      <Badge className={getStatusClass(client.projectStatus)}>
-                        {client.projectStatus}
-                      </Badge>
+                      <Button>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Edit Project
+                      </Button>
                     </div>
-                    
-                    <div className="grid grid-cols-3 gap-4 mt-4">
-                      <div>
-                        <p className="text-sm text-gray-500">Start Date</p>
-                        <p className="font-medium">{formatDate(client.projectStartDate)}</p>
-                      </div>
-                      {client.projectEndDate && (
+                  </CardHeader>
+                  <CardContent>
+                    <div className="border rounded-md p-4 bg-white">
+                      <div className="flex justify-between items-start">
                         <div>
-                          <p className="text-sm text-gray-500">End Date</p>
-                          <p className="font-medium">{formatDate(client.projectEndDate)}</p>
+                          <h3 className="font-medium text-lg">{client.projectName}</h3>
+                          <p className="text-sm text-gray-500 mt-1">{client.projectDescription}</p>
                         </div>
-                      )}
-                      <div>
-                        <p className="text-sm text-gray-500">Value</p>
-                        <p className="font-medium">{formatCurrency(client.projectValue)}</p>
+                        <Badge className={getStatusClass(client.projectStatus)}>
+                          {client.projectStatus}
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-4 mt-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Start Date</p>
+                          <p className="font-medium">{formatDate(client.projectStartDate)}</p>
+                        </div>
+                        {client.projectEndDate && (
+                          <div>
+                            <p className="text-sm text-gray-500">End Date</p>
+                            <p className="font-medium">{formatDate(client.projectEndDate)}</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm text-gray-500">Value</p>
+                          <p className="font-medium">{formatCurrency(client.projectValue)}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+                
+                {/* Client Companion */}
+                <ClientCompanion client={client} />
+              </div>
             </div>
           </div>
         </main>
