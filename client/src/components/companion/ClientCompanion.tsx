@@ -35,17 +35,17 @@ import CompanionTaskCard from "./CompanionTaskCard";
 // Define task type information with project phase categorization
 const taskTypes = {
   // Discovery phase tasks
-  schedule_discovery: {
-    icon: <Calendar className="h-5 w-5" />,
-    label: "Schedule Discovery Call",
-    description: "Set up initial consultation to understand client needs",
-    iconColor: "bg-blue-50 text-blue-600",
-    phase: "Discovery"
-  },
   company_analysis: {
     icon: <FileSearch className="h-5 w-5" />,
     label: "Company Analysis",
     description: "Comprehensive business and website analysis",
+    iconColor: "bg-blue-50 text-blue-600",
+    phase: "Discovery"
+  },
+  schedule_discovery: {
+    icon: <Calendar className="h-5 w-5" />,
+    label: "Schedule Discovery Call",
+    description: "Email with booking link and company analysis",
     iconColor: "bg-blue-50 text-blue-600",
     phase: "Discovery"
   },

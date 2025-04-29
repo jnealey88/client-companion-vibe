@@ -72,6 +72,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const newClient = await storage.createClient(validationResult.data);
+      
+      // Automatically create and generate company analysis task for the new client
+      try {
+        // First create the task
+        const newTask = await storage.createCompanionTask({
+          clientId: newClient.id,
+          type: "company_analysis",
+          status: "pending"
+        });
+        
+        // Then generate content for it (async, don't wait for completion)
+        generateCompanyAnalysis(newClient)
+          .then(async (content) => {
+            if (content) {
+              await storage.updateCompanionTask(newTask.id, {
+                content,
+                status: "completed",
+                completedAt: new Date()
+              });
+              console.log(`Auto-generated company analysis for client ${newClient.id}`);
+            }
+          })
+          .catch(err => {
+            console.error(`Error auto-generating company analysis for client ${newClient.id}:`, err);
+          });
+          
+      } catch (analysisError) {
+        // Log error but don't fail client creation if analysis fails
+        console.error("Error setting up auto analysis for new client:", analysisError);
+      }
+      
       return res.status(201).json(newClient);
     } catch (error) {
       console.error("Error creating client:", error);

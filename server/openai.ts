@@ -14,8 +14,8 @@ const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
 // Define task types for client companion
 export enum TaskType {
   // Discovery phase tasks
-  SCHEDULE_DISCOVERY = "schedule_discovery",
   COMPANY_ANALYSIS = "company_analysis",
+  SCHEDULE_DISCOVERY = "schedule_discovery",
   PROPOSAL = "proposal",
   
   // Planning phase tasks

@@ -26,8 +26,8 @@ export const clients = pgTable("clients", {
 // Define task type enum
 export const taskTypeEnum = pgEnum("task_type", [
   // Discovery phase tasks
-  "schedule_discovery",
   "company_analysis",
+  "schedule_discovery",
   "proposal",
   
   // Planning phase tasks
@@ -105,8 +105,8 @@ export const companionTaskSchema = z.object({
   clientId: z.number(),
   type: z.enum([
     // Discovery phase tasks
-    "schedule_discovery",
     "company_analysis",
+    "schedule_discovery",
     "proposal",
     
     // Planning phase tasks
