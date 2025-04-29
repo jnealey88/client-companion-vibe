@@ -436,25 +436,19 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
-                                    onClick={() => setExpandedTasks({
-                                      ...expandedTasks,
-                                      [type]: !expandedTasks[type]
-                                    })}
+                                    onClick={() => {
+                                      if (task) {
+                                        setSelectedTask(task);
+                                      }
+                                    }}
                                   >
-                                    {expandedTasks[type] ? 'Hide' : 'View'} 
+                                    View
                                   </Button>
                                 </div>
                               </div>
                             </CardHeader>
                             
-                            {expandedTasks[type] && (
-                              <CardContent className="p-4 border-t">
-                                <div 
-                                  className="bg-white rounded-md p-2 max-h-[400px] overflow-y-auto"
-                                  dangerouslySetInnerHTML={{ __html: task!.content || "" }}
-                                ></div>
-                              </CardContent>
-                            )}
+
                           </Card>
                         );
                       })}
