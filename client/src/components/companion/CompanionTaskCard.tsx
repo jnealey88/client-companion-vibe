@@ -13,6 +13,7 @@ interface TaskCardProps {
   isGenerating: boolean;
   onGenerate: () => void;
   onSelect: (task: CompanionTask) => void;
+  onRetry?: () => void; // New prop for retry functionality
 }
 
 export default function CompanionTaskCard({
@@ -23,7 +24,8 @@ export default function CompanionTaskCard({
   task,
   isGenerating,
   onGenerate,
-  onSelect
+  onSelect,
+  onRetry
 }: TaskCardProps) {
   // Status variant mapping
   const getStatusVariant = (status: string) => {
@@ -48,19 +50,34 @@ export default function CompanionTaskCard({
       </div>
       
       {task ? (
-        <>
+        <div className="flex items-center gap-1">
           <Badge variant={getStatusVariant(task.status)}>
             {task.status}
           </Badge>
+          
+          {task.status === "completed" && onRetry && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRetry}
+              className="ml-2"
+              title="Regenerate this analysis"
+            >
+              <RotateCw className="h-3.5 w-3.5 mr-1" />
+              Retry
+            </Button>
+          )}
+          
           <Button 
             variant="ghost" 
             size="sm"
             onClick={() => onSelect(task)}
             disabled={task.status !== "completed"}
+            className="ml-1"
           >
             <ArrowRight className="h-4 w-4" />
           </Button>
-        </>
+        </div>
       ) : (
         <Button
           variant="outline"

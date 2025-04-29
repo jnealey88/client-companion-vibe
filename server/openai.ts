@@ -136,22 +136,35 @@ async function extractKeywords(text: string): Promise<string[]> {
 
 // Initial function for Company Analysis
 async function generateInitialAnalysis(clientInfo: any): Promise<string> {
-  const prompt = `Create a professional company analysis for a client in the ${clientInfo.industry} industry. 
-  The client name is "${clientInfo.name}" and they are working on a project called "${clientInfo.projectName}".
-  If available, include details from their website: ${clientInfo.websiteUrl || "N/A"}.
+  // Extract the most relevant business information
+  const businessName = clientInfo.name;
+  const businessDescription = clientInfo.projectDescription || "No description provided"; // Will use field as-is now, and update to businessDescription later
+  const websiteUrl = clientInfo.websiteUrl || "N/A";
+  const industry = clientInfo.industry;
+  
+  const prompt = `Create a professional company analysis for "${businessName}".
+  
+  Important business information:
+  - Business name: ${businessName}
+  - Business description: ${businessDescription}
+  - Website URL: ${websiteUrl}
+  - Industry: ${industry}
+  
+  Focus ONLY on the specific business information provided above, not generic industry analysis.
+  
   The analysis should include:
-  - Business overview
-  - Key competitors in their market
-  - Target audience analysis
-  - Industry challenges they are facing
-  - Initial SEO strategy recommendations
-  - Suggested keywords they should focus on (list 5 specific keywords)
+  - Detailed business overview based on the business description
+  - Key competitors likely faced by this specific business (not generic industry competitors)
+  - Target audience analysis specifically for this business
+  - Challenges specific to this business based on their description 
+  - Initial SEO strategy recommendations tailored for their specific business
+  - Suggested keywords they should focus on (list 5 specific keywords relevant to their business)
   
   Format the response as a professional business document with sections and bullet points where appropriate.`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 1500,
     });

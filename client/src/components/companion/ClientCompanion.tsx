@@ -102,6 +102,12 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     generateMutation.mutate({ clientId: client.id, taskType });
   };
   
+  // Handle re-generation of content (retry)
+  const handleRetry = (taskType: string) => {
+    // Use the same mutation as generate, but for an existing task
+    generateMutation.mutate({ clientId: client.id, taskType });
+  };
+  
   // Group tasks by type for easier display
   const tasksByType: Record<string, CompanionTask | undefined> = {};
   if (tasks) {
@@ -157,6 +163,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                 task={tasksByType.company_analysis}
                 isGenerating={generateMutation.isPending}
                 onGenerate={() => handleGenerate("company_analysis")}
+                onRetry={() => handleRetry("company_analysis")}
                 onSelect={handleTaskSelect}
               />
               
@@ -169,6 +176,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                 task={tasksByType.proposal}
                 isGenerating={generateMutation.isPending}
                 onGenerate={() => handleGenerate("proposal")}
+                onRetry={() => handleRetry("proposal")}
                 onSelect={handleTaskSelect}
               />
               
@@ -181,6 +189,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                 task={tasksByType.contract}
                 isGenerating={generateMutation.isPending}
                 onGenerate={() => handleGenerate("contract")}
+                onRetry={() => handleRetry("contract")}
                 onSelect={handleTaskSelect}
               />
               
@@ -193,6 +202,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                 task={tasksByType.site_map}
                 isGenerating={generateMutation.isPending}
                 onGenerate={() => handleGenerate("site_map")}
+                onRetry={() => handleRetry("site_map")}
                 onSelect={handleTaskSelect}
               />
               
@@ -205,6 +215,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                 task={tasksByType.status_update}
                 isGenerating={generateMutation.isPending}
                 onGenerate={() => handleGenerate("status_update")}
+                onRetry={() => handleRetry("status_update")}
                 onSelect={handleTaskSelect}
               />
             </div>
