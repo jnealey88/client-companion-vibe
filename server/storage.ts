@@ -22,10 +22,10 @@ export class DatabaseStorage implements IStorage {
       const { clients } = await import('@shared/schema');
       const { eq, ilike, and, or, desc, asc } = await import('drizzle-orm');
       
-      let query = db.select().from(clients);
-      
-      // Apply filters
+      // Build query conditions
       const conditions = [];
+      
+      // Search filter
       if (filters?.search) {
         const searchTerm = `%${filters.search}%`;
         conditions.push(
@@ -37,49 +37,67 @@ export class DatabaseStorage implements IStorage {
         );
       }
       
+      // Status filter
       if (filters?.status && filters.status !== "All Status") {
         conditions.push(eq(clients.status, filters.status.toLowerCase()));
       }
       
+      // Industry filter
       if (filters?.industry && filters.industry !== "All Industries") {
         conditions.push(eq(clients.industry, filters.industry));
       }
       
+      // Project status filter
       if (filters?.projectStatus && filters.projectStatus !== "All Projects") {
         const status = filters.projectStatus.split(' ')[0].toLowerCase();
         conditions.push(eq(clients.projectStatus, status));
       }
       
+      // Execute base query
+      let baseQuery = db.select().from(clients);
+      
+      // Apply conditions if any
       if (conditions.length > 0) {
-        query = query.where(and(...conditions));
+        baseQuery = baseQuery.where(and(...conditions));
       }
       
-      // Apply sorting
+      // Determine sort order
+      let sortField;
+      let sortOrder;
+      
       if (filters?.sort) {
         switch (filters.sort) {
           case "Name (A-Z)":
-            query = query.orderBy(asc(clients.name));
+            sortField = clients.name;
+            sortOrder = "asc";
             break;
           case "Name (Z-A)":
-            query = query.orderBy(desc(clients.name));
+            sortField = clients.name;
+            sortOrder = "desc";
             break;
           case "Value (High-Low)":
-            query = query.orderBy(desc(clients.projectValue));
+            sortField = clients.projectValue;
+            sortOrder = "desc";
             break;
           case "Value (Low-High)":
-            query = query.orderBy(asc(clients.projectValue));
+            sortField = clients.projectValue;
+            sortOrder = "asc";
             break;
           default:
-            // Sort by recent (last contact) by default
-            query = query.orderBy(desc(clients.lastContact));
+            sortField = clients.lastContact;
+            sortOrder = "desc";
         }
       } else {
-        // Default sort by recent
-        query = query.orderBy(desc(clients.lastContact));
+        sortField = clients.lastContact;
+        sortOrder = "desc";
       }
       
-      const clientsResult = await query;
-      return clientsResult;
+      // Execute the query with the sort
+      if (sortOrder === "asc") {
+        return await baseQuery.orderBy(asc(sortField));
+      } else {
+        return await baseQuery.orderBy(desc(sortField));
+      }
     } catch (error) {
       console.error("Error fetching clients:", error);
       throw error;
@@ -92,12 +110,12 @@ export class DatabaseStorage implements IStorage {
       const { clients } = await import('@shared/schema');
       const { eq } = await import('drizzle-orm');
       
-      const [client] = await db
+      const result = await db
         .select()
         .from(clients)
         .where(eq(clients.id, id));
       
-      return client;
+      return result[0];
     } catch (error) {
       console.error(`Error fetching client with ID ${id}:`, error);
       throw error;
