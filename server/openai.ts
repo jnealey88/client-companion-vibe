@@ -1364,11 +1364,13 @@ ${strategicRecommendations ? "Based on our market research, we've identified the
 Format the proposal as a professional HTML business proposal with clear sections. Use <h2>, <h3> tags for headings and proper HTML structure.
 
 IMPORTANT FORMATTING INSTRUCTIONS:
-- DO NOT include a title or main heading at the beginning (like "Website Redesign Proposal")
-- Start directly with the first section (Executive Summary)
+- DO NOT include a title or main heading at the beginning (no "Website Redesign Proposal" or similar titles)
+- DO NOT start with an H1 heading of any kind
+- Start directly with the Executive Summary section using an H2 heading
 - Avoid any whitespace, line breaks, or empty paragraphs at the beginning
 - Make sure each section has a clear <h2> heading
 - Do not repeat the project name in headings
+- Again, DO NOT include any variation of "Website Redesign Proposal" as a heading
 
 Include these sections:
 
@@ -1403,8 +1405,9 @@ Include these sections:
   - By paying the deposit, you agree to our contract terms and conditions.
 
 # Output Format
-The proposal should be delivered as an HTML document with proper section headers and formatted text. 
-DO NOT include a main title - start directly with the Executive Summary section.`;
+The proposal should be delivered as an HTML document with proper section headers and formatted text.
+DO NOT include a main title like "Website Redesign Proposal" - start directly with the Executive Summary section.
+IMPORTANT: THE FIRST HEADING IN YOUR RESPONSE MUST BE "Executive Summary" (h2 tag) - do not include any h1 headings.`;
 
   try {
     // Update prompt to request pricing info extraction
@@ -1493,6 +1496,9 @@ DO NOT include a main title - start directly with the Executive Summary section.
     
     // Remove any main title or website redesign proposal title
     let titleRegexes = [
+      // Target the specific "Website Redesign Proposal" title that's appearing
+      /<h[1-3][^>]*>\s*Website\s+Redesign\s+Proposal\s*<\/h[1-3]>/gi,
+      // Other generic patterns
       /<h[1-3][^>]*>(?:.*?website redesign.*?|.*?proposal.*?|.*?project.*?)<\/h[1-3]>/gi,
       /<h[1-3][^>]*>(?:.*?)(?:proposal|project)(?:.*?)<\/h[1-3]>/gi,
       /<h[1-3][^>]*>(?:.*?)redesign(?:.*?)<\/h[1-3]>/gi,
