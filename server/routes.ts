@@ -4,9 +4,19 @@ import { storage } from "./storage";
 import { 
   insertClientSchema, 
   updateClientSchema, 
-  ClientFilters
+  ClientFilters,
+  insertCompanionTaskSchema,
+  updateCompanionTaskSchema
 } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import {
+  generateMarketResearch,
+  generateProposal,
+  generateContract,
+  generateSiteMap,
+  generateStatusUpdate,
+  TaskType
+} from "./openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);

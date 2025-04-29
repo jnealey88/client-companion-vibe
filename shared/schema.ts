@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -21,6 +21,33 @@ export const clients = pgTable("clients", {
   projectValue: integer("project_value").notNull().default(0),
   lastContact: timestamp("last_contact").notNull().default(new Date()),
   createdAt: timestamp("created_at").notNull().default(new Date()),
+});
+
+// Define task type enum
+export const taskTypeEnum = pgEnum("task_type", [
+  "market_research",
+  "proposal",
+  "contract", 
+  "site_map",
+  "status_update"
+]);
+
+// Define task status enum
+export const taskStatusEnum = pgEnum("task_status", [
+  "pending",
+  "in_progress",
+  "completed"
+]);
+
+// Table for client companion tasks
+export const companionTasks = pgTable("companion_tasks", {
+  id: serial("id").primaryKey(),
+  clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  type: taskTypeEnum("type").notNull(),
+  status: taskStatusEnum("status").notNull().default("pending"),
+  content: text("content"),
+  createdAt: timestamp("created_at").notNull().default(new Date()),
+  completedAt: timestamp("completed_at"),
 });
 
 // Client Schemas
@@ -52,11 +79,34 @@ export const clientSchema = z.object({
 
 export const updateClientSchema = insertClientSchema.partial();
 
+// Companion Task Schemas
+export const insertCompanionTaskSchema = createInsertSchema(companionTasks).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export const companionTaskSchema = z.object({
+  id: z.number(),
+  clientId: z.number(),
+  type: z.enum(["market_research", "proposal", "contract", "site_map", "status_update"]),
+  status: z.enum(["pending", "in_progress", "completed"]),
+  content: z.string().nullable(),
+  createdAt: z.date(),
+  completedAt: z.date().nullable(),
+});
+
+export const updateCompanionTaskSchema = insertCompanionTaskSchema.partial();
+
 // Types
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type UpdateClient = z.infer<typeof updateClientSchema>;
 export type Client = typeof clients.$inferSelect;
 export type ClientWithProject = z.infer<typeof clientSchema>;
+
+export type InsertCompanionTask = z.infer<typeof insertCompanionTaskSchema>;
+export type UpdateCompanionTask = z.infer<typeof updateCompanionTaskSchema>;
+export type CompanionTask = typeof companionTasks.$inferSelect;
 
 // Filters/Sorting
 export type ClientFilters = {

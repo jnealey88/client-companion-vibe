@@ -2,7 +2,10 @@ import {
   Client, 
   InsertClient, 
   UpdateClient, 
-  ClientFilters
+  ClientFilters,
+  CompanionTask,
+  InsertCompanionTask,
+  UpdateCompanionTask
 } from "@shared/schema";
 
 export interface IStorage {
@@ -12,6 +15,13 @@ export interface IStorage {
   createClient(client: InsertClient): Promise<Client>;
   updateClient(id: number, client: UpdateClient): Promise<Client | undefined>;
   deleteClient(id: number): Promise<boolean>;
+
+  // Client Companion Task operations
+  getCompanionTasks(clientId: number): Promise<CompanionTask[]>;
+  getCompanionTask(id: number): Promise<CompanionTask | undefined>;
+  createCompanionTask(task: InsertCompanionTask): Promise<CompanionTask>;
+  updateCompanionTask(id: number, task: UpdateCompanionTask): Promise<CompanionTask | undefined>;
+  deleteCompanionTask(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -176,6 +186,105 @@ export class DatabaseStorage implements IStorage {
       return deletedClients.length > 0;
     } catch (error) {
       console.error(`Error deleting client with ID ${id}:`, error);
+      throw error;
+    }
+  }
+
+  // Companion Task operations
+  async getCompanionTasks(clientId: number): Promise<CompanionTask[]> {
+    try {
+      const { db } = await import('./db');
+      const { companionTasks } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      return await db
+        .select()
+        .from(companionTasks)
+        .where(eq(companionTasks.clientId, clientId))
+        .orderBy(companionTasks.createdAt);
+    } catch (error) {
+      console.error(`Error fetching companion tasks for client ${clientId}:`, error);
+      throw error;
+    }
+  }
+  
+  async getCompanionTask(id: number): Promise<CompanionTask | undefined> {
+    try {
+      const { db } = await import('./db');
+      const { companionTasks } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const result = await db
+        .select()
+        .from(companionTasks)
+        .where(eq(companionTasks.id, id));
+      
+      return result[0];
+    } catch (error) {
+      console.error(`Error fetching companion task with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  async createCompanionTask(task: InsertCompanionTask): Promise<CompanionTask> {
+    try {
+      const { db } = await import('./db');
+      const { companionTasks } = await import('@shared/schema');
+      
+      const [newTask] = await db
+        .insert(companionTasks)
+        .values({
+          ...task,
+          createdAt: new Date()
+        })
+        .returning();
+      
+      return newTask;
+    } catch (error) {
+      console.error("Error creating companion task:", error);
+      throw error;
+    }
+  }
+  
+  async updateCompanionTask(id: number, updateData: UpdateCompanionTask): Promise<CompanionTask | undefined> {
+    try {
+      const { db } = await import('./db');
+      const { companionTasks } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+
+      // If the status is being updated to 'completed', add the completedAt timestamp
+      const dataToUpdate = { ...updateData };
+      if (updateData.status === 'completed') {
+        dataToUpdate.completedAt = new Date();
+      }
+      
+      const [updatedTask] = await db
+        .update(companionTasks)
+        .set(dataToUpdate)
+        .where(eq(companionTasks.id, id))
+        .returning();
+      
+      return updatedTask;
+    } catch (error) {
+      console.error(`Error updating companion task with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  async deleteCompanionTask(id: number): Promise<boolean> {
+    try {
+      const { db } = await import('./db');
+      const { companionTasks } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const deletedTasks = await db
+        .delete(companionTasks)
+        .where(eq(companionTasks.id, id))
+        .returning();
+      
+      return deletedTasks.length > 0;
+    } catch (error) {
+      console.error(`Error deleting companion task with ID ${id}:`, error);
       throw error;
     }
   }
