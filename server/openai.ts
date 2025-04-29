@@ -484,7 +484,7 @@ Format the response as a professional business document with clear sections and 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 1500,
+      max_tokens: 10000,
     });
 
     return response.choices[0].message.content || "Failed to generate initial company analysis.";
@@ -583,7 +583,7 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
       let keywordInfo = {
         keyword: keyword,
         volume: "Unknown",
-        difficulty: "Unknown",
+        // Removed difficulty as it's consistently unreliable
         clientPosition: "Not ranked",
         recommendation: "Needs research"
       };
@@ -631,12 +631,11 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
       
       // Add SERP data if available
       if (serpData) {
-        // Use actual difficulty when available
-        keywordInfo.difficulty = serpData.keywordDifficulty?.toString() || "Unknown";
+        // Set client position if available
         keywordInfo.clientPosition = serpData.clientPosition ? 
           `Ranked #${serpData.clientPosition}` : "Not in top 100";
         
-        // Generate recommendation based on data
+        // Generate recommendation based on position data
         if (serpData.clientPosition && serpData.clientPosition <= 10) {
           keywordInfo.recommendation = "Maintain position";
         } else if (serpData.clientPosition && serpData.clientPosition <= 30) {
@@ -645,17 +644,16 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
           keywordInfo.recommendation = "Create targeted content";
         }
       } else {
-        // Calculate difficulty using our algorithm when DataForSEO data isn't available
-        const calculatedDifficulty = calculateKeywordDifficulty(keyword, keywordInfo.volume);
-        keywordInfo.difficulty = calculatedDifficulty.toString();
+        // No SERP data available, use volume to determine recommendation
+        const volumeNum = keywordInfo.volume !== "Unknown" ? 
+          parseInt(keywordInfo.volume.replace(/,/g, '')) : 0;
         
-        // Provide recommendation based on calculated difficulty
-        if (calculatedDifficulty < 30) {
-          keywordInfo.recommendation = "Target as priority (low competition)";
-        } else if (calculatedDifficulty < 60) {
-          keywordInfo.recommendation = "Create quality content (medium competition)";
+        if (volumeNum > 5000) {
+          keywordInfo.recommendation = "High-value target, create optimized content";
+        } else if (volumeNum > 1000) {
+          keywordInfo.recommendation = "Good opportunity, create relevant content";
         } else {
-          keywordInfo.recommendation = "Consider long-term strategy (high competition)";
+          keywordInfo.recommendation = "Consider targeting this keyword";
         }
       }
       
@@ -715,8 +713,8 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
         },
         "keywordAnalysis": {
           "recommendedKeywords": [
-            {"keyword": "Keyword 1", "volume": "Volume data", "difficulty": "Difficulty assessment", "recommendation": "Specific recommendation"},
-            {"keyword": "Keyword 2", "volume": "Volume data", "difficulty": "Difficulty assessment", "recommendation": "Specific recommendation"}
+            {"keyword": "Keyword 1", "volume": "Volume data", "recommendation": "Specific recommendation"},
+            {"keyword": "Keyword 2", "volume": "Volume data", "recommendation": "Specific recommendation"}
           ],
           "seoStrategy": "Brief SEO strategy overview"
         },
@@ -757,7 +755,7 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
       model: "gpt-4o-mini", // Using the mini model for efficiency
       messages: [{ role: "user", content: structuredPrompt }],
       response_format: { type: "json_object" }, // Ensure we get a proper JSON response
-      max_tokens: 3000,
+      max_tokens: 10000,
     });
     
     // Parse the JSON response
@@ -780,20 +778,7 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
     const currentDate = new Date();
     const formattedDate = `${currentDate.toLocaleDateString()} at ${currentDate.toLocaleTimeString()}`;
     
-    // Format keyword difficulty as a color and label
-    const getDifficultyColor = (difficulty: string | number) => {
-      const difficultyNum = typeof difficulty === 'string' ? parseInt(difficulty) : difficulty;
-      if (difficultyNum <= 30) return '#4CAF50'; // Green for easy
-      if (difficultyNum <= 60) return '#FFC107'; // Amber for medium
-      return '#F44336'; // Red for hard
-    };
-    
-    const getDifficultyLabel = (difficulty: string | number) => {
-      const difficultyNum = typeof difficulty === 'string' ? parseInt(difficulty) : difficulty;
-      if (difficultyNum <= 30) return 'Easy';
-      if (difficultyNum <= 60) return 'Medium';
-      return 'Difficult';
-    };
+    // Removed difficulty formatting functions as we no longer display difficulty
     
     // Format the search volume
     const getVolumeLabel = (volume: string) => {
@@ -872,22 +857,7 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
         }
       };
       
-      // Helper function to generate difficulty indicator
-      const getDifficultyIndicator = (difficulty: string) => {
-        if (difficulty === "Unknown" || !difficulty) return "";
-        
-        const difficultyNum = parseInt(difficulty);
-        
-        if (isNaN(difficultyNum)) return "";
-        
-        if (difficultyNum > 70) {
-          return `<span style="display: inline-block; width: 50px; text-align: center; background-color: #F44336; color: white; padding: 3px; border-radius: 3px; font-size: 12px;">HARD</span>`;
-        } else if (difficultyNum > 40) {
-          return `<span style="display: inline-block; width: 50px; text-align: center; background-color: #FFC107; color: black; padding: 3px; border-radius: 3px; font-size: 12px;">MED</span>`;
-        } else {
-          return `<span style="display: inline-block; width: 50px; text-align: center; background-color: #4CAF50; color: white; padding: 3px; border-radius: 3px; font-size: 12px;">EASY</span>`;
-        }
-      };
+      // Removed difficulty indicator function as we no longer show difficulty
       
       // Helper function to get action badge
       const getActionBadge = (recommendation: string) => {
@@ -949,19 +919,13 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
                   <h4 style="margin: 0; color: #2c3e50; font-size: 18px;">${kw.keyword} ${getActionBadge(kw.recommendation)}</h4>
                   <div>
                     ${getVolumeIndicator(kw.volume)}
-                    <span style="margin: 0 5px;"></span>
-                    ${getDifficultyIndicator(kw.difficulty)}
                   </div>
                 </div>
                 
                 <div style="display: flex; flex-wrap: wrap; margin-bottom: 10px;">
-                  <div style="flex: 1; min-width: 200px; margin-right: 20px;">
+                  <div style="flex: 1; min-width: 200px;">
                     <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">Search Volume</div>
                     <div style="font-weight: bold; color: #2c3e50;">${kw.volume || "Data Unavailable"}</div>
-                  </div>
-                  <div style="flex: 1; min-width: 200px;">
-                    <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">Difficulty</div>
-                    <div style="font-weight: bold; color: #2c3e50;">${kw.difficulty || "Data Unavailable"}</div>
                   </div>
                 </div>
                 
@@ -1295,7 +1259,7 @@ export async function generateProposal(clientInfo: any, marketResearch?: string)
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 1500,
+      max_tokens: 10000,
     });
 
     return response.choices[0].message.content || "Failed to generate proposal.";
@@ -1324,7 +1288,7 @@ export async function generateContract(clientInfo: any): Promise<string> {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 1500,
+      max_tokens: 10000,
     });
 
     return response.choices[0].message.content || "Failed to generate contract.";
@@ -1350,7 +1314,7 @@ export async function generateSiteMap(clientInfo: any): Promise<string> {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 1500,
+      max_tokens: 10000,
     });
 
     return response.choices[0].message.content || "Failed to generate site map.";
@@ -1389,7 +1353,7 @@ export async function generateStatusUpdate(clientInfo: any, taskStatus: any): Pr
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 1000,
+      max_tokens: 10000,
     });
 
     return response.choices[0].message.content || "Failed to generate status update.";
