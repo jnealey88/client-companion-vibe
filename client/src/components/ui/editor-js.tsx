@@ -80,12 +80,27 @@ export function EditorJs({
     
     const parser = new DOMParser();
     const doc = parser.parseFromString(cleanedHtml, 'text/html');
+    
+    // Track titles to prevent duplicates
+    const titleTracker = new Set<string>();
     const blocks: any[] = [];
     
     // Process each element in the body
     Array.from(doc.body.children).forEach((element) => {
       if (element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3' || 
           element.tagName === 'H4' || element.tagName === 'H5' || element.tagName === 'H6') {
+        
+        // Check for duplicate headings
+        const headingText = element.innerHTML.trim();
+        const headingKey = `${element.tagName}-${headingText}`;
+        
+        // Skip duplicate headings
+        if (titleTracker.has(headingKey)) {
+          return;
+        }
+        
+        titleTracker.add(headingKey);
+        
         blocks.push({
           type: 'header',
           data: {
@@ -153,6 +168,18 @@ export function EditorJs({
         Array.from(element.children).forEach(child => {
           if (child.tagName === 'H1' || child.tagName === 'H2' || child.tagName === 'H3' || 
               child.tagName === 'H4' || child.tagName === 'H5' || child.tagName === 'H6') {
+            
+            // Check for duplicate headings
+            const headingText = child.innerHTML.trim();
+            const headingKey = `${child.tagName}-${headingText}`;
+            
+            // Skip duplicate headings
+            if (titleTracker.has(headingKey)) {
+              return;
+            }
+            
+            titleTracker.add(headingKey);
+            
             childBlocks.push({
               type: 'header',
               data: {

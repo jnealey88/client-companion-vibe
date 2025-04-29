@@ -1482,15 +1482,43 @@ The proposal should be delivered as an HTML document with proper section headers
     // Remove the JSON from the content if present and clean up extra whitespace/line breaks
     let cleanContent = content.replace(/```json\s*[\s\S]*?\s*```/, '');
     
-    // Remove any "Project Investment Summary" heading or similar text at the beginning
-    cleanContent = cleanContent.replace(/(^[\s\n]*?(?:Project\s+Investment\s+Summary|Investment\s+Summary)[\s\n]*)/i, '');
-    
     // Remove excessive whitespace at the beginning of the document
-    cleanContent = cleanContent.replace(/^\s+/, '');
+    cleanContent = cleanContent.replace(/^\s+/, '').trim();
+    
+    // Remove any "Project Investment Summary" heading or similar text at the beginning
+    cleanContent = cleanContent.replace(/(^[\s\n]*?(?:Project\s+Investment\s+Summary|Investment\s+Summary|Project\s+Proposal)[\s\n]*)/i, '');
+    
+    // Check for duplicate titles (if AI generated one similar to what we'll add)
+    const hasProjectName = new RegExp(`<h[1-2][^>]*>${clientInfo.projectName}`, 'i').test(cleanContent);
+    const hasProposalWord = new RegExp(`<h[1-2][^>]*>.*?Proposal`, 'i').test(cleanContent);
     
     // Ensure the content starts with a proper heading
     if (!cleanContent.trim().startsWith('<h1') && !cleanContent.trim().startsWith('<h2')) {
       // Add a proper title if missing
+      cleanContent = `<h1>${clientInfo.projectName} Proposal</h1>\n${cleanContent}`;
+    } else if (hasProjectName && hasProposalWord) {
+      // If the content already has both the project name and "Proposal" in a heading,
+      // we don't need to add another title as it would be duplicative
+      // Just make sure we don't have two very similar titles together
+      
+      // Find the first two headings
+      const headingMatches = Array.from(cleanContent.matchAll(/<h[1-2][^>]*>(.*?)<\/h[1-2]>/gi));
+      
+      if (headingMatches.length >= 2) {
+        const firstHeading = headingMatches[0][1];
+        const secondHeading = headingMatches[1][1];
+        
+        // If they're too similar, remove the second one
+        if (
+          (firstHeading.includes(clientInfo.projectName) && secondHeading.includes(clientInfo.projectName)) ||
+          (firstHeading.toLowerCase().includes('proposal') && secondHeading.toLowerCase().includes('proposal'))
+        ) {
+          // Replace the second heading with nothing
+          cleanContent = cleanContent.replace(headingMatches[1][0], '');
+        }
+      }
+    } else {
+      // If there's a heading but it's missing context, prepend our standard heading
       cleanContent = `<h1>${clientInfo.projectName} Proposal</h1>\n${cleanContent}`;
     }
     
