@@ -570,10 +570,24 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         onTaskGenerated={(task) => {
           // Check if this is a new task request (dummy task with no content)
           if (!task.content && task.type === 'proposal') {
-            // Generate a new proposal using the in-card loading state
+            // Check if there are discovery notes in the metadata
+            if (task.metadata) {
+              try {
+                // Try to parse discovery notes from metadata
+                const metadata = JSON.parse(task.metadata);
+                if (metadata.discoveryNotes) {
+                  // Start in-card loading with discovery notes
+                  handleGenerate('proposal', { discoveryNotes: metadata.discoveryNotes });
+                  return;
+                }
+              } catch (e) {
+                console.error("Error parsing metadata:", e);
+              }
+            }
+            // No valid metadata with notes, generate without notes
             handleGenerate('proposal');
           } else {
-            // This is a real task, show it in the dialog
+            // This is a real task with content, show it in the dialog
             setTimeout(() => {
               setProposalTask(task);
               setIsProposalDialogOpen(true);

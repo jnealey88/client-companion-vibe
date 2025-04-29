@@ -269,20 +269,15 @@ export default function ProposalDialog({
 
   // Generate a proposal with the discovery notes provided
   const handleGenerate = () => {
-    // Start loading state
-    setLoading(true);
-    
     // Get the discovery notes from the form
     const discoveryNotes = discoveryNotesRef.current?.value || '';
     
+    // Close the dialog first to show the in-card loading state
+    onOpenChange(false);
+    
     // If we have an onTaskGenerated callback, use it to notify the parent
     if (onTaskGenerated && client?.id) {
-      // Create a task generation options object with the discovery notes
-      const options = {
-        discoveryNotes: discoveryNotes
-      };
-      
-      // This will trigger the API call via the parent component
+      // Create a dummy task for the parent to start showing the loading state
       const dummyTask = { 
         id: 0,
         clientId: client.id,
@@ -291,35 +286,29 @@ export default function ProposalDialog({
         content: null,
         createdAt: new Date(),
         completedAt: null
-      };
+      } as CompanionTask;
       
-      // Generate the proposal using the parent's handler
-      // which will show the in-card loading state
-      apiRequest(
-        "POST", 
-        `/api/clients/${client.id}/generate/proposal`, 
-        options
-      )
-      .then(response => response.json())
-      .then(data => {
-        // Notify the parent component about the new task
-        onTaskGenerated(data);
-        
-        // Close this dialog - the task will be loaded in the card
-        onOpenChange(false);
-      })
-      .catch(error => {
-        console.error("Error generating proposal:", error);
-        toast({
-          title: "Generation Failed",
-          description: "Failed to generate the proposal. Please try again.",
-          variant: "destructive"
-        });
-        setLoading(false);
-      });
-    } else {
-      // If no callback is provided, just close the dialog
-      onOpenChange(false);
+      // Tell the parent to start its loading state
+      onTaskGenerated(dummyTask);
+      
+      // Let the parent component's card show the loading state
+      // The actual API call will be handled by the parent
+      // through handleGenerate('proposal', {discoveryNotes})
+      setTimeout(() => {
+        // This is just a notification - we send the dummy task first
+        // so the parent component will show the loading state
+        // and then we tell it to generate the task with the discovery notes
+        if (onTaskGenerated) {
+          // Clone dummy task with discoveryNotes
+          const taskWithNotes = {
+            ...dummyTask,
+            metadata: JSON.stringify({discoveryNotes}) // Pass notes in metadata
+          };
+          
+          // This will trigger actual generation through parent's handleGenerate
+          onTaskGenerated(taskWithNotes);
+        }
+      }, 100);
     }
   };
 
