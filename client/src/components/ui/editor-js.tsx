@@ -78,7 +78,8 @@ export function EditorJs({
     
     // Process each element in the body
     Array.from(doc.body.children).forEach((element) => {
-      if (element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3') {
+      if (element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3' || 
+          element.tagName === 'H4' || element.tagName === 'H5' || element.tagName === 'H6') {
         blocks.push({
           type: 'header',
           data: {
@@ -140,6 +141,79 @@ export function EditorJs({
             caption: ''
           }
         });
+      } else if (element.tagName === 'DIV' || element.tagName === 'SECTION') {
+        // For divs and sections, process their children recursively
+        const childBlocks: any[] = [];
+        Array.from(element.children).forEach(child => {
+          if (child.tagName === 'H1' || child.tagName === 'H2' || child.tagName === 'H3' || 
+              child.tagName === 'H4' || child.tagName === 'H5' || child.tagName === 'H6') {
+            childBlocks.push({
+              type: 'header',
+              data: {
+                text: child.innerHTML,
+                level: parseInt(child.tagName.charAt(1))
+              }
+            });
+          } else if (child.tagName === 'P') {
+            childBlocks.push({
+              type: 'paragraph',
+              data: {
+                text: child.innerHTML
+              }
+            });
+          } else if (child.tagName === 'UL' || child.tagName === 'OL') {
+            const items = Array.from(child.querySelectorAll('li')).map(li => li.innerHTML);
+            childBlocks.push({
+              type: 'list',
+              data: {
+                style: child.tagName === 'OL' ? 'ordered' : 'unordered',
+                items: items
+              }
+            });
+          } else if (child.tagName === 'TABLE') {
+            const tableData: string[][] = [];
+            const rows = child.querySelectorAll('tr');
+            rows.forEach(row => {
+              const rowData: string[] = [];
+              const cells = row.querySelectorAll('td, th');
+              cells.forEach(cell => {
+                rowData.push(cell.innerHTML);
+              });
+              if (rowData.length > 0) {
+                tableData.push(rowData);
+              }
+            });
+            
+            if (tableData.length > 0) {
+              childBlocks.push({
+                type: 'table',
+                data: {
+                  content: tableData
+                }
+              });
+            }
+          } else {
+            childBlocks.push({
+              type: 'paragraph',
+              data: {
+                text: child.outerHTML
+              }
+            });
+          }
+        });
+        
+        // Add all child blocks to the main blocks array
+        blocks.push(...childBlocks);
+        
+        // If no child blocks were created, add the div as a paragraph
+        if (childBlocks.length === 0) {
+          blocks.push({
+            type: 'paragraph',
+            data: {
+              text: element.outerHTML
+            }
+          });
+        }
       } else {
         // Default to paragraph for any other element
         blocks.push({
