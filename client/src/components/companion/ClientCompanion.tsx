@@ -34,6 +34,7 @@ import { Client, CompanionTask, statusOptions } from "@shared/schema";
 import CompanionTaskCard from "./CompanionTaskCard";
 import ScheduleDiscoveryDialog from "./ScheduleDiscoveryDialog";
 import ProposalDialog from "./ProposalDialog";
+import CompanyAnalysisDialog from "./CompanyAnalysisDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -171,7 +172,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
+  const [isCompanyAnalysisDialogOpen, setIsCompanyAnalysisDialogOpen] = useState(false);
   const [proposalTask, setProposalTask] = useState<CompanionTask | undefined>(undefined);
+  const [companyAnalysisTask, setCompanyAnalysisTask] = useState<CompanionTask | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<CompanionTask | null>(null);
   const { toast } = useToast();
@@ -273,6 +276,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     // If we're deleting a task that's currently open in a dialog, close it
     if (task.type === 'proposal' && proposalTask?.id === task.id) {
       setIsProposalDialogOpen(false);
+    } else if (task.type === 'company_analysis' && companyAnalysisTask?.id === task.id) {
+      setIsCompanyAnalysisDialogOpen(false);
     } else if (task.type === 'schedule_discovery') {
       setIsDiscoveryDialogOpen(false);
     }
@@ -292,6 +297,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     if (taskToDelete.type === 'proposal' && proposalTask?.id === taskToDelete.id) {
       setProposalTask(undefined);
       setIsProposalDialogOpen(false);
+    } else if (taskToDelete.type === 'company_analysis' && companyAnalysisTask?.id === taskToDelete.id) {
+      setCompanyAnalysisTask(undefined);
+      setIsCompanyAnalysisDialogOpen(false);
     } else if (taskToDelete.type === 'schedule_discovery') {
       setIsDiscoveryDialogOpen(false);
     }
@@ -396,6 +404,21 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           setTimeout(() => {
             setProposalTask(task);
             setIsProposalDialogOpen(true);
+          }, 1000);
+        }}
+      />
+      
+      {/* Company analysis dialog */}
+      <CompanyAnalysisDialog
+        open={isCompanyAnalysisDialogOpen}
+        onOpenChange={setIsCompanyAnalysisDialogOpen}
+        client={client}
+        existingTask={companyAnalysisTask}
+        onTaskGenerated={(task) => {
+          // When a new task is generated, set it as the company analysis task and open the dialog
+          setTimeout(() => {
+            setCompanyAnalysisTask(task);
+            setIsCompanyAnalysisDialogOpen(true);
           }, 1000);
         }}
       />
