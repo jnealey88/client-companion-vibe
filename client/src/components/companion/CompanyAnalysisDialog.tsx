@@ -313,7 +313,7 @@ export default function CompanyAnalysisDialog({
               className="w-full"
               disabled={loading}
             >
-              Close and Generate in Card
+              Generate Company Analysis
             </Button>
           </div>
         )}

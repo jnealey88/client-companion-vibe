@@ -210,29 +210,63 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [generationProgress, setGenerationProgress] = useState<Record<string, number>>({});
   const [generationStage, setGenerationStage] = useState<Record<string, string>>({});
   
-  // Task generation loading stages
+  // Task generation loading stages - each with unique messaging
   const loadingStages: Record<string, string[]> = {
     company_analysis: [
-      "Analyzing client information...",
+      "Analyzing business information...",
       "Researching industry competitors...",
-      "Identifying target audience...",
-      "Analyzing website performance...",
-      "Examining SEO positioning...",
-      "Generating business recommendations...",
-      "Finalizing company analysis..."
+      "Evaluating target audience data...",
+      "Examining SEO and keyword positioning...",
+      "Checking website performance metrics...",
+      "Analyzing user experience elements...",
+      "Creating industry benchmarks...",
+      "Identifying business opportunities...",
+      "Crafting strategic recommendations...",
+      "Finalizing comprehensive analysis..."
     ],
     proposal: [
-      "Analyzing client requirements...",
-      "Researching industry standards...",
-      "Calculating project pricing...",
-      "Identifying recommended products...",
-      "Generating proposal content...",
-      "Finalizing your proposal..."
+      "Gathering project requirements...",
+      "Evaluating technical needs...",
+      "Calculating optimal pricing...",
+      "Researching industry benchmarks...",
+      "Identifying recommended GoDaddy products...",
+      "Calculating hosting requirements...",
+      "Estimating development timeline...",
+      "Preparing proposal document...",
+      "Adding payment options...",
+      "Finalizing proposal with recommendations..."
+    ],
+    site_map: [
+      "Analyzing website structure needs...",
+      "Evaluating user journey patterns...",
+      "Mapping content hierarchies...",
+      "Optimizing navigation flows...",
+      "Creating sitemap structure...",
+      "Finalizing recommendations..."
+    ],
+    contract: [
+      "Reviewing project details...",
+      "Creating legal framework...",
+      "Adding payment milestones...",
+      "Specifying deliverables...",
+      "Adding terms and conditions...",
+      "Finalizing contract document..."
+    ],
+    status_update: [
+      "Gathering project milestones...",
+      "Checking completion status...",
+      "Evaluating timeline adherence...",
+      "Calculating completion percentage...",
+      "Creating visual progress indicators...",
+      "Finalizing status report..."
     ],
     default: [
+      "Starting process...",
       "Gathering information...",
       "Processing data...",
-      "Generating content...",
+      "Analyzing results...",
+      "Evaluating alternatives...",
+      "Creating recommendations...",
       "Finalizing results..."
     ]
   };
@@ -778,10 +812,15 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       onClick={() => {
                                         if (type === 'schedule_discovery') {
                                           setIsDiscoveryDialogOpen(true);
-                                        } else if (type === 'proposal' && task?.content) {
-                                          // Open proposal dialog only for existing tasks
-                                          setProposalTask(task);
-                                          setIsProposalDialogOpen(true);
+                                        } else if (type === 'proposal') {
+                                          if (task?.content) {
+                                            // Open existing proposal in the dialog
+                                            setProposalTask(task);
+                                            setIsProposalDialogOpen(true);
+                                          } else {
+                                            // For new proposals, always show the dialog to collect notes first
+                                            setIsProposalDialogOpen(true);
+                                          }
                                         } else if (type === 'company_analysis' && task?.content) {
                                           // Open company analysis dialog only for existing tasks
                                           setCompanyAnalysisTask(task);
@@ -789,9 +828,11 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                         } else if (task?.content) {
                                           // View any other type of content
                                           handleTaskSelect(task);
+                                        } else if (type === 'company_analysis') {
+                                          // Generate company analysis with in-card loading
+                                          handleGenerate(type);
                                         } else {
-                                          // Generate new content with in-card loading
-                                          // This skips the dialog completely and uses the card loading state
+                                          // Generate other content types with in-card loading
                                           handleGenerate(type);
                                         }
                                       }}

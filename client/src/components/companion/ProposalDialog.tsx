@@ -368,28 +368,11 @@ export default function ProposalDialog({
             </div>
 
             <Button 
-              onClick={() => {
-                // Close the dialog first
-                onOpenChange(false);
-                
-                // Allow a brief delay for the dialog to close, then tell parent to generate
-                setTimeout(() => {
-                  // If parent provided a callback, tell it to generate a proposal
-                  if (client && client.id && onTaskGenerated) {
-                    // Execute this from ClientCompanion component
-                    const dummyTask = { 
-                      type: 'proposal',
-                      clientId: client.id,
-                      content: null
-                    } as any;
-                    onTaskGenerated(dummyTask);
-                  }
-                }, 300);
-              }} 
+              onClick={handleGenerate} 
               className="w-full"
               disabled={loading}
             >
-              Close and Generate in Card
+              Generate Project Proposal
             </Button>
           </div>
         )}
