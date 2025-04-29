@@ -11,7 +11,17 @@ import {
   CheckCircle,
   AlertCircle,
   ArrowRight,
-  ListFilter
+  ListFilter,
+  Calendar,
+  FileSearch,
+  Layers,
+  Settings,
+  Sparkles,
+  Bot,
+  TestTube,
+  Wrench,
+  LineChart,
+  Link
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,19 +34,36 @@ import CompanionTaskCard from "./CompanionTaskCard";
 
 // Define task type information with project phase categorization
 const taskTypes = {
+  // Discovery phase tasks
+  schedule_discovery: {
+    icon: <Calendar className="h-5 w-5" />,
+    label: "Schedule Discovery Call",
+    description: "Set up initial consultation to understand client needs",
+    iconColor: "bg-blue-50 text-blue-600",
+    phase: "Discovery"
+  },
   company_analysis: {
-    icon: <FileText className="h-5 w-5" />,
+    icon: <FileSearch className="h-5 w-5" />,
     label: "Company Analysis",
     description: "Comprehensive business and website analysis",
     iconColor: "bg-blue-50 text-blue-600",
     phase: "Discovery"
   },
   proposal: {
-    icon: <Check className="h-5 w-5" />,
+    icon: <FileText className="h-5 w-5" />,
     label: "Project Proposal",
     description: "Professional project proposal",
     iconColor: "bg-green-50 text-green-600",
     phase: "Discovery"
+  },
+  
+  // Planning phase tasks
+  define_scope: {
+    icon: <ListFilter className="h-5 w-5" />,
+    label: "Define Project Scope",
+    description: "Document project requirements and deliverables",
+    iconColor: "bg-purple-50 text-purple-600",
+    phase: "Planning"
   },
   contract: {
     icon: <Scroll className="h-5 w-5" />,
@@ -45,6 +72,15 @@ const taskTypes = {
     iconColor: "bg-purple-50 text-purple-600",
     phase: "Planning"
   },
+  third_party: {
+    icon: <Link className="h-5 w-5" />,
+    label: "3rd Party Integrations",
+    description: "Plan for CRM, payment gateways, analytics and other tools",
+    iconColor: "bg-indigo-50 text-indigo-600",
+    phase: "Planning"
+  },
+  
+  // Design and Development phase tasks
   site_map: {
     icon: <FolderTree className="h-5 w-5" />,
     label: "Site Map & Content",
@@ -52,11 +88,41 @@ const taskTypes = {
     iconColor: "bg-amber-50 text-amber-600",
     phase: "Design and Development"
   },
+  ai_site_designer: {
+    icon: <Sparkles className="h-5 w-5" />,
+    label: "AI Site Designer",
+    description: "Generate design mockups and UI components",
+    iconColor: "bg-amber-50 text-amber-600",
+    phase: "Design and Development"
+  },
+  ai_qa_tool: {
+    icon: <TestTube className="h-5 w-5" />,
+    label: "AI QA Tool",
+    description: "Automated testing and quality assurance",
+    iconColor: "bg-red-50 text-red-600",
+    phase: "Design and Development"
+  },
+  
+  // Post Launch Management phase tasks
   status_update: {
     icon: <MessageCircle className="h-5 w-5" />,
     label: "Status Update",
     description: "Client status update email",
     iconColor: "bg-pink-50 text-pink-600",
+    phase: "Post Launch Management"
+  },
+  site_maintenance: {
+    icon: <Wrench className="h-5 w-5" />,
+    label: "Site Maintenance",
+    description: "Regular updates and maintenance tasks",
+    iconColor: "bg-green-50 text-green-600",
+    phase: "Post Launch Management"
+  },
+  site_optimizer: {
+    icon: <LineChart className="h-5 w-5" />,
+    label: "Site Optimizer",
+    description: "Performance optimization and SEO enhancements",
+    iconColor: "bg-orange-50 text-orange-600",
     phase: "Post Launch Management"
   }
 };
