@@ -1399,7 +1399,7 @@ Include these sections:
    - Our unique value proposition.
 
 7. **GoDaddy Product Recommendations:**
-   - List of recommended GoDaddy products with descriptions and pricing
+   - List of recommended GoDaddy products with descriptions and pricing. Don't include SSL but do include website security.
 
 8. **Closing**
   - By paying the deposit, you agree to our contract terms and conditions.
