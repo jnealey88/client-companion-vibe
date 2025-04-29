@@ -72,12 +72,13 @@ export default function StrategicActionCards({ recommendations, onSelectRecommen
             <CardFooter className="pt-0">
               {group.items.length > 0 && (
                 <Button 
-                  variant="ghost" 
-                  className="w-full justify-between text-sm hover:bg-slate-100"
+                  variant="outline" 
+                  className="w-full justify-between text-sm hover:bg-slate-100 focus:ring-2 focus:ring-blue-500"
                   onClick={() => onSelectRecommendation(group.items.join('\n- '), group.type)}
+                  aria-label={`Use ${group.title} in proposal`}
                 >
                   <span>Use in Proposal</span>
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               )}
             </CardFooter>

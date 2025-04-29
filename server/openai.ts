@@ -1217,28 +1217,7 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
           ${arrayToList(analysisData.websitePerformance.improvementAreas)}
         </div>
         
-        <!-- Recommendations Section -->
-        <div style="margin-bottom: 30px;">
-          <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Strategic Recommendations</h2>
-          <div style="background-color: #fcf3cf; padding: 15px; border-left: 5px solid #f1c40f; margin-bottom: 20px;">
-            <h3 style="color: #f39c12; margin-top: 0;">Priority Actions</h3>
-            <p>${analysisData.recommendations.priorityActions}</p>
-          </div>
-          <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
-              <h3 style="color: #2ecc71; margin-top: 0;">Short-term Actions</h3>
-              ${arrayToList(analysisData.recommendations.shortTerm)}
-            </div>
-            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
-              <h3 style="color: #3498db; margin-top: 0;">Medium-term Actions</h3>
-              ${arrayToList(analysisData.recommendations.mediumTerm)}
-            </div>
-            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
-              <h3 style="color: #9b59b6; margin-top: 0;">Long-term Actions</h3>
-              ${arrayToList(analysisData.recommendations.longTerm)}
-            </div>
-          </div>
-        </div>
+        <!-- Note: Strategic Recommendations section removed as it will be displayed as action cards -->
         
         <div style="text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #7f8c8d;">
           <p>This report was automatically generated based on industry data, website analysis, and market research. The recommendations are intended as a starting point for your digital strategy.</p>
