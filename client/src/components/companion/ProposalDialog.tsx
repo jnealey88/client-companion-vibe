@@ -304,6 +304,10 @@ export default function ProposalDialog({
     // Get the discovery notes from the form
     const discoveryNotes = discoveryNotesRef.current?.value || '';
     
+    // Check for recommendations in localStorage as well
+    const storedRecommendation = localStorage.getItem('selectedRecommendation');
+    const storedType = localStorage.getItem('recommendationType');
+    
     // Close the dialog first to show the in-card loading state
     onOpenChange(false);
     
@@ -331,10 +335,26 @@ export default function ProposalDialog({
         // so the parent component will show the loading state
         // and then we tell it to generate the task with the discovery notes
         if (onTaskGenerated) {
-          // Clone dummy task with discoveryNotes
+          // Create metadata with discovery notes
+          const metadata: any = { discoveryNotes };
+          
+          // Add the stored recommendations if they exist
+          if (storedRecommendation && storedType) {
+            metadata.from_analysis = true;
+            metadata.recommendations = {
+              type: storedType,
+              content: storedRecommendation
+            };
+            
+            // Clear localStorage after using
+            localStorage.removeItem('selectedRecommendation');
+            localStorage.removeItem('recommendationType');
+          }
+          
+          // Clone dummy task with metadata
           const taskWithNotes = {
             ...dummyTask,
-            metadata: JSON.stringify({discoveryNotes}) // Pass notes in metadata
+            metadata: JSON.stringify(metadata)
           };
           
           // This will trigger actual generation through parent's handleGenerate
