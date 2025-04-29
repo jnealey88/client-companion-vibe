@@ -25,7 +25,7 @@ export const clients = pgTable("clients", {
 
 // Define task type enum
 export const taskTypeEnum = pgEnum("task_type", [
-  "market_research",
+  "company_analysis",
   "proposal",
   "contract", 
   "site_map",
@@ -89,7 +89,7 @@ export const insertCompanionTaskSchema = createInsertSchema(companionTasks).omit
 export const companionTaskSchema = z.object({
   id: z.number(),
   clientId: z.number(),
-  type: z.enum(["market_research", "proposal", "contract", "site_map", "status_update"]),
+  type: z.enum(["company_analysis", "proposal", "contract", "site_map", "status_update"]),
   status: z.enum(["pending", "in_progress", "completed"]),
   content: z.string().nullable(),
   createdAt: z.date(),

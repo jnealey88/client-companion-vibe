@@ -285,16 +285,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       try {
         switch (taskType) {
-          case TaskType.MARKET_RESEARCH:
-            content = await generateMarketResearch(client);
+          case TaskType.COMPANY_ANALYSIS:
+            content = await generateCompanyAnalysis(client);
             break;
           case TaskType.PROPOSAL:
-            // Optionally get market research if it exists
-            const marketResearchTasks = await storage.getCompanionTasks(clientId);
-            const marketResearchTask = marketResearchTasks
-              .find(t => t.type === TaskType.MARKET_RESEARCH && t.status === "completed");
-            const marketResearch = marketResearchTask?.content || undefined;
-            content = await generateProposal(client, marketResearch);
+            // Optionally get company analysis if it exists
+            const companyAnalysisTasks = await storage.getCompanionTasks(clientId);
+            const companyAnalysisTask = companyAnalysisTasks
+              .find(t => t.type === TaskType.COMPANY_ANALYSIS && t.status === "completed");
+            const companyAnalysis = companyAnalysisTask?.content || undefined;
+            content = await generateProposal(client, companyAnalysis);
             break;
           case TaskType.CONTRACT:
             content = await generateContract(client);
