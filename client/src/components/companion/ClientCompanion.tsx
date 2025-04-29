@@ -104,20 +104,14 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     if (tasks && tasks.length > 0) {
       // Initialize all completed tasks as expanded
       const newExpandedTasks: Record<string, boolean> = {};
-      let lastTaskWithContent: CompanionTask | null = null;
       
       tasks.forEach(task => {
         if (task.content) {
           newExpandedTasks[task.type] = true;
-          lastTaskWithContent = task; // Track the most recent task with content
         }
       });
       
-      // Set the last task with content as selected for viewing
-      if (lastTaskWithContent) {
-        setSelectedTask(lastTaskWithContent);
-      }
-      
+      // Don't auto-select any task by default, just expand them
       setExpandedTasks(newExpandedTasks);
     }
   }, [tasks]);
@@ -442,20 +436,25 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
-                                    onClick={() => setSelectedTask(selectedTask === task ? null : task!)}
+                                    onClick={() => setExpandedTasks({
+                                      ...expandedTasks,
+                                      [type]: !expandedTasks[type]
+                                    })}
                                   >
-                                    {selectedTask === task ? 'Hide' : 'View'} 
+                                    {expandedTasks[type] ? 'Hide' : 'View'} 
                                   </Button>
                                 </div>
                               </div>
                             </CardHeader>
                             
-                            <CardContent className="p-4 border-t">
-                              <div 
-                                className="bg-white rounded-md p-2 max-h-[400px] overflow-y-auto"
-                                dangerouslySetInnerHTML={{ __html: task!.content || "" }}
-                              ></div>
-                            </CardContent>
+                            {expandedTasks[type] && (
+                              <CardContent className="p-4 border-t">
+                                <div 
+                                  className="bg-white rounded-md p-2 max-h-[400px] overflow-y-auto"
+                                  dangerouslySetInnerHTML={{ __html: task!.content || "" }}
+                                ></div>
+                              </CardContent>
+                            )}
                           </Card>
                         );
                       })}
