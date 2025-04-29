@@ -242,8 +242,23 @@ export default function ProposalDialog({
     // In a real application, this would send the proposal via an email provider API
   };
 
+  // Cleanup function when dialog is closed
+  const handleOpenChange = (isOpen: boolean) => {
+    // If closing the dialog
+    if (!isOpen) {
+      // Reset states if needed
+      setLoading(false);
+      setIsSaving(false);
+      
+      // Call the parent's handler
+      onOpenChange(isOpen);
+    } else {
+      onOpenChange(isOpen);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -357,6 +372,30 @@ export default function ProposalDialog({
                   {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copied ? "Copied" : "Copy to Clipboard"}
                 </Button>
+                
+                {existingTask && (
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      // Close the dialog and let the ClientCompanion handle deletion
+                      if (existingTask) {
+                        onOpenChange(false);
+                        // Allow parent component time to handle the delete request
+                        setTimeout(() => {
+                          toast({
+                            title: "Delete from Companion",
+                            description: "Use the delete button in the Client Companion to remove this proposal.",
+                            variant: "default"
+                          });
+                        }, 300);
+                      }
+                    }}
+                    className="gap-1"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                )}
               </div>
               <Button onClick={handleSend} className="gap-1">
                 <Send className="h-4 w-4" />

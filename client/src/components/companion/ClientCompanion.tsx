@@ -267,7 +267,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   
   // Handle delete request - open confirmation dialog
   const handleDelete = (task: CompanionTask) => {
+    // Store the task to delete
     setTaskToDelete(task);
+    
+    // If we're deleting a task that's currently open in a dialog, close it
+    if (task.type === 'proposal' && proposalTask?.id === task.id) {
+      setIsProposalDialogOpen(false);
+    } else if (task.type === 'schedule_discovery') {
+      setIsDiscoveryDialogOpen(false);
+    }
+    
+    // Open the delete confirmation dialog
     setDeleteDialogOpen(true);
   };
   
