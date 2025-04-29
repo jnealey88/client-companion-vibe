@@ -31,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Client, CompanionTask, statusOptions } from "@shared/schema";
 import CompanionTaskCard from "./CompanionTaskCard";
+import ScheduleDiscoveryDialog from "./ScheduleDiscoveryDialog";
 
 // Define task type information with project phase categorization
 const taskTypes = {
