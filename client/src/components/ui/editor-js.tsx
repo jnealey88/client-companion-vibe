@@ -44,17 +44,11 @@ export function EditorJs({
           // Content is already in JSON format
           setEditorData(JSON.parse(content));
         } else if (content) {
-          // Content is in HTML format, set as initial blocks
+          // Content is in HTML format, convert to blocks
+          const blocks = convertHtmlToBlocks(content);
           setEditorData({
             time: new Date().getTime(),
-            blocks: [
-              {
-                type: 'paragraph',
-                data: {
-                  text: content
-                }
-              }
-            ]
+            blocks: blocks
           });
         }
       } catch (error) {
@@ -75,6 +69,100 @@ export function EditorJs({
       }
     }
   }, [content, isReady]);
+
+  // Helper function to convert HTML to EditorJS blocks
+  const convertHtmlToBlocks = (html: string) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const blocks: any[] = [];
+    
+    // Process each element in the body
+    Array.from(doc.body.children).forEach((element) => {
+      if (element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3') {
+        blocks.push({
+          type: 'header',
+          data: {
+            text: element.innerHTML,
+            level: parseInt(element.tagName.charAt(1))
+          }
+        });
+      } else if (element.tagName === 'P') {
+        blocks.push({
+          type: 'paragraph',
+          data: {
+            text: element.innerHTML
+          }
+        });
+      } else if (element.tagName === 'UL' || element.tagName === 'OL') {
+        const items = Array.from(element.querySelectorAll('li')).map(li => li.innerHTML);
+        blocks.push({
+          type: 'list',
+          data: {
+            style: element.tagName === 'OL' ? 'ordered' : 'unordered',
+            items: items
+          }
+        });
+      } else if (element.tagName === 'BLOCKQUOTE') {
+        blocks.push({
+          type: 'quote',
+          data: {
+            text: element.innerHTML,
+            caption: ''
+          }
+        });
+      } else if (element.tagName === 'TABLE') {
+        const tableData: string[][] = [];
+        const rows = element.querySelectorAll('tr');
+        rows.forEach(row => {
+          const rowData: string[] = [];
+          const cells = row.querySelectorAll('td, th');
+          cells.forEach(cell => {
+            rowData.push(cell.innerHTML);
+          });
+          if (rowData.length > 0) {
+            tableData.push(rowData);
+          }
+        });
+        
+        if (tableData.length > 0) {
+          blocks.push({
+            type: 'table',
+            data: {
+              content: tableData
+            }
+          });
+        }
+      } else if (element.tagName === 'DIV' && element.classList.contains('embed')) {
+        blocks.push({
+          type: 'embed',
+          data: {
+            embed: element.innerHTML,
+            caption: ''
+          }
+        });
+      } else {
+        // Default to paragraph for any other element
+        blocks.push({
+          type: 'paragraph',
+          data: {
+            text: element.outerHTML
+          }
+        });
+      }
+    });
+    
+    // If no blocks were created, create a default paragraph with the entire HTML content
+    if (blocks.length === 0) {
+      blocks.push({
+        type: 'paragraph',
+        data: {
+          text: html
+        }
+      });
+    }
+    
+    return blocks;
+  };
 
   // Handle editor initialization
   const handleInitialize = React.useCallback((instance: any) => {
