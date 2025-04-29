@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { FileText, Copy, Edit, CheckCircle2, Send, AlertCircle, Code } from "lucide-react";
+import { FileText, Copy, CheckCircle2, Send, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -12,9 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -33,7 +31,6 @@ export default function ProposalDialog({
   client,
   existingTask
 }: ProposalDialogProps) {
-  const [activeTab, setActiveTab] = useState<string>("preview");
   const [proposalContent, setProposalContent] = useState<string>("");
   const [discoveryNotes, setDiscoveryNotes] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
@@ -63,7 +60,6 @@ export default function ProposalDialog({
     onSuccess: (data: any) => {
       setProposalContent(data.content);
       setEditedContent(data.content);
-      setActiveTab("preview");
       setLoading(false);
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
       toast({
@@ -90,7 +86,6 @@ export default function ProposalDialog({
     onSuccess: () => {
       setIsSaving(false);
       setProposalContent(editedContent);
-      setActiveTab("preview");
       setIsEdited(false);
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
       toast({
@@ -154,7 +149,6 @@ export default function ProposalDialog({
   // Handle cancel edit
   const handleCancelEdit = () => {
     setEditedContent(proposalContent);
-    setActiveTab("preview");
     setIsEdited(false);
   };
 
@@ -212,32 +206,23 @@ export default function ProposalDialog({
 
         {(proposalContent || existingTask?.content) && (
           <>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="preview">Preview</TabsTrigger>
-                <TabsTrigger value="edit">Visual Editor</TabsTrigger>
-              </TabsList>
+            <div className="border rounded-md p-6 min-h-[450px] mt-2">
+              {isEdited && (
+                <Alert className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    You have unsaved changes. Click "Save Changes" when you're done editing.
+                  </AlertDescription>
+                </Alert>
+              )}
               
-              <TabsContent value="preview" className="border rounded-md p-4 min-h-[400px] mt-2">
-                <div className="editor-js-wrapper proposal-preview" dangerouslySetInnerHTML={{ __html: proposalContent }} />
-              </TabsContent>
+              <EditorJs
+                content={editedContent}
+                onChange={handleEditorChange}
+                className="min-h-[450px] mb-4"
+              />
               
-              <TabsContent value="edit" className="mt-2">
-                {isEdited && (
-                  <Alert className="mb-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      You have unsaved changes. Click "Save Changes" when you're done editing.
-                    </AlertDescription>
-                  </Alert>
-                )}
-                
-                <EditorJs
-                  content={editedContent}
-                  onChange={handleEditorChange}
-                  className="min-h-[400px] mb-4"
-                />
-                
+              {isEdited && (
                 <div className="flex gap-2 mt-4">
                   <Button 
                     onClick={handleSaveEdit}
@@ -254,12 +239,10 @@ export default function ProposalDialog({
                     Cancel
                   </Button>
                 </div>
-              </TabsContent>
-              
+              )}
+            </div>
 
-            </Tabs>
-
-            <DialogFooter className="flex justify-between items-center gap-2">
+            <DialogFooter className="flex justify-between items-center gap-2 mt-4">
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -269,16 +252,6 @@ export default function ProposalDialog({
                   {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   {copied ? "Copied" : "Copy to Clipboard"}
                 </Button>
-                {activeTab === "preview" && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setActiveTab("edit")}
-                    className="gap-1"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit Proposal
-                  </Button>
-                )}
               </div>
               <Button onClick={handleSend} className="gap-1">
                 <Send className="h-4 w-4" />

@@ -486,12 +486,17 @@ export function EditorJs({
       .editor-js-wrapper .ce-block__content {
         max-width: 95%;
         margin: 0 auto;
+        padding: 0 25px;
       }
       .editor-js-wrapper .ce-toolbar__content {
         max-width: 95%;
+        padding: 0 25px;
       }
       .editor-js-wrapper .ce-header {
         font-weight: bold;
+        position: relative;
+        padding-top: 10px;
+        padding-bottom: 10px;
       }
       .editor-js-wrapper .ce-header--h1 {
         font-size: 2.5rem;
@@ -501,6 +506,18 @@ export function EditorJs({
       }
       .editor-js-wrapper .ce-header--h3 {
         font-size: 1.75rem;
+      }
+      /* Fix toolbar alignment */
+      .editor-js-wrapper .ce-toolbar__actions {
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .editor-js-wrapper .ce-toolbar__plus {
+        left: -25px;
+      }
+      /* Add spacing between blocks */
+      .editor-js-wrapper .ce-block {
+        margin-bottom: 10px;
       }
       .editor-js-wrapper .ce-delimiter {
         line-height: 1.6em;
