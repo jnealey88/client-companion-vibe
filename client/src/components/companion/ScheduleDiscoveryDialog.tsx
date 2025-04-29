@@ -194,13 +194,12 @@ Web Design Consultant`;
                   size="sm"
                   className="h-8 w-8 p-0"
                   onClick={() => {
-                    const selectedText = window.getSelection()?.toString() || '';
-                    if (selectedText) {
-                      const updatedContent = emailContent.replace(
-                        selectedText,
-                        `**${selectedText}**`
-                      );
-                      setEmailContent(updatedContent);
+                    // Apply bold formatting using document.execCommand
+                    document.execCommand('bold', false);
+                    // Focus back on the contentEditable
+                    const editor = document.querySelector('[contenteditable=true]') as HTMLElement;
+                    if (editor) {
+                      editor.focus();
                     }
                   }}
                   title="Bold"
@@ -213,28 +212,36 @@ Web Design Consultant`;
                   size="sm"
                   className="h-8 w-8 p-0"
                   onClick={() => {
-                    // Add bullet point at cursor position or to selection
-                    const textarea = document.querySelector('textarea');
-                    const selectionStart = textarea?.selectionStart || 0;
-                    const selectionEnd = textarea?.selectionEnd || 0;
-                    const selectedText = emailContent.substring(selectionStart, selectionEnd);
-                    
-                    if (selectedText) {
-                      // Add bullets to each line in selection
-                      const lines = selectedText.split('\n');
-                      const bulletedLines = lines.map(line => `• ${line}`).join('\n');
-                      const updatedContent = 
-                        emailContent.substring(0, selectionStart) + 
-                        bulletedLines + 
-                        emailContent.substring(selectionEnd);
-                      setEmailContent(updatedContent);
-                    } else {
-                      // Add a single bullet at cursor position
-                      const updatedContent = 
-                        emailContent.substring(0, selectionStart) + 
-                        '• ' + 
-                        emailContent.substring(selectionStart);
-                      setEmailContent(updatedContent);
+                    // Get the contentEditable div
+                    const editor = document.querySelector('[contenteditable=true]') as HTMLElement;
+                    if (editor) {
+                      // Create and insert a bullet point
+                      const selection = window.getSelection();
+                      const range = selection?.getRangeAt(0);
+                      
+                      if (range) {
+                        // Create a bullet point element
+                        const listItem = document.createElement('li');
+                        listItem.style.marginLeft = '20px';
+                        listItem.style.marginBottom = '8px';
+                        
+                        // If there's selected text, move it into the list item
+                        if (!range.collapsed) {
+                          listItem.appendChild(range.extractContents());
+                        }
+                        
+                        // Insert the list item
+                        range.insertNode(listItem);
+                        
+                        // Move cursor inside the list item
+                        range.selectNodeContents(listItem);
+                        range.collapse(false); // collapse to end
+                        selection?.removeAllRanges();
+                        selection?.addRange(range);
+                      }
+                      
+                      // Focus back on the editor
+                      editor.focus();
                     }
                   }}
                   title="Bullet List"
@@ -249,13 +256,16 @@ Web Design Consultant`;
                   size="sm"
                   className="h-8 px-2"
                   onClick={() => {
-                    const textarea = document.querySelector('textarea');
-                    const selectionStart = textarea?.selectionStart || 0;
-                    const updatedContent = 
-                      emailContent.substring(0, selectionStart) + 
-                      '[Analysis Report Link]' + 
-                      emailContent.substring(selectionStart);
-                    setEmailContent(updatedContent);
+                    // Insert Analysis Report Link at cursor position
+                    const editor = document.querySelector('[contenteditable=true]') as HTMLElement;
+                    if (editor) {
+                      document.execCommand('insertText', false, '[Analysis Report Link]');
+                      editor.focus();
+                      
+                      // Trigger the input event to update our state
+                      const event = new Event('input', { bubbles: true });
+                      editor.dispatchEvent(event);
+                    }
                   }}
                   title="Insert Analysis Link"
                 >
@@ -267,13 +277,16 @@ Web Design Consultant`;
                   size="sm"
                   className="h-8 px-2"
                   onClick={() => {
-                    const textarea = document.querySelector('textarea');
-                    const selectionStart = textarea?.selectionStart || 0;
-                    const updatedContent = 
-                      emailContent.substring(0, selectionStart) + 
-                      '[Booking Calendar Link]' + 
-                      emailContent.substring(selectionStart);
-                    setEmailContent(updatedContent);
+                    // Insert Booking Calendar Link at cursor position
+                    const editor = document.querySelector('[contenteditable=true]') as HTMLElement;
+                    if (editor) {
+                      document.execCommand('insertText', false, '[Booking Calendar Link]');
+                      editor.focus();
+                      
+                      // Trigger the input event to update our state
+                      const event = new Event('input', { bubbles: true });
+                      editor.dispatchEvent(event);
+                    }
                   }}
                   title="Insert Booking Link"
                 >
@@ -282,62 +295,62 @@ Web Design Consultant`;
               </div>
             </div>
             
-            {/* Rich Content Editor */}
-            <div className="relative">
-              <Textarea
-                value={emailContent}
-                onChange={(e) => {
-                  setEmailContent(e.target.value);
-                  
-                  // Update HTML preview with improved formatting
-                  let htmlVersion = e.target.value;
-                  
-                  // Format bullet points properly
-                  htmlVersion = htmlVersion.replace(/• (.*?)(?:\n|$)/g, '<li>$1</li>');
-                  
-                  // Replace double line breaks with paragraph breaks
-                  htmlVersion = htmlVersion.replace(/\n\n/g, '</p><p>');
-                  
-                  // Replace remaining single line breaks with <br>
-                  htmlVersion = htmlVersion.replace(/\n/g, '<br>');
-                  
-                  // Format **bold** text
-                  htmlVersion = htmlVersion.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                  
-                  // Find and wrap the bullet list in a ul element with styling
-                  htmlVersion = htmlVersion.replace(/<li>(.*?)<\/li>(?:<br>)*<li>/g, '<li>$1</li><li>');
-                  if (htmlVersion.includes('<li>')) {
-                    htmlVersion = htmlVersion.replace(/<p>(.*?)<li>/g, '<p>$1<ul style="margin: 10px 0; padding-left: 30px;"><li style="margin-bottom: 8px;">');
-                    htmlVersion = htmlVersion.replace(/<\/li>(<br>)*<\/p>/g, '</li></ul></p>');
-                    // Add styling to all list items
-                    htmlVersion = htmlVersion.replace(/<li>(.*?)<\/li>/g, '<li style="margin-bottom: 8px;">$1</li>');
+            {/* Rich Content Editor - Simplified Approach */}
+            <div className="bg-white">
+              <div
+                ref={(el) => {
+                  // Initial setup when component mounts
+                  if (el && !el.innerHTML && emailContent) {
+                    // Apply formatting to the initial content
+                    const formatted = emailContent
+                      .replace(/\n\n/g, '<br><br>')
+                      .replace(/\n/g, '<br>')
+                      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/• (.*?)(?:<br>|$)/g, '<li style="margin-bottom: 8px; margin-left: 20px;">$1</li>')
+                      .replace('[Analysis Report Link]', companyAnalysisTask 
+                        ? `<a href="/client/${client.id}/analysis/${companyAnalysisTask.id}" style="color: #0066cc; text-decoration: underline; font-weight: 600;">View Business Analysis Report</a>` 
+                        : '')
+                      .replace('[Booking Calendar Link]', 
+                        `<a href="https://calendly.com/yourbusiness/discovery-call" style="display: inline-block; background-color: #0066cc; color: white; padding: 10px 16px; text-decoration: none; border-radius: 4px; font-weight: 500; margin: 8px 0;">Schedule Discovery Call</a>`);
+                    
+                    el.innerHTML = formatted || '<div style="color: #a0aec0;">Type your email here...</div>';
                   }
+                }}
+                className="p-4 min-h-[350px] font-sans focus:outline-none"
+                contentEditable={true}
+                suppressContentEditableWarning={true}
+                onInput={(e) => {
+                  // Get the raw content from the contentEditable div
+                  const content = e.currentTarget.innerHTML;
+                  
+                  // Convert HTML back to plain text for storing
+                  const tempDiv = document.createElement('div');
+                  tempDiv.innerHTML = content;
+                  const plainText = tempDiv.innerText || tempDiv.textContent || '';
+                  
+                  // Update our state
+                  setEmailContent(plainText);
+                  
+                  // Format the content for preview
+                  let formattedContent = content;
                   
                   // Replace placeholder links with actual links
-                  htmlVersion = htmlVersion.replace('[Analysis Report Link]', companyAnalysisTask 
-                      ? `<a href="/client/${client.id}/analysis/${companyAnalysisTask.id}" style="color: #0066cc; text-decoration: underline; font-weight: 600;">View Business Analysis Report</a>` 
-                      : '');
+                  formattedContent = formattedContent.replace('[Analysis Report Link]', companyAnalysisTask 
+                    ? `<a href="/client/${client.id}/analysis/${companyAnalysisTask.id}" style="color: #0066cc; text-decoration: underline; font-weight: 600;">View Business Analysis Report</a>` 
+                    : '');
                   
-                  htmlVersion = htmlVersion.replace('[Booking Calendar Link]', 
+                  formattedContent = formattedContent.replace('[Booking Calendar Link]', 
                     `<a href="https://calendly.com/yourbusiness/discovery-call" style="display: inline-block; background-color: #0066cc; color: white; padding: 10px 16px; text-decoration: none; border-radius: 4px; font-weight: 500; margin: 8px 0;">Schedule Discovery Call</a>`);
-                  
-                  // Add styled email container
+                    
+                  // Update the HTML state to match what we're displaying
                   setEmailHtml(`
                     <div style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; padding: 5px;">
                       <div style="background-color: white; padding: 15px;">
-                        <p>${htmlVersion}</p>
+                        ${formattedContent}
                       </div>
                     </div>
                   `);
                 }}
-                className="min-h-[350px] resize-none text-sm p-4 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 opacity-20 absolute inset-0 z-10 caret-black"
-                placeholder="Type your email here..."
-              />
-              
-              {/* Preview is layered underneath for the WYSIWYG effect */}
-              <div
-                className="min-h-[350px] p-4 overflow-y-auto"
-                dangerouslySetInnerHTML={{ __html: emailHtml }}
               />
             </div>
           </div>
