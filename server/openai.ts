@@ -1352,7 +1352,6 @@ export async function generateProposal(clientInfo: any, marketResearch?: string,
 Client Information:
 - Business Name: ${clientInfo.name}
 - Website URL: ${clientInfo.websiteUrl || "No website URL provided"}
-- Industry: ${clientInfo.industry || "Not specified"}
 - Project Name: ${clientInfo.projectName}
 
 ${discoveryNotes ? "During our discovery call, I took these notes:\n" + discoveryNotes + "\n\n" : ""}
@@ -1374,7 +1373,7 @@ Format the proposal as a professional HTML business proposal with clear sections
 
 2. **Executive Summary:**
    - Brief overview of the project and client needs (≤ 75 words)
-   - Example of desired result: “${clientInfo.name} needs to turn casual visitors into bookings. We’ll launch a mobile-first site that raises online reservations by 25% within three months.”
+
 
 3. **Objectives & Success Metrics:**
    - Objective, KPI & Target, Business Impact
@@ -1389,6 +1388,7 @@ Format the proposal as a professional HTML business proposal with clear sections
 
 
 6. **Investment & Pricing:**
+   - You'll provide a quote/dollar amounts based on the client's industry and project needs in the following items.
    - Total Project Fee: $ [Amount]
    - Stage, % Due, Amount
    - Signing: 50%, $ …

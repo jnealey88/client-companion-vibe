@@ -17,6 +17,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { EditorJs } from "@/components/ui/editor-js";
+import PaymentSummaryWidget from "./PaymentSummaryWidget";
+import { formatCurrency } from "@/lib/utils";
 
 interface ProposalDialogProps {
   open: boolean;
@@ -38,6 +40,11 @@ export default function ProposalDialog({
   const [editedContent, setEditedContent] = useState<string>("");
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isEdited, setIsEdited] = useState<boolean>(false);
+  
+  // Payment information (these would come from the backend in a real app)
+  const [projectValue, setProjectValue] = useState<number>(client.projectValue || 5000);
+  const [carePlanMonthly, setCarePlanMonthly] = useState<number>(99);
+  const [productsMonthly, setProductsMonthly] = useState<number>(29);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -222,6 +229,46 @@ export default function ProposalDialog({
                 onChange={handleEditorChange}
                 className="min-h-[450px] mb-4"
               />
+              
+              {/* Payment Summary Widget */}
+              <div className="mt-8 mb-4">
+                <h3 className="text-xl font-bold mb-4">Project Investment Summary</h3>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-muted-foreground mb-4">
+                      This proposal includes a comprehensive breakdown of your investment. The total project cost covers all deliverables outlined above, while the optional care plan and recommended products ensure your ongoing success.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <div className="flex items-center gap-1 text-sm bg-muted px-3 py-1 rounded-full">
+                        <span className="font-medium">One-time:</span> {formatCurrency(projectValue)}
+                      </div>
+                      {carePlanMonthly > 0 && (
+                        <div className="flex items-center gap-1 text-sm bg-muted px-3 py-1 rounded-full">
+                          <span className="font-medium">Care Plan:</span> {formatCurrency(carePlanMonthly)}/mo
+                        </div>
+                      )}
+                      {productsMonthly > 0 && (
+                        <div className="flex items-center gap-1 text-sm bg-muted px-3 py-1 rounded-full">
+                          <span className="font-medium">GoDaddy:</span> {formatCurrency(productsMonthly)}/mo
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="md:col-span-1">
+                    <PaymentSummaryWidget 
+                      projectValue={projectValue} 
+                      carePlanMonthly={carePlanMonthly}
+                      productsMonthly={productsMonthly}
+                      onPayClick={() => {
+                        toast({
+                          title: "Payment Feature",
+                          description: "This would connect to your payment processor in a real application.",
+                        });
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
               
               {isEdited && (
                 <div className="flex gap-2 mt-4">
