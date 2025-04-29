@@ -174,7 +174,7 @@ async function getWebsitePerformance(url: string): Promise<any> {
     
     // Make request to Google PageSpeed API
     const response = await axios.get(
-      `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${GOOGLE_API_KEY}`
+      `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${GOOGLE_API_KEY}&category=PERFORMANCE&category=ACCESSIBILITY&category=BEST_PRACTICES&category=SEO`
     );
     
     console.log("PageSpeed API response status:", response.status);
@@ -188,27 +188,88 @@ async function getWebsitePerformance(url: string): Promise<any> {
       
       // Extract scores with detailed logging
       const performanceScore = categories.performance?.score * 100 || 0;
-      const accessibilityScore = categories.accessibility?.score * 100 || 0;
+      const accessibilityScore = categories.accessibility?.score * 100 || 0; 
       const bestPracticesScore = categories['best-practices']?.score * 100 || 0;
-      const seoScore = categories.seo?.score * 100 || 0;
+      const pagespeedSeoScore = categories.seo?.score * 100 || 0;
       
       console.log("PageSpeed scores:", {
         performance: performanceScore,
         accessibility: accessibilityScore,
         bestPractices: bestPracticesScore,
-        seo: seoScore
+        seo: pagespeedSeoScore
       });
+      
+      // Extract key performance metrics
+      const coreMetrics = {
+        firstContentfulPaint: metrics['first-contentful-paint']?.displayValue || 'N/A',
+        largestContentfulPaint: metrics['largest-contentful-paint']?.displayValue || 'N/A',
+        cumulativeLayoutShift: metrics['cumulative-layout-shift']?.displayValue || 'N/A',
+        totalBlockingTime: metrics['total-blocking-time']?.displayValue || 'N/A',
+        speedIndex: metrics['speed-index']?.displayValue || 'N/A',
+        interactive: metrics['interactive']?.displayValue || 'N/A'
+      };
+      
+      console.log("Core web vitals:", coreMetrics);
+      
+      // Collect specific issues from the audits
+      const issues = [];
+      
+      // Performance issues
+      if (performanceScore < 90) {
+        if (metrics['render-blocking-resources'] && metrics['render-blocking-resources'].score < 0.9) {
+          issues.push("Reduce render-blocking resources");
+        }
+        if (metrics['unused-javascript'] && metrics['unused-javascript'].score < 0.9) {
+          issues.push("Remove unused JavaScript");
+        }
+        if (metrics['unminified-css'] && metrics['unminified-css'].score < 0.9) {
+          issues.push("Minify CSS files");
+        }
+        if (metrics['uses-responsive-images'] && metrics['uses-responsive-images'].score < 0.9) {
+          issues.push("Properly size images");
+        }
+      }
+      
+      // Accessibility issues  
+      if (accessibilityScore < 90) {
+        if (metrics['color-contrast'] && metrics['color-contrast'].score < 0.9) {
+          issues.push("Improve color contrast");
+        }
+        if (metrics['document-title'] && metrics['document-title'].score < 0.9) {
+          issues.push("Add a proper document title");
+        }
+        if (metrics['html-has-lang'] && metrics['html-has-lang'].score < 0.9) {
+          issues.push("Add HTML lang attribute");
+        }
+      }
+      
+      // Best practices issues
+      if (bestPracticesScore < 90) {
+        if (metrics['no-document-write'] && metrics['no-document-write'].score < 0.9) {
+          issues.push("Avoid document.write()");
+        }
+        if (metrics['uses-https'] && metrics['uses-https'].score < 0.9) {
+          issues.push("Ensure HTTPS usage");
+        }
+      }
+      
+      // SEO issues
+      if (pagespeedSeoScore < 90) {
+        if (metrics['meta-description'] && metrics['meta-description'].score < 0.9) {
+          issues.push("Add meta descriptions");
+        }
+        if (metrics['link-text'] && metrics['link-text'].score < 0.9) {
+          issues.push("Use descriptive link text");
+        }
+      }
       
       const result = {
         performance: performanceScore,
         accessibility: accessibilityScore,
         bestPractices: bestPracticesScore,
-        seo: seoScore,
-        firstContentfulPaint: metrics['first-contentful-paint']?.displayValue || 'N/A',
-        largestContentfulPaint: metrics['largest-contentful-paint']?.displayValue || 'N/A',
-        speedIndex: metrics['speed-index']?.displayValue || 'N/A',
-        totalBlockingTime: metrics['total-blocking-time']?.displayValue || 'N/A',
-        issues: []
+        pagespeedSeo: pagespeedSeoScore, // Renamed to clarify it's from PageSpeed
+        ...coreMetrics,
+        issues: issues
       };
       
       return result;
@@ -317,7 +378,7 @@ interface CompanyAnalysisOutput {
     opportunities: string[];
   };
   keywordAnalysis: {
-    recommendedKeywords: { keyword: string; volume: string; difficulty: string; recommendation: string }[];
+    recommendedKeywords: { keyword: string; volume: string; difficulty: string; clientPosition?: string; recommendation: string }[];
     seoStrategy: string;
   };
   websitePerformance: {
@@ -325,7 +386,7 @@ interface CompanyAnalysisOutput {
     performanceMetrics: {
       performance: number;
       accessibility: number;
-      seo: number;
+      seo: number; // This is populated with pagespeedSeo but named seo in the report
       bestPractices: number;
     };
     loadingSpeed: string;
@@ -412,16 +473,19 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
       return keywordInfo;
     });
     
-    // Format performance data for prompt
+    // Format performance data for prompt - clearly separate from DataForSEO SEO data
     const performanceData = websitePerformance ? {
       performance: websitePerformance.performance,
       accessibility: websitePerformance.accessibility,
-      seo: websitePerformance.seo,
-      bestPractices: websitePerformance.bestPractices || 0,
+      bestPractices: websitePerformance.bestPractices,
+      pagespeedSeo: websitePerformance.pagespeedSeo, // Renamed to make distinction clear
       firstContentfulPaint: websitePerformance.firstContentfulPaint,
       largestContentfulPaint: websitePerformance.largestContentfulPaint,
+      cumulativeLayoutShift: websitePerformance.cumulativeLayoutShift,
+      totalBlockingTime: websitePerformance.totalBlockingTime,
       speedIndex: websitePerformance.speedIndex,
-      totalBlockingTime: websitePerformance.totalBlockingTime
+      interactive: websitePerformance.interactive,
+      issues: websitePerformance.issues || []
     } : null;
     
     // Create a structured prompt for JSON output
@@ -468,23 +532,25 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
           "seoStrategy": "Brief SEO strategy overview"
         },
         "websitePerformance": {
-          "overallScore": ${performanceData ? Math.round((performanceData.performance + performanceData.accessibility + performanceData.seo + performanceData.bestPractices) / 4) : 0},
+          "overallScore": ${performanceData ? Math.round((performanceData.performance + performanceData.accessibility + performanceData.pagespeedSeo + performanceData.bestPractices) / 4) : 0},
           "performanceMetrics": {
             "performance": ${performanceData?.performance || 0},
             "accessibility": ${performanceData?.accessibility || 0},
-            "seo": ${performanceData?.seo || 0},
+            "seo": ${performanceData?.pagespeedSeo || 0}, // Using pagespeedSeo here
             "bestPractices": ${performanceData?.bestPractices || 0}
           },
-          "loadingSpeed": "${performanceData ? 'First Contentful Paint: ' + performanceData.firstContentfulPaint + ', Largest Contentful Paint: ' + performanceData.largestContentfulPaint : 'No data available'}",
-          "mobileUsability": "${performanceData ? 'The website has ' + (performanceData.seo > 80 ? 'good' : 'areas for improvement in') + ' mobile usability' : 'No data available'}",
-          "improvementAreas": ${performanceData 
-            ? `[
-                ${performanceData.performance < 90 ? `"Improve page performance (current score: ${performanceData.performance}%)"` : ""},
-                ${performanceData.accessibility < 90 ? `"Enhance accessibility features (current score: ${performanceData.accessibility}%)"` : ""},
-                ${performanceData.seo < 90 ? `"Optimize SEO elements (current score: ${performanceData.seo}%)"` : ""},
-                ${performanceData.bestPractices < 90 ? `"Address web best practices (current score: ${performanceData.bestPractices}%)"` : ""}
-              ].filter(item => item !== "")` 
-            : "[]"}
+          "loadingSpeed": "${performanceData ? 'First Contentful Paint: ' + performanceData.firstContentfulPaint + ', Largest Contentful Paint: ' + performanceData.largestContentfulPaint + ', Time to Interactive: ' + performanceData.interactive : 'No data available'}",
+          "mobileUsability": "${performanceData ? 'The website has ' + (performanceData.pagespeedSeo > 80 ? 'good' : 'areas for improvement in') + ' mobile usability according to PageSpeed Insights' : 'No data available'}",
+          "improvementAreas": ${performanceData && performanceData.issues && performanceData.issues.length > 0 
+            ? JSON.stringify(performanceData.issues) 
+            : performanceData 
+              ? `[
+                  ${performanceData.performance < 90 ? `"Improve page performance (current score: ${performanceData.performance}%)"` : ""},
+                  ${performanceData.accessibility < 90 ? `"Enhance accessibility features (current score: ${performanceData.accessibility}%)"` : ""},
+                  ${performanceData.pagespeedSeo < 90 ? `"Optimize technical SEO elements (current score: ${performanceData.pagespeedSeo}%)"` : ""},
+                  ${performanceData.bestPractices < 90 ? `"Address web best practices (current score: ${performanceData.bestPractices}%)"` : ""}
+                ].filter(item => item !== "")`
+              : "[]"}
         },
         "recommendations": {
           "shortTerm": ["Short-term action 1", "Short-term action 2"],
@@ -623,11 +689,12 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
             <span style="margin-left: 10px; font-weight: bold;">${accessibility}%</span>
           </div>
           <div style="margin-bottom: 12px;">
-            <span style="display: inline-block; width: 150px; font-weight: bold;">SEO:</span>
+            <span style="display: inline-block; width: 150px; font-weight: bold;">Technical SEO:</span>
             <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
               <div style="width: ${seo}%; height: 100%; background-color: ${getColorForScore(seo)}; border-radius: 10px;"></div>
             </div>
             <span style="margin-left: 10px; font-weight: bold;">${seo}%</span>
+            <span style="margin-left: 5px; font-size: 12px; color: #7f8c8d;">(PageSpeed Insights)</span>
           </div>
           <div style="margin-bottom: 12px;">
             <span style="display: inline-block; width: 150px; font-weight: bold;">Best Practices:</span>
@@ -736,7 +803,7 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
               </div>
             </div>
           </div>
-          <h3 style="color: #3498db;">Performance Metrics</h3>
+          <h3 style="color: #3498db;">Google PageSpeed Insights Metrics</h3>
           ${performanceMetrics()}
           <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px;">
             <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
