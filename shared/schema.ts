@@ -11,8 +11,8 @@ export const clients = pgTable("clients", {
   email: text("email").notNull(),
   phone: text("phone").notNull(),
   industry: text("industry").notNull(),
-  status: text("status").notNull().default("active"),
-  logo: text("logo"),
+  websiteUrl: text("website_url"),
+  status: text("status").notNull().default("discovery"),
   projectName: text("project_name").notNull(),
   projectDescription: text("project_description"),
   projectStatus: text("project_status").notNull().default("active"),
@@ -38,8 +38,8 @@ export const clientSchema = z.object({
   email: z.string().email(),
   phone: z.string(),
   industry: z.string(),
+  websiteUrl: z.string().nullable(),
   status: z.string(),
-  logo: z.string().nullable(),
   projectName: z.string(),
   projectDescription: z.string().nullable(),
   projectStatus: z.string(),
@@ -67,7 +67,7 @@ export type ClientFilters = {
   sort?: string;
 };
 
-export const statusOptions = ["All Status", "Active", "Pending", "On Hold", "Completed"];
+export const statusOptions = ["All Status", "Discovery", "Planning", "Design and Development", "Post Launch Management"];
 export const industryOptions = ["All Industries", "Technology", "Healthcare", "Education", "E-commerce", "Finance", "Media", "Sustainability", "Data Analytics"];
 export const projectStatusOptions = ["All Projects", "Active Projects", "Completed Projects", "Pending Projects"];
 export const sortOptions = ["Sort by: Recent", "Name (A-Z)", "Name (Z-A)", "Value (High-Low)", "Value (Low-High)"];

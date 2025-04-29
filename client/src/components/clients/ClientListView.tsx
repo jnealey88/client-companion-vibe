@@ -111,8 +111,7 @@ export default function ClientListView({
                       className="mr-3 h-4 w-4 rounded border-gray-300 text-accent focus:ring-accent"
                     />
                     <Avatar className="h-10 w-10 rounded-md overflow-hidden">
-                      <AvatarImage src={client.logo || ''} alt={`${client.name} Logo`} />
-                      <AvatarFallback className="bg-gray-200">{client.name.substring(0, 2)}</AvatarFallback>
+                      <AvatarFallback className="bg-gray-200">{client.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="ml-4">
                       <Link href={`/clients/${client.id}`}>

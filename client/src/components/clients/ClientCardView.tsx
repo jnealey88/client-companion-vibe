@@ -20,8 +20,7 @@ export default function ClientCardView({ clients }: ClientCardViewProps) {
               <div className="flex items-start justify-between">
                 <div className="flex items-center">
                   <Avatar className="h-12 w-12 rounded-md overflow-hidden">
-                    <AvatarImage src={client.logo || ''} alt={`${client.name} Logo`} />
-                    <AvatarFallback className="bg-gray-200">{client.name.substring(0, 2)}</AvatarFallback>
+                    <AvatarFallback className="bg-gray-200">{client.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
                   <div className="ml-4">
                     <h3 className="text-lg font-medium text-gray-900">{client.name}</h3>

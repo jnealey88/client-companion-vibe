@@ -59,9 +59,12 @@ export default function AddClientDialog({
       email: "",
       phone: "",
       industry: "",
-      status: "Active",
-      logo: "",
-      totalValue: 0,
+      status: "Discovery",
+      websiteUrl: "",
+      projectName: "",
+      projectDescription: "",
+      projectStatus: "Active",
+      projectValue: 0,
     },
   });
   
@@ -226,16 +229,63 @@ export default function AddClientDialog({
               
               <FormField
                 control={form.control}
-                name="logo"
+                name="websiteUrl"
                 render={({ field }) => (
                   <FormItem className="col-span-2">
-                    <FormLabel>Logo URL (optional)</FormLabel>
+                    <FormLabel>Website URL (optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter logo URL" {...field} />
+                      <Input placeholder="Enter website URL" {...field} />
                     </FormControl>
                     <FormDescription>
-                      Provide a URL to the client's logo image
+                      Provide the client's website URL
                     </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="projectName"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Project Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter project name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="projectDescription"
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormLabel>Project Description (optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter project description" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="projectValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project Value *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="Enter project value" 
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
