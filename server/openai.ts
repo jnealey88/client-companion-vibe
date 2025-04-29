@@ -1253,7 +1253,7 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
   }
 }
 
-export async function generateProposal(clientInfo: any, marketResearch?: string, discoveryNotes?: string): Promise<string> {
+export async function generateProposal(clientInfo: any, marketResearch?: string, discoveryNotes?: string): Promise<any> {
   // Extract strategic recommendations from market research if available
   let strategicRecommendations = "";
   if (marketResearch) {
@@ -1420,13 +1420,84 @@ Format the proposal as a professional HTML business proposal with clear sections
 The proposal should be delivered as an HTML document with section headers and formatted text. Include placeholders for [Agency Logo], [Your Name], [Date], [Client Name], etc., and ensure that placeholders for financial and metric data (e.g., $ [Amount], [AvgOrder], [X]) are clearly defined.`;
 
   try {
+    // Update prompt to request pricing info extraction
+    const updatedPrompt = prompt + `\n\nAfter generating the proposal, also analyze the content and extract the following pricing information:
+    - Total project fee (from the Investment & Pricing section)
+    - Monthly care plan fee (if mentioned)
+    - Monthly fees for any GoDaddy products
+    
+    Include this pricing data at the end of your response in the following JSON format (not visible to clients):
+    
+    \`\`\`json
+    {
+      "projectTotalFee": 0000,
+      "carePlanMonthly": 00,
+      "productsMonthlyTotal": 00
+    }
+    \`\`\`
+    
+    Use exact numbers, not ranges, in the JSON. These values should match what you recommend in the proposal.`;
+    
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [{ role: "user", content: updatedPrompt }],
       max_tokens: 10000,
     });
 
-    return response.choices[0].message.content || "Failed to generate proposal.";
+    const content = response.choices[0].message.content || "Failed to generate proposal.";
+    
+    // Extract pricing information
+    let pricingData = {
+      projectTotalFee: basePrice,
+      carePlanMonthly: 100,
+      productsMonthlyTotal: 50
+    };
+    
+    try {
+      // Try to extract the JSON pricing data
+      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch && jsonMatch[1]) {
+        const extractedJson = jsonMatch[1].trim();
+        const parsedPricing = JSON.parse(extractedJson);
+        
+        if (parsedPricing) {
+          // Update pricing data with extracted values
+          if (typeof parsedPricing.projectTotalFee === 'number') {
+            pricingData.projectTotalFee = parsedPricing.projectTotalFee;
+          }
+          
+          if (typeof parsedPricing.carePlanMonthly === 'number') {
+            pricingData.carePlanMonthly = parsedPricing.carePlanMonthly;
+          }
+          
+          if (typeof parsedPricing.productsMonthlyTotal === 'number') {
+            pricingData.productsMonthlyTotal = parsedPricing.productsMonthlyTotal;
+          }
+        }
+      } else {
+        // If no JSON, try to extract values using regex
+        const projectFeeMatch = content.match(/Total Project Fee: \$\s*([0-9,]+)/);
+        if (projectFeeMatch && projectFeeMatch[1]) {
+          pricingData.projectTotalFee = parseInt(projectFeeMatch[1].replace(/,/g, ''));
+        }
+        
+        const carePlanMatch = content.match(/Care Plan: \$\s*([0-9,]+)/);
+        if (carePlanMatch && carePlanMatch[1]) {
+          pricingData.carePlanMonthly = parseInt(carePlanMatch[1].replace(/,/g, ''));
+        }
+      }
+    } catch (error) {
+      console.error("Error extracting pricing data:", error);
+      // Fallback to default values
+    }
+    
+    // Remove the JSON from the content if present
+    const cleanContent = content.replace(/```json\s*[\s\S]*?\s*```/, '');
+    
+    return {
+      content: cleanContent,
+      pricingData
+    };
   } catch (error) {
     console.error("Error generating proposal:", error);
     throw new Error("Failed to generate project proposal");

@@ -226,37 +226,14 @@ export default function ProposalDialog({
               
               {/* Main Content Area - Two Columns Layout */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Left Column - Contains Project Investment Summary and Proposal Content */}
+                {/* Left Column - Proposal Content */}
                 <div className="md:col-span-2">
-                  {/* Project Investment Summary - Top Section */}
-                  <div className="bg-muted/30 p-6 rounded-lg mb-8">
-                    <h3 className="text-xl font-bold mb-4">Project Investment Summary</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      This proposal includes a comprehensive breakdown of your investment. The total project cost covers all deliverables outlined above, while the optional care plan and recommended products ensure your ongoing success.
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <div className="flex items-center gap-1 text-sm bg-background px-3 py-1 rounded-full">
-                        <span className="font-medium">One-time:</span> {formatCurrency(projectValue)}
-                      </div>
-                      {carePlanMonthly > 0 && (
-                        <div className="flex items-center gap-1 text-sm bg-background px-3 py-1 rounded-full">
-                          <span className="font-medium">Care Plan:</span> {formatCurrency(carePlanMonthly)}/mo
-                        </div>
-                      )}
-                      {productsMonthly > 0 && (
-                        <div className="flex items-center gap-1 text-sm bg-background px-3 py-1 rounded-full">
-                          <span className="font-medium">GoDaddy:</span> {formatCurrency(productsMonthly)}/mo
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
                   {/* AI Proposal Content */}
-                  <div className="min-h-[450px]">
+                  <div>
                     <EditorJs
                       content={editedContent}
                       onChange={handleEditorChange}
-                      className="min-h-[450px]"
+                      className="prose max-w-none"
                     />
                   </div>
                 </div>
