@@ -10,7 +10,8 @@ import {
   User, 
   Briefcase, 
   DollarSign, 
-  Edit 
+  Edit,
+  Globe
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -93,7 +94,6 @@ export default function ClientDetail() {
                   <div className="flex justify-between items-start">
                     <div className="flex items-center">
                       <Avatar className="h-16 w-16 rounded-md mr-4">
-                        <AvatarImage src={client.logo || ''} alt={`${client.name} Logo`} />
                         <AvatarFallback className="bg-gray-200 text-lg">{client.name.substring(0, 2)}</AvatarFallback>
                       </Avatar>
                       <div>
@@ -142,6 +142,23 @@ export default function ClientDetail() {
                         <p className="font-medium">{client.industry}</p>
                       </div>
                     </div>
+                    
+                    {client.websiteUrl && (
+                      <div className="flex items-center">
+                        <Globe className="h-4 w-4 text-gray-500 mr-2" />
+                        <div>
+                          <p className="text-sm text-gray-500">Website</p>
+                          <a 
+                            href={client.websiteUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="font-medium text-blue-600 hover:underline"
+                          >
+                            {client.websiteUrl}
+                          </a>
+                        </div>
+                      </div>
+                    )}
                     
                     <div className="flex items-center">
                       <DollarSign className="h-4 w-4 text-gray-500 mr-2" />

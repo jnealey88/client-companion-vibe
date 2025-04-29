@@ -234,7 +234,11 @@ export default function AddClientDialog({
                   <FormItem className="col-span-2">
                     <FormLabel>Website URL (optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter website URL" {...field} />
+                      <Input 
+                        placeholder="Enter website URL" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
                     </FormControl>
                     <FormDescription>
                       Provide the client's website URL
@@ -265,7 +269,11 @@ export default function AddClientDialog({
                   <FormItem className="col-span-2">
                     <FormLabel>Project Description (optional)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter project description" {...field} />
+                      <Input 
+                        placeholder="Enter project description" 
+                        {...field} 
+                        value={field.value || ''}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
