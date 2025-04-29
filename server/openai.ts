@@ -468,16 +468,23 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
           "seoStrategy": "Brief SEO strategy overview"
         },
         "websitePerformance": {
-          "overallScore": 85,
+          "overallScore": ${performanceData ? Math.round((performanceData.performance + performanceData.accessibility + performanceData.seo + performanceData.bestPractices) / 4) : 0},
           "performanceMetrics": {
             "performance": ${performanceData?.performance || 0},
             "accessibility": ${performanceData?.accessibility || 0},
             "seo": ${performanceData?.seo || 0},
             "bestPractices": ${performanceData?.bestPractices || 0}
           },
-          "loadingSpeed": "Assessment of loading speed",
-          "mobileUsability": "Assessment of mobile usability",
-          "improvementAreas": ["Area 1", "Area 2"]
+          "loadingSpeed": "${performanceData ? 'First Contentful Paint: ' + performanceData.firstContentfulPaint + ', Largest Contentful Paint: ' + performanceData.largestContentfulPaint : 'No data available'}",
+          "mobileUsability": "${performanceData ? 'The website has ' + (performanceData.seo > 80 ? 'good' : 'areas for improvement in') + ' mobile usability' : 'No data available'}",
+          "improvementAreas": ${performanceData 
+            ? `[
+                ${performanceData.performance < 90 ? `"Improve page performance (current score: ${performanceData.performance}%)"` : ""},
+                ${performanceData.accessibility < 90 ? `"Enhance accessibility features (current score: ${performanceData.accessibility}%)"` : ""},
+                ${performanceData.seo < 90 ? `"Optimize SEO elements (current score: ${performanceData.seo}%)"` : ""},
+                ${performanceData.bestPractices < 90 ? `"Address web best practices (current score: ${performanceData.bestPractices}%)"` : ""}
+              ].filter(item => item !== "")` 
+            : "[]"}
         },
         "recommendations": {
           "shortTerm": ["Short-term action 1", "Short-term action 2"],
@@ -583,37 +590,51 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
     
     // Website performance visualization
     const performanceMetrics = () => {
+      // Defensive check to ensure metrics object exists
+      if (!analysisData.websitePerformance || !analysisData.websitePerformance.performanceMetrics) {
+        console.log("Performance metrics data is missing");
+        return `<p>Performance metrics data is unavailable</p>`;
+      }
+      
+      // Safety check - log metrics for debugging
       const metrics = analysisData.websitePerformance.performanceMetrics;
+      console.log("Rendering metrics:", metrics);
+      
+      // Use default values if metrics are missing to prevent rendering issues
+      const performance = metrics.performance || 0;
+      const accessibility = metrics.accessibility || 0;
+      const seo = metrics.seo || 0;
+      const bestPractices = metrics.bestPractices || 0;
       
       return `
         <div style="margin-top: 15px;">
-          <div style="margin-bottom: 8px;">
-            <span style="display: inline-block; width: 150px;">Performance:</span>
+          <div style="margin-bottom: 12px;">
+            <span style="display: inline-block; width: 150px; font-weight: bold;">Performance:</span>
             <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
-              <div style="width: ${metrics.performance}%; height: 100%; background-color: ${getColorForScore(metrics.performance)}; border-radius: 10px;"></div>
+              <div style="width: ${performance}%; height: 100%; background-color: ${getColorForScore(performance)}; border-radius: 10px;"></div>
             </div>
-            <span style="margin-left: 10px;">${metrics.performance}%</span>
+            <span style="margin-left: 10px; font-weight: bold;">${performance}%</span>
           </div>
-          <div style="margin-bottom: 8px;">
-            <span style="display: inline-block; width: 150px;">Accessibility:</span>
+          <div style="margin-bottom: 12px;">
+            <span style="display: inline-block; width: 150px; font-weight: bold;">Accessibility:</span>
             <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
-              <div style="width: ${metrics.accessibility}%; height: 100%; background-color: ${getColorForScore(metrics.accessibility)}; border-radius: 10px;"></div>
+              <div style="width: ${accessibility}%; height: 100%; background-color: ${getColorForScore(accessibility)}; border-radius: 10px;"></div>
             </div>
-            <span style="margin-left: 10px;">${metrics.accessibility}%</span>
+            <span style="margin-left: 10px; font-weight: bold;">${accessibility}%</span>
           </div>
-          <div style="margin-bottom: 8px;">
-            <span style="display: inline-block; width: 150px;">SEO:</span>
+          <div style="margin-bottom: 12px;">
+            <span style="display: inline-block; width: 150px; font-weight: bold;">SEO:</span>
             <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
-              <div style="width: ${metrics.seo}%; height: 100%; background-color: ${getColorForScore(metrics.seo)}; border-radius: 10px;"></div>
+              <div style="width: ${seo}%; height: 100%; background-color: ${getColorForScore(seo)}; border-radius: 10px;"></div>
             </div>
-            <span style="margin-left: 10px;">${metrics.seo}%</span>
+            <span style="margin-left: 10px; font-weight: bold;">${seo}%</span>
           </div>
-          <div style="margin-bottom: 8px;">
-            <span style="display: inline-block; width: 150px;">Best Practices:</span>
+          <div style="margin-bottom: 12px;">
+            <span style="display: inline-block; width: 150px; font-weight: bold;">Best Practices:</span>
             <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
-              <div style="width: ${metrics.bestPractices}%; height: 100%; background-color: ${getColorForScore(metrics.bestPractices)}; border-radius: 10px;"></div>
+              <div style="width: ${bestPractices}%; height: 100%; background-color: ${getColorForScore(bestPractices)}; border-radius: 10px;"></div>
             </div>
-            <span style="margin-left: 10px;">${metrics.bestPractices}%</span>
+            <span style="margin-left: 10px; font-weight: bold;">${bestPractices}%</span>
           </div>
         </div>
       `;
