@@ -23,10 +23,10 @@ import CompanionTaskCard from "./CompanionTaskCard";
 
 // Define task type information
 const taskTypes = {
-  market_research: {
+  company_analysis: {
     icon: <FileText className="h-5 w-5" />,
-    label: "Market Research",
-    description: "Industry insights and market analysis",
+    label: "Company Analysis",
+    description: "Comprehensive business and website analysis",
     iconColor: "bg-blue-50 text-blue-600"
   },
   proposal: {
@@ -148,15 +148,15 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           
           <TabsContent value="tasks" className="mt-4">
             <div className="space-y-4">
-              {/* Market Research task */}
+              {/* Company Analysis task */}
               <CompanionTaskCard
-                title={taskTypes.market_research.label}
-                description={taskTypes.market_research.description}
-                icon={taskTypes.market_research.icon}
-                iconColor={taskTypes.market_research.iconColor}
-                task={tasksByType.market_research}
+                title={taskTypes.company_analysis.label}
+                description={taskTypes.company_analysis.description}
+                icon={taskTypes.company_analysis.icon}
+                iconColor={taskTypes.company_analysis.iconColor}
+                task={tasksByType.company_analysis}
                 isGenerating={generateMutation.isPending}
-                onGenerate={() => handleGenerate("market_research")}
+                onGenerate={() => handleGenerate("company_analysis")}
                 onSelect={handleTaskSelect}
               />
               

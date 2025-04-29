@@ -10,7 +10,7 @@ import {
 } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import {
-  generateMarketResearch,
+  generateCompanyAnalysis,
   generateProposal,
   generateContract,
   generateSiteMap,
