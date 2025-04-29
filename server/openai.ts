@@ -1388,14 +1388,14 @@ Format the proposal as a professional HTML business proposal with clear sections
 
 
 6. **Investment & Pricing:**
-   - You'll provide a quote/dollar amounts based on the client's industry and project needs in the following items.
-   - Total Project Fee: $ [Amount]
+   - Must provide a quote/dollar amounts based on the client's industry and project needs in the following items.
+   - Total Project Fee: $ 
    - Stage, % Due, Amount
    - Signing: 50%, $ …
    - Design approval: 25%, $ …
    - Pre-launch: 25%, $ …
-   - Optional Care Plan: $ [Monthly] – hosting, updates, backups, SEO tweaks.
-   - ROI Snapshot: Example: One extra sale per week at $ [AvgOrder] pays for the site in [X] months.
+   - Optional Care Plan: $ – hosting, updates, backups, SEO tweaks.
+   - ROI Snapshot: Example: One extra sale per week at $  pays for the site in  months.
 
 7. **Why Choose Us:**
    - Our unique value proposition.
@@ -1412,12 +1412,10 @@ Format the proposal as a professional HTML business proposal with clear sections
     - Book the kickoff call (calendar link).
     - We’ll hold your start date for seven days.
 
-11. **Acceptance:**
-    - I, [Client Name], authorize [Agency] to proceed as outlined.
 
 # Output Format
 
-The proposal should be delivered as an HTML document with section headers and formatted text. Include placeholders for [Agency Logo], [Your Name], [Date], [Client Name], etc., and ensure that placeholders for financial and metric data (e.g., $ [Amount], [AvgOrder], [X]) are clearly defined.`;
+The proposal should be delivered as an HTML document with section headers and formatted text.`;
 
   try {
     // Update prompt to request pricing info extraction

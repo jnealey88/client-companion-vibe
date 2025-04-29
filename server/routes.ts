@@ -338,21 +338,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               // Store pricing data in task metadata
               if (proposalResponse.pricingData) {
-                // First update the content
-                const updatedTask = await storage.updateCompanionTask(newTask.id, {
-                  content: content
+                // Prepare metadata for later use
+                newTask.metadata = JSON.stringify({
+                  projectTotalFee: proposalResponse.pricingData.projectTotalFee || client.projectValue || 0,
+                  carePlanMonthly: proposalResponse.pricingData.carePlanMonthly || 0,
+                  productsMonthlyTotal: proposalResponse.pricingData.productsMonthlyTotal || 0
                 });
-                
-                // Then update the metadata in a separate call
-                if (updatedTask) {
-                  await storage.updateCompanionTask(newTask.id, {
-                    metadata: JSON.stringify({
-                      projectTotalFee: proposalResponse.pricingData.projectTotalFee || client.projectValue || 0,
-                      carePlanMonthly: proposalResponse.pricingData.carePlanMonthly || 0,
-                      productsMonthlyTotal: proposalResponse.pricingData.productsMonthlyTotal || 0
-                    })
-                  });
-                }
               }
             } else {
               // Handle the case where the response is a string (for backward compatibility)
@@ -384,11 +375,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
         }
         
-        // Update the task with the generated content
-        const updatedTask = await storage.updateCompanionTask(newTask.id, {
+        // For all task types, update the content and status
+        // Include metadata if it was prepared earlier
+        const updateObject: any = {
           content,
           status: "completed"
-        });
+        };
+        
+        // If we have metadata assigned to newTask (from proposals), include it
+        if (newTask.metadata) {
+          updateObject.metadata = newTask.metadata;
+        }
+        
+        const updatedTask = await storage.updateCompanionTask(newTask.id, updateObject);
         
         return res.json(updatedTask);
       } catch (error) {

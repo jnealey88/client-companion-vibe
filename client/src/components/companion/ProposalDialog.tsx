@@ -86,33 +86,42 @@ export default function ProposalDialog({
       return apiRequest("POST", `/api/clients/${clientId}/generate/proposal`, { discoveryNotes });
     },
     onSuccess: (data: any) => {
-      if (data && data.content) {
+      // Make sure we have valid data and content
+      if (data && typeof data === 'object' && data.content) {
         setProposalContent(data.content);
         setEditedContent(data.content);
-      } else if (data) {
+        
+        // Extract pricing information from metadata if available
+        if (data.metadata) {
+          try {
+            const metadata = JSON.parse(data.metadata);
+            if (metadata.projectTotalFee) {
+              setProjectValue(metadata.projectTotalFee);
+            }
+            if (metadata.carePlanMonthly) {
+              setCarePlanMonthly(metadata.carePlanMonthly);
+            }
+            if (metadata.productsMonthlyTotal) {
+              setProductsMonthly(metadata.productsMonthlyTotal);
+            }
+          } catch (e) {
+            console.error("Error parsing metadata:", e);
+          }
+        }
+      } else if (typeof data === 'string') {
+        // If data is a string, it's just the content
         setProposalContent(data);
         setEditedContent(data);
+      } else {
+        console.error("Unexpected response format:", data);
+        toast({
+          title: "Warning",
+          description: "Received unexpected response format from server.",
+          variant: "destructive"
+        });
       }
       
       setLoading(false);
-      
-      // Extract pricing information from metadata if available
-      if (data && data.metadata) {
-        try {
-          const metadata = JSON.parse(data.metadata);
-          if (metadata.projectTotalFee) {
-            setProjectValue(metadata.projectTotalFee);
-          }
-          if (metadata.carePlanMonthly) {
-            setCarePlanMonthly(metadata.carePlanMonthly);
-          }
-          if (metadata.productsMonthlyTotal) {
-            setProductsMonthly(metadata.productsMonthlyTotal);
-          }
-        } catch (e) {
-          console.error("Error parsing metadata:", e);
-        }
-      }
       
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
       toast({
