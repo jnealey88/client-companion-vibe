@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { FileText, Copy, CheckCircle2, Send, AlertCircle } from "lucide-react";
+import { FileText, Copy, CheckCircle2, Send, AlertCircle, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +41,7 @@ export default function ProposalDialog({
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
   // Fetch the task content if an existing task was provided
   useEffect(() => {
