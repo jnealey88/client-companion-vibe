@@ -229,9 +229,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                 
                 <Separator />
                 
-                <div className="bg-gray-50 rounded-md p-4 whitespace-pre-line max-h-[500px] overflow-y-auto">
-                  {selectedTask.content}
-                </div>
+                <div 
+                  className="bg-white rounded-md p-4 max-h-[600px] overflow-y-auto"
+                  dangerouslySetInnerHTML={{ __html: selectedTask.content || "" }}
+                ></div>
                 
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setSelectedTask(null)}>

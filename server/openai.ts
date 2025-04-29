@@ -163,6 +163,52 @@ async function generateInitialAnalysis(clientInfo: any): Promise<string> {
   }
 }
 
+// Define the structure for the visual company analysis
+interface CompanyAnalysisOutput {
+  businessOverview: {
+    summary: string;
+    keyPoints: string[];
+    industryPosition: string;
+  };
+  competitorsAnalysis: {
+    mainCompetitors: { name: string; strengths: string; weaknesses: string }[];
+    competitiveAdvantage: string;
+  };
+  targetAudience: {
+    demographics: string;
+    psychographics: string;
+    painPoints: string[];
+    goals: string[];
+  };
+  industryChallenges: {
+    currentChallenges: string[];
+    futureThreats: string[];
+    opportunities: string[];
+  };
+  keywordAnalysis: {
+    recommendedKeywords: { keyword: string; volume: string; difficulty: string; recommendation: string }[];
+    seoStrategy: string;
+  };
+  websitePerformance: {
+    overallScore: number;
+    performanceMetrics: {
+      performance: number;
+      accessibility: number;
+      seo: number;
+      bestPractices: number;
+    };
+    loadingSpeed: string;
+    mobileUsability: string;
+    improvementAreas: string[];
+  };
+  recommendations: {
+    shortTerm: string[];
+    mediumTerm: string[];
+    longTerm: string[];
+    priorityActions: string;
+  };
+}
+
 // Function to generate comprehensive company analysis with integrated data
 export async function generateCompanyAnalysis(clientInfo: any): Promise<string> {
   try {
@@ -184,7 +230,7 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
     const websitePerformance = clientInfo.websiteUrl ? 
       await getWebsitePerformance(clientInfo.websiteUrl) : null;
     
-    // Step 5: Integrate all data into final analysis
+    // Step 5: Generate structured analysis using OpenAI
     console.log("Generating final comprehensive analysis...");
     
     // Format keyword data for prompt
@@ -193,61 +239,360 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
       if (data && data[0] && data[0].items) {
         const searchVolume = data[0].search_volume || "Unknown";
         const topResults = data[0].items.slice(0, 3).map((item: any) => item.title).join(", ");
-        return `- "${keyword}": Search volume: ${searchVolume}, Top results include: ${topResults}`;
+        return {
+          keyword: keyword,
+          volume: searchVolume,
+          topResults: topResults
+        };
       }
-      return `- "${keyword}": No detailed data available`;
-    }).join("\n");
-    
-    // Format performance data for prompt
-    let performanceDataFormatted = "No website performance data available.";
-    if (websitePerformance) {
-      performanceDataFormatted = `
-        Performance score: ${websitePerformance.performance}/100
-        Accessibility score: ${websitePerformance.accessibility}/100
-        SEO score: ${websitePerformance.seo}/100
-        First Contentful Paint: ${websitePerformance.firstContentfulPaint}
-        Largest Contentful Paint: ${websitePerformance.largestContentfulPaint}
-        Speed Index: ${websitePerformance.speedIndex}
-        Total Blocking Time: ${websitePerformance.totalBlockingTime}
-      `;
-    }
-    
-    // Final integration prompt
-    const finalPrompt = `
-      Create a comprehensive, visual-friendly company analysis report for ${clientInfo.name} in the ${clientInfo.industry} industry.
-      
-      Use this initial analysis as a foundation:
-      ${initialAnalysis}
-      
-      Integrate this keyword data:
-      ${keywordDataFormatted}
-      
-      Include this website performance information:
-      ${performanceDataFormatted}
-      
-      The final report should be well-structured with these sections:
-      1. Business Overview
-      2. Competitors Analysis
-      3. Target Audience Profile
-      4. Industry Challenges
-      5. Keyword Analysis & SEO Strategy
-      6. Website Performance Assessment
-      7. Strategic Recommendations
-      
-      Format as a professional, visually organized report with sections, bullet points, and data visualization descriptions where appropriate.
-      Make specific, actionable recommendations based on all the data integrated above.
-    `;
-    
-    const finalResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: finalPrompt }],
-      max_tokens: 2000,
+      return {
+        keyword: keyword,
+        volume: "Unknown",
+        topResults: "No data available"
+      };
     });
     
-    return finalResponse.choices[0].message.content || "Failed to generate company analysis.";
+    // Format performance data for prompt
+    const performanceData = websitePerformance ? {
+      performance: websitePerformance.performance,
+      accessibility: websitePerformance.accessibility,
+      seo: websitePerformance.seo,
+      bestPractices: websitePerformance.bestPractices || 0,
+      firstContentfulPaint: websitePerformance.firstContentfulPaint,
+      largestContentfulPaint: websitePerformance.largestContentfulPaint,
+      speedIndex: websitePerformance.speedIndex,
+      totalBlockingTime: websitePerformance.totalBlockingTime
+    } : null;
+    
+    // Create a structured prompt for JSON output
+    const structuredPrompt = `
+      As an expert business analyst, create a comprehensive visual company analysis report for ${clientInfo.name} in the ${clientInfo.industry} industry.
+      
+      Initial business analysis:
+      ${initialAnalysis}
+      
+      Keyword data: ${JSON.stringify(keywordDataFormatted)}
+      
+      Website performance data: ${JSON.stringify(performanceData)}
+      
+      Return a JSON object that follows this exact structure. Fill all fields with appropriate content based on the provided information:
+      {
+        "businessOverview": {
+          "summary": "Brief overview of the business and its position",
+          "keyPoints": ["Key point 1", "Key point 2", "Key point 3"],
+          "industryPosition": "Analysis of position in the industry"
+        },
+        "competitorsAnalysis": {
+          "mainCompetitors": [
+            {"name": "Competitor 1", "strengths": "Their strengths", "weaknesses": "Their weaknesses"},
+            {"name": "Competitor 2", "strengths": "Their strengths", "weaknesses": "Their weaknesses"}
+          ],
+          "competitiveAdvantage": "The client's competitive advantage"
+        },
+        "targetAudience": {
+          "demographics": "Description of demographic characteristics",
+          "psychographics": "Description of psychographic characteristics",
+          "painPoints": ["Pain point 1", "Pain point 2"],
+          "goals": ["Goal 1", "Goal 2"]
+        },
+        "industryChallenges": {
+          "currentChallenges": ["Challenge 1", "Challenge 2"],
+          "futureThreats": ["Threat 1", "Threat 2"],
+          "opportunities": ["Opportunity 1", "Opportunity 2"]
+        },
+        "keywordAnalysis": {
+          "recommendedKeywords": [
+            {"keyword": "Keyword 1", "volume": "Volume data", "difficulty": "Difficulty assessment", "recommendation": "Specific recommendation"},
+            {"keyword": "Keyword 2", "volume": "Volume data", "difficulty": "Difficulty assessment", "recommendation": "Specific recommendation"}
+          ],
+          "seoStrategy": "Brief SEO strategy overview"
+        },
+        "websitePerformance": {
+          "overallScore": 85,
+          "performanceMetrics": {
+            "performance": ${performanceData?.performance || 0},
+            "accessibility": ${performanceData?.accessibility || 0},
+            "seo": ${performanceData?.seo || 0},
+            "bestPractices": ${performanceData?.bestPractices || 0}
+          },
+          "loadingSpeed": "Assessment of loading speed",
+          "mobileUsability": "Assessment of mobile usability",
+          "improvementAreas": ["Area 1", "Area 2"]
+        },
+        "recommendations": {
+          "shortTerm": ["Short-term action 1", "Short-term action 2"],
+          "mediumTerm": ["Medium-term action 1", "Medium-term action 2"],
+          "longTerm": ["Long-term action 1", "Long-term action 2"],
+          "priorityActions": "The most important actions to take"
+        }
+      }
+      
+      Make all content specific to the client, industry, and data provided. Use realistic, actionable insights.
+    `;
+    
+    // Get the structured analysis from OpenAI
+    const structuredResponse = await openai.chat.completions.create({
+      model: "gpt-4o-mini", // Using the mini model for efficiency
+      messages: [{ role: "user", content: structuredPrompt }],
+      response_format: { type: "json_object" }, // Ensure we get a proper JSON response
+      max_tokens: 3000,
+    });
+    
+    // Parse the JSON response
+    const analysisJson = JSON.parse(structuredResponse.choices[0].message.content || "{}");
+    
+    // Convert the JSON to an HTML report format for better visualization
+    const htmlReport = generateHtmlReport(analysisJson, clientInfo);
+    
+    return htmlReport;
   } catch (error) {
     console.error("Error in company analysis generation pipeline:", error);
     throw new Error("Failed to generate complete company analysis");
+  }
+}
+
+// Function to convert the JSON analysis to HTML for better visualization
+function generateHtmlReport(analysisData: any, clientInfo: any): string {
+  try {
+    // Function to convert array to HTML list
+    const arrayToList = (arr: string[]) => {
+      if (!arr || arr.length === 0) return "<p>No data available</p>";
+      return "<ul>" + arr.map(item => `<li>${item}</li>`).join("") + "</ul>";
+    };
+    
+    // Create keyword table
+    const keywordTable = () => {
+      if (!analysisData.keywordAnalysis.recommendedKeywords || analysisData.keywordAnalysis.recommendedKeywords.length === 0) {
+        return "<p>No keyword data available</p>";
+      }
+      
+      return `
+        <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+          <tr style="background-color: #f2f2f2;">
+            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Keyword</th>
+            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Volume</th>
+            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Difficulty</th>
+            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Recommendation</th>
+          </tr>
+          ${analysisData.keywordAnalysis.recommendedKeywords.map((kw: any) => `
+            <tr>
+              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.keyword}</td>
+              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.volume}</td>
+              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.difficulty}</td>
+              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.recommendation}</td>
+            </tr>
+          `).join("")}
+        </table>
+      `;
+    };
+    
+    // Create competitor table
+    const competitorTable = () => {
+      if (!analysisData.competitorsAnalysis.mainCompetitors || analysisData.competitorsAnalysis.mainCompetitors.length === 0) {
+        return "<p>No competitor data available</p>";
+      }
+      
+      return `
+        <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+          <tr style="background-color: #f2f2f2;">
+            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Competitor</th>
+            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Strengths</th>
+            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Weaknesses</th>
+          </tr>
+          ${analysisData.competitorsAnalysis.mainCompetitors.map((comp: any) => `
+            <tr>
+              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${comp.name}</td>
+              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${comp.strengths}</td>
+              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${comp.weaknesses}</td>
+            </tr>
+          `).join("")}
+        </table>
+      `;
+    };
+    
+    // Website performance visualization
+    const performanceMetrics = () => {
+      const metrics = analysisData.websitePerformance.performanceMetrics;
+      
+      return `
+        <div style="margin-top: 15px;">
+          <div style="margin-bottom: 8px;">
+            <span style="display: inline-block; width: 150px;">Performance:</span>
+            <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
+              <div style="width: ${metrics.performance}%; height: 100%; background-color: ${getColorForScore(metrics.performance)}; border-radius: 10px;"></div>
+            </div>
+            <span style="margin-left: 10px;">${metrics.performance}%</span>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <span style="display: inline-block; width: 150px;">Accessibility:</span>
+            <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
+              <div style="width: ${metrics.accessibility}%; height: 100%; background-color: ${getColorForScore(metrics.accessibility)}; border-radius: 10px;"></div>
+            </div>
+            <span style="margin-left: 10px;">${metrics.accessibility}%</span>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <span style="display: inline-block; width: 150px;">SEO:</span>
+            <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
+              <div style="width: ${metrics.seo}%; height: 100%; background-color: ${getColorForScore(metrics.seo)}; border-radius: 10px;"></div>
+            </div>
+            <span style="margin-left: 10px;">${metrics.seo}%</span>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <span style="display: inline-block; width: 150px;">Best Practices:</span>
+            <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
+              <div style="width: ${metrics.bestPractices}%; height: 100%; background-color: ${getColorForScore(metrics.bestPractices)}; border-radius: 10px;"></div>
+            </div>
+            <span style="margin-left: 10px;">${metrics.bestPractices}%</span>
+          </div>
+        </div>
+      `;
+    };
+    
+    // Get color based on score
+    const getColorForScore = (score: number) => {
+      if (score >= 90) return "#4CAF50"; // Green
+      if (score >= 70) return "#FFC107"; // Yellow
+      return "#F44336"; // Red
+    };
+
+    // Generate the full HTML report
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; color: #333;">
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 30px;">
+          <h1 style="color: #2c3e50; margin-top: 0;">Company Analysis Report</h1>
+          <h2 style="color: #3498db;">${clientInfo.name}</h2>
+          <p style="color: #7f8c8d;">Industry: ${clientInfo.industry}</p>
+          <p style="color: #7f8c8d;">Generated on: ${new Date().toLocaleDateString()}</p>
+        </div>
+        
+        <!-- Business Overview Section -->
+        <div style="margin-bottom: 30px;">
+          <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Business Overview</h2>
+          <p>${analysisData.businessOverview.summary}</p>
+          <h3 style="color: #3498db;">Key Points</h3>
+          ${arrayToList(analysisData.businessOverview.keyPoints)}
+          <h3 style="color: #3498db;">Industry Position</h3>
+          <p>${analysisData.businessOverview.industryPosition}</p>
+        </div>
+        
+        <!-- Competitors Analysis Section -->
+        <div style="margin-bottom: 30px;">
+          <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Competitors Analysis</h2>
+          <h3 style="color: #3498db;">Main Competitors</h3>
+          ${competitorTable()}
+          <h3 style="color: #3498db;">Competitive Advantage</h3>
+          <p>${analysisData.competitorsAnalysis.competitiveAdvantage}</p>
+        </div>
+        
+        <!-- Target Audience Section -->
+        <div style="margin-bottom: 30px;">
+          <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Target Audience</h2>
+          <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #3498db; margin-top: 0;">Demographics</h3>
+              <p>${analysisData.targetAudience.demographics}</p>
+            </div>
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #3498db; margin-top: 0;">Psychographics</h3>
+              <p>${analysisData.targetAudience.psychographics}</p>
+            </div>
+          </div>
+          <h3 style="color: #3498db;">Pain Points</h3>
+          ${arrayToList(analysisData.targetAudience.painPoints)}
+          <h3 style="color: #3498db;">Goals</h3>
+          ${arrayToList(analysisData.targetAudience.goals)}
+        </div>
+        
+        <!-- Industry Challenges Section -->
+        <div style="margin-bottom: 30px;">
+          <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Industry Challenges & Opportunities</h2>
+          <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #e74c3c; margin-top: 0;">Current Challenges</h3>
+              ${arrayToList(analysisData.industryChallenges.currentChallenges)}
+            </div>
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #f39c12; margin-top: 0;">Future Threats</h3>
+              ${arrayToList(analysisData.industryChallenges.futureThreats)}
+            </div>
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #2ecc71; margin-top: 0;">Opportunities</h3>
+              ${arrayToList(analysisData.industryChallenges.opportunities)}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Keyword Analysis Section -->
+        <div style="margin-bottom: 30px;">
+          <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Keyword Analysis & SEO Strategy</h2>
+          <h3 style="color: #3498db;">Recommended Keywords</h3>
+          ${keywordTable()}
+          <h3 style="color: #3498db;">SEO Strategy</h3>
+          <p>${analysisData.keywordAnalysis.seoStrategy}</p>
+        </div>
+        
+        <!-- Website Performance Section -->
+        <div style="margin-bottom: 30px;">
+          <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Website Performance Assessment</h2>
+          <div style="text-align: center; margin-bottom: 20px;">
+            <div style="display: inline-block; width: 150px; height: 150px; border-radius: 50%; position: relative; background: conic-gradient(${getColorForScore(analysisData.websitePerformance.overallScore)} ${analysisData.websitePerformance.overallScore}%, #e0e0e0 0);">
+              <div style="position: absolute; top: 10px; right: 10px; bottom: 10px; left: 10px; border-radius: 50%; background-color: white; display: flex; justify-content: center; align-items: center;">
+                <div>
+                  <div style="font-size: 36px; font-weight: bold; color: #2c3e50;">${analysisData.websitePerformance.overallScore}</div>
+                  <div style="font-size: 14px; color: #7f8c8d;">Overall Score</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <h3 style="color: #3498db;">Performance Metrics</h3>
+          ${performanceMetrics()}
+          <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 20px;">
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #3498db; margin-top: 0;">Loading Speed</h3>
+              <p>${analysisData.websitePerformance.loadingSpeed}</p>
+            </div>
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #3498db; margin-top: 0;">Mobile Usability</h3>
+              <p>${analysisData.websitePerformance.mobileUsability}</p>
+            </div>
+          </div>
+          <h3 style="color: #3498db;">Areas for Improvement</h3>
+          ${arrayToList(analysisData.websitePerformance.improvementAreas)}
+        </div>
+        
+        <!-- Recommendations Section -->
+        <div style="margin-bottom: 30px;">
+          <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Strategic Recommendations</h2>
+          <div style="background-color: #fcf3cf; padding: 15px; border-left: 5px solid #f1c40f; margin-bottom: 20px;">
+            <h3 style="color: #f39c12; margin-top: 0;">Priority Actions</h3>
+            <p>${analysisData.recommendations.priorityActions}</p>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #2ecc71; margin-top: 0;">Short-term Actions</h3>
+              ${arrayToList(analysisData.recommendations.shortTerm)}
+            </div>
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #3498db; margin-top: 0;">Medium-term Actions</h3>
+              ${arrayToList(analysisData.recommendations.mediumTerm)}
+            </div>
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #9b59b6; margin-top: 0;">Long-term Actions</h3>
+              ${arrayToList(analysisData.recommendations.longTerm)}
+            </div>
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #7f8c8d;">
+          <p>This report was automatically generated based on industry data, website analysis, and market research. The recommendations are intended as a starting point for your digital strategy.</p>
+        </div>
+      </div>
+    `;
+    
+    return html;
+  } catch (error) {
+    console.error("Error generating HTML report:", error);
+    return "Failed to generate visual report. Error converting data to visual format.";
   }
 }
 
