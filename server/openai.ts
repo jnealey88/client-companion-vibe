@@ -555,7 +555,7 @@ interface CompanyAnalysisOutput {
 }
 
 // Function to generate comprehensive company analysis with integrated data
-export async function generateCompanyAnalysis(clientInfo: any): Promise<{ content: string; metadata: string }> {
+export async function generateCompanyAnalysis(clientInfo: any): Promise<string> {
   try {
     console.log("Generating initial company analysis...");
     // Step 1: Generate initial analysis with OpenAI
@@ -778,30 +778,10 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<{ conten
     // Convert the JSON to an HTML report format for better visualization
     const htmlReport = generateHtmlReport(analysisJson, clientInfo);
     
-    // Generate separate strategic recommendations that will be easier to extract
-    console.log("Generating strategic recommendations...");
-    const strategicRecommendations = await generateStrategicRecommendations(clientInfo);
-    
-    // Return both the HTML content and the structured recommendations
-    return {
-      content: htmlReport,
-      metadata: JSON.stringify({
-        recommendations: strategicRecommendations
-      })
-    };
+    return htmlReport;
   } catch (error) {
     console.error("Error in company analysis generation pipeline:", error);
-    return {
-      content: "Failed to generate company analysis. Please try again later.",
-      metadata: JSON.stringify({
-        recommendations: {
-          shortTerm: [],
-          mediumTerm: [],
-          longTerm: [],
-          priorityActions: ""
-        }
-      })
-    };
+    throw new Error("Failed to generate complete company analysis");
   }
 }
 
@@ -1237,7 +1217,28 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
           ${arrayToList(analysisData.websitePerformance.improvementAreas)}
         </div>
         
-        <!-- Note: Strategic Recommendations section removed as it will be displayed as action cards -->
+        <!-- Recommendations Section -->
+        <div style="margin-bottom: 30px;">
+          <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">Strategic Recommendations</h2>
+          <div style="background-color: #fcf3cf; padding: 15px; border-left: 5px solid #f1c40f; margin-bottom: 20px;">
+            <h3 style="color: #f39c12; margin-top: 0;">Priority Actions</h3>
+            <p>${analysisData.recommendations.priorityActions}</p>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #2ecc71; margin-top: 0;">Short-term Actions</h3>
+              ${arrayToList(analysisData.recommendations.shortTerm)}
+            </div>
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #3498db; margin-top: 0;">Medium-term Actions</h3>
+              ${arrayToList(analysisData.recommendations.mediumTerm)}
+            </div>
+            <div style="flex: 1; min-width: 300px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">
+              <h3 style="color: #9b59b6; margin-top: 0;">Long-term Actions</h3>
+              ${arrayToList(analysisData.recommendations.longTerm)}
+            </div>
+          </div>
+        </div>
         
         <div style="text-align: center; margin-top: 50px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #7f8c8d;">
           <p>This report was automatically generated based on industry data, website analysis, and market research. The recommendations are intended as a starting point for your digital strategy.</p>
@@ -1673,61 +1674,6 @@ export async function generateStatusUpdate(clientInfo: any, taskStatus: any): Pr
 
 // Generate an email for scheduling a discovery call with the client
 // Includes references to the company analysis that was already generated
-// Generate strategic recommendations for a company based on their information
-async function generateStrategicRecommendations(clientInfo: any): Promise<any> {
-  try {
-    const prompt = `
-      As a digital marketing expert, generate actionable strategic recommendations for ${clientInfo.name} in the ${clientInfo.industry} industry.
-      
-      Generate specific recommendations in the following categories:
-      1. Short-term actions (next 30-60 days)
-      2. Medium-term initiatives (2-6 months) 
-      3. Long-term strategic goals (6+ months)
-      
-      Also provide a one or two sentence "Priority Action" that summarizes the most critical immediate step.
-      
-      Return your response in the following JSON format:
-      {
-        "shortTerm": ["recommendation 1", "recommendation 2", "recommendation 3", ...],
-        "mediumTerm": ["recommendation 1", "recommendation 2", "recommendation 3", ...],
-        "longTerm": ["recommendation 1", "recommendation 2", "recommendation 3", ...],
-        "priorityActions": "The single most important action to take immediately."
-      }
-      
-      Make all recommendations specific, actionable, and focused on digital presence and marketing.
-      Each recommendation should be a complete sentence that can stand on its own.
-    `;
-
-    // Get structured recommendations from OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-      messages: [{ role: "user", content: prompt }],
-      response_format: { type: "json_object" },
-      max_tokens: 1000,
-    });
-
-    // Parse the JSON response
-    const recommendationsJson = JSON.parse(response.choices[0].message.content || "{}");
-    
-    // Ensure we have all expected properties with defaults if missing
-    return {
-      shortTerm: recommendationsJson.shortTerm || [],
-      mediumTerm: recommendationsJson.mediumTerm || [],
-      longTerm: recommendationsJson.longTerm || [],
-      priorityActions: recommendationsJson.priorityActions || ""
-    };
-  } catch (error) {
-    console.error("Error generating strategic recommendations:", error);
-    // Return empty recommendations if there was an error
-    return {
-      shortTerm: [],
-      mediumTerm: [],
-      longTerm: [],
-      priorityActions: ""
-    };
-  }
-}
-
 export async function generateScheduleDiscovery(clientInfo: any, analysisId?: number): Promise<string> {
   const clientName = clientInfo.name;
   const contactName = clientInfo.contactName;

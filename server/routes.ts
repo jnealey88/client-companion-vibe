@@ -85,11 +85,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Then generate content for it (async, don't wait for completion)
         generateCompanyAnalysis(newClient)
-          .then(async (result) => {
-            if (result) {
+          .then(async (content) => {
+            if (content) {
               await storage.updateCompanionTask(newTask.id, {
-                content: result.content,
-                metadata: result.metadata,
+                content,
                 status: "completed"
               });
               console.log(`Auto-generated company analysis for client ${newClient.id}`);
@@ -314,14 +313,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Generate content based on task type
       let content = "";
-      let metadata = null;
       
       try {
         switch (taskType) {
           case TaskType.COMPANY_ANALYSIS:
-            const analysisResult = await generateCompanyAnalysis(client);
-            content = analysisResult.content;
-            metadata = analysisResult.metadata;
+            content = await generateCompanyAnalysis(client);
             break;
           case TaskType.PROPOSAL:
             // Optionally get company analysis if it exists
