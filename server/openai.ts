@@ -1496,8 +1496,14 @@ IMPORTANT: THE FIRST HEADING IN YOUR RESPONSE MUST BE "Executive Summary" (h2 ta
     
     // Remove any main title or website redesign proposal title
     let titleRegexes = [
-      // Target the specific "Website Redesign Proposal" title that's appearing
+      // Target specific variations of "Website Redesign Proposal" title
       /<h[1-3][^>]*>\s*Website\s+Redesign\s+Proposal\s*<\/h[1-3]>/gi,
+      /<h[1-3][^>]*>\s*Web\s+Redesign\s+Proposal\s*<\/h[1-3]>/gi,
+      /<h[1-3][^>]*>\s*Website\s+Development\s+Proposal\s*<\/h[1-3]>/gi,
+      /<h[1-3][^>]*>\s*Web\s+Design\s+Proposal\s*<\/h[1-3]>/gi,
+      /<h[1-3][^>]*>\s*Project\s+Proposal\s*<\/h[1-3]>/gi,
+      // Remove any H1 headings at the beginning of the document
+      /^<h1[^>]*>.*?<\/h1>\s*/gi,
       // Other generic patterns
       /<h[1-3][^>]*>(?:.*?website redesign.*?|.*?proposal.*?|.*?project.*?)<\/h[1-3]>/gi,
       /<h[1-3][^>]*>(?:.*?)(?:proposal|project)(?:.*?)<\/h[1-3]>/gi,
@@ -1525,12 +1531,21 @@ IMPORTANT: THE FIRST HEADING IN YOUR RESPONSE MUST BE "Executive Summary" (h2 ta
       if (beforeES) {
         // Only keep content before executive summary if it contains meaningful text
         const hasText = /<[^>]*>[^<]*[a-zA-Z][^<]*<\/[^>]*>/.test(beforeES);
-        if (!hasText) {
+        
+        // Check if the text before Executive Summary contains any h1 tags or proposal-related terms
+        const containsH1 = /<h1[^>]*>.*?<\/h1>/i.test(beforeES);
+        const containsProposalTerms = /proposal|redesign|project/i.test(beforeES);
+        
+        // If it's just formatting tags or contains h1/proposal terms, remove everything before Executive Summary
+        if (!hasText || containsH1 || containsProposalTerms) {
           // Remove everything before the executive summary heading
           cleanContent = afterES;
         }
       }
     }
+    
+    // Ensure there are no h1 tags anywhere in the document - convert them to h2
+    cleanContent = cleanContent.replace(/<h1([^>]*)>(.*?)<\/h1>/gi, '<h2$1>$2</h2>');
     
     // Ensure the content is clean
     cleanContent = cleanContent.trim();
