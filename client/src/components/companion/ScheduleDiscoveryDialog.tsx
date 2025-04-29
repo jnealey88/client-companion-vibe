@@ -1,8 +1,7 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Calendar, Mail, Copy, CheckCircle2, Loader2 } from "lucide-react";
+import { Calendar, Copy, CheckCircle2, Send } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,9 +26,9 @@ export default function ScheduleDiscoveryDialog({
   client,
 }: ScheduleDiscoveryDialogProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [emailContent, setEmailContent] = useState<string | null>(null);
+  const [emailContent, setEmailContent] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [emailHtml, setEmailHtml] = useState<string>("");
 
   // Fetch existing company analysis task
   const { data: tasks } = useQuery<CompanionTask[]>({
@@ -41,137 +41,161 @@ export default function ScheduleDiscoveryDialog({
     (t) => t.type === "company_analysis" && t.status === "completed"
   );
 
-  // Generate schedule discovery email
-  const generateDiscoveryMutation = useMutation({
-    mutationFn: async ({ clientId }: { clientId: number }) => {
-      return apiRequest("POST", `/api/clients/${clientId}/generate/schedule_discovery`);
-    },
-    onSuccess: (data: any) => {
-      setEmailContent(data.content);
-      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
-    },
-    onError: () => {
-      toast({
-        title: "Generation failed",
-        description: "Failed to generate discovery email. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+  // Generate default email content when the dialog opens
+  useEffect(() => {
+    if (open && client) {
+      // Default booking URL - in a real app, this would come from your configuration
+      const bookingUrl = "https://calendly.com/yourbusiness/discovery-call";
+      
+      // Create the default email content
+      const analysisLink = companyAnalysisTask 
+        ? `/client/${client.id}/analysis/${companyAnalysisTask.id}`
+        : "";
+      
+      const defaultEmail = `Dear ${client.contactName},
 
-  // Handle generate email button click
-  const handleGenerateEmail = () => {
-    generateDiscoveryMutation.mutate({ clientId: client.id });
-  };
+Thank you for your interest in our web design services for ${client.name}. I'd like to schedule a discovery call to discuss your project needs and how we can help bring your vision to life.
+
+${companyAnalysisTask ? `I've prepared a complimentary business analysis report that you can review before our call: [Analysis Report Link]` : ''}
+
+During our call, we'll discuss:
+• Your business goals and objectives
+• Website functionality requirements
+• Design preferences and branding needs
+• Timeline and budget considerations
+• Next steps in the process
+
+Please use the link below to schedule a time that works best for you:
+[Booking Calendar Link]
+
+I look forward to speaking with you and learning more about ${client.name}.
+
+Best regards,
+Your Name
+Web Design Consultant`;
+
+      setEmailContent(defaultEmail);
+      
+      // Create HTML version for preview
+      const htmlVersion = defaultEmail
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>')
+        .replace('[Analysis Report Link]', companyAnalysisTask 
+            ? `<a href="${analysisLink}" style="color: #0066cc; text-decoration: underline;">View Business Analysis Report</a>` 
+            : '')
+        .replace('[Booking Calendar Link]', `<a href="${bookingUrl}" style="color: #0066cc; text-decoration: underline;">Schedule Discovery Call</a>`);
+      
+      setEmailHtml(`<div style="font-family: Arial, sans-serif; line-height: 1.6;"><p>${htmlVersion}</p></div>`);
+    }
+  }, [open, client, companyAnalysisTask]);
 
   // Handle copy to clipboard
   const handleCopy = () => {
-    if (emailContent) {
-      // Extract the plain text from the HTML content
-      const tempDiv = document.createElement("div");
-      tempDiv.innerHTML = emailContent;
-      const textContent = tempDiv.textContent || tempDiv.innerText || "";
-      
-      navigator.clipboard.writeText(textContent).then(() => {
-        setCopied(true);
-        toast({
-          title: "Email copied",
-          description: "The email has been copied to your clipboard.",
-        });
-        
-        // Reset copied state after 2 seconds
-        setTimeout(() => setCopied(false), 2000);
+    navigator.clipboard.writeText(emailContent).then(() => {
+      setCopied(true);
+      toast({
+        title: "Email copied",
+        description: "The email has been copied to your clipboard.",
       });
-    }
+      
+      // Reset copied state after 2 seconds
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  // Handle sending the email (would connect to email provider in a real app)
+  const handleSend = () => {
+    toast({
+      title: "Email ready to send",
+      description: "This would connect to your email provider in a real application.",
+    });
+    // In a real application, this would send the email via an email provider API
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[750px]">
+      <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Schedule Discovery Call with {client.name}</DialogTitle>
           <DialogDescription>
-            Generate an email template for scheduling a discovery call with{" "}
-            {client.contactName}. The email will include a reference to the
+            Customize this email template for scheduling a discovery call with{" "}
+            {client.contactName}. The template includes a reference to the
             company analysis and a booking link.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {!emailContent && !generateDiscoveryMutation.isPending ? (
-            <div className="flex flex-col items-center justify-center p-6 border rounded-md bg-gray-50">
-              <Calendar className="h-12 w-12 text-primary mb-2" />
-              <h3 className="text-lg font-medium mb-1">Ready to Schedule</h3>
-              <p className="text-sm text-center text-gray-500 mb-4">
-                Generate an email template for scheduling a discovery call with{" "}
-                {client.name}. The email will include:
-              </p>
-              <ul className="text-sm text-gray-500 space-y-1 mb-4">
-                <li className="flex items-center">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                  Personalized greeting to {client.contactName}
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                  Reference to your company analysis
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                  Booking link for scheduling the call
-                </li>
-                <li className="flex items-center">
-                  <CheckCircle2 className="h-4 w-4 mr-2 text-green-500" />
-                  Professional email formatting
-                </li>
-              </ul>
-              <Button 
-                onClick={handleGenerateEmail}
-                className="w-full md:w-auto"
-                disabled={!companyAnalysisTask}
-              >
-                <Mail className="mr-2 h-4 w-4" />
-                Generate Email Template
-              </Button>
-              {!companyAnalysisTask && (
-                <p className="text-sm text-orange-500 mt-2">
-                  Note: You need to generate a company analysis first before scheduling a call.
-                </p>
-              )}
-            </div>
-          ) : generateDiscoveryMutation.isPending ? (
-            <div className="flex flex-col items-center justify-center p-12 border rounded-md">
-              <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-              <p className="text-sm text-gray-500">
-                Generating email template...
-              </p>
-            </div>
-          ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Email Template</h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopy}
-                  className="flex items-center gap-1"
-                >
-                  {copied ? (
-                    <>
-                      <CheckCircle2 className="h-4 w-4" /> Copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4" /> Copy to Clipboard
-                    </>
-                  )}
-                </Button>
+                <h3 className="text-sm font-medium">Email Content</h3>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopy}
+                    className="flex items-center gap-1 h-8"
+                  >
+                    {copied ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4" /> Copied
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" /> Copy
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSend}
+                    className="flex items-center gap-1 h-8"
+                  >
+                    <Send className="h-4 w-4" /> Send
+                  </Button>
+                </div>
+              </div>
+              <Textarea
+                value={emailContent}
+                onChange={(e) => {
+                  setEmailContent(e.target.value);
+                  
+                  // Update HTML preview when text changes
+                  const htmlVersion = e.target.value
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>')
+                    .replace('[Analysis Report Link]', companyAnalysisTask 
+                        ? `<a href="/client/${client.id}/analysis/${companyAnalysisTask.id}" style="color: #0066cc; text-decoration: underline;">View Business Analysis Report</a>` 
+                        : '')
+                    .replace('[Booking Calendar Link]', `<a href="https://calendly.com/yourbusiness/discovery-call" style="color: #0066cc; text-decoration: underline;">Schedule Discovery Call</a>`);
+                  
+                  setEmailHtml(`<div style="font-family: Arial, sans-serif; line-height: 1.6;"><p>${htmlVersion}</p></div>`);
+                }}
+                className="h-[350px] resize-none font-mono text-sm"
+                placeholder="Email content..."
+              />
+              <div className="text-xs text-gray-500">
+                <p className="font-medium mb-1">Template Tags:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><code>[Analysis Report Link]</code> - Will be replaced with a link to your company analysis</li>
+                  <li><code>[Booking Calendar Link]</code> - Will be replaced with your booking calendar link</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-medium">Preview</h3>
+                <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
+                  <Calendar className="h-3 w-3" /> Email Preview
+                </div>
               </div>
               <div
-                className="border rounded-md p-4 bg-white overflow-y-auto max-h-[400px]"
-                dangerouslySetInnerHTML={{ __html: emailContent || "" }}
+                className="border rounded-md p-4 bg-white overflow-y-auto h-[400px]"
+                dangerouslySetInnerHTML={{ __html: emailHtml }}
               />
             </div>
-          )}
+          </div>
         </div>
 
         <DialogFooter>
