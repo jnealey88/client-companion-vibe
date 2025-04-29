@@ -1364,8 +1364,11 @@ ${strategicRecommendations ? "Based on our market research, we've identified the
 Format the proposal as a professional HTML business proposal with clear sections. Use <h2>, <h3> tags for headings and proper HTML structure.
 
 IMPORTANT FORMATTING INSTRUCTIONS:
-- Avoid excessive whitespace, line breaks, or empty paragraphs at the beginning
+- DO NOT include a title or main heading at the beginning (like "Website Redesign Proposal")
+- Start directly with the first section (Executive Summary)
+- Avoid any whitespace, line breaks, or empty paragraphs at the beginning
 - Make sure each section has a clear <h2> heading
+- Do not repeat the project name in headings
 
 Include these sections:
 
@@ -1400,7 +1403,8 @@ Include these sections:
   - By paying the deposit, you agree to our contract terms and conditions.
 
 # Output Format
-The proposal should be delivered as an HTML document with proper section headers and formatted text.`;
+The proposal should be delivered as an HTML document with proper section headers and formatted text. 
+DO NOT include a main title - start directly with the Executive Summary section.`;
 
   try {
     // Update prompt to request pricing info extraction
@@ -1487,35 +1491,44 @@ The proposal should be delivered as an HTML document with proper section headers
     const hasProjectName = new RegExp(`<h[1-2][^>]*>${clientInfo.projectName}`, 'i').test(cleanContent);
     const hasProposalWord = new RegExp(`<h[1-2][^>]*>.*?Proposal`, 'i').test(cleanContent);
     
-    // Ensure the content starts with a proper heading
-    if (!cleanContent.trim().startsWith('<h1') && !cleanContent.trim().startsWith('<h2')) {
-      // Add a proper title if missing
-      cleanContent = `<h1>${clientInfo.projectName} Proposal</h1>\n${cleanContent}`;
-    } else if (hasProjectName && hasProposalWord) {
-      // If the content already has both the project name and "Proposal" in a heading,
-      // we don't need to add another title as it would be duplicative
-      // Just make sure we don't have two very similar titles together
+    // Remove any titles or main headings that might have been generated despite our instructions
+    const headingMatches = Array.from(cleanContent.matchAll(/<h[1-2][^>]*>(.*?)<\/h[1-2]>/gi));
+    
+    if (headingMatches.length > 0) {
+      // Check if the first heading looks like a title (contains "proposal" or matches project name)
+      const firstHeading = headingMatches[0][1];
       
-      // Find the first two headings
-      const headingMatches = Array.from(cleanContent.matchAll(/<h[1-2][^>]*>(.*?)<\/h[1-2]>/gi));
-      
-      if (headingMatches.length >= 2) {
-        const firstHeading = headingMatches[0][1];
-        const secondHeading = headingMatches[1][1];
+      if (
+        firstHeading.toLowerCase().includes('proposal') || 
+        firstHeading.includes(clientInfo.projectName) ||
+        firstHeading.toLowerCase().includes('website redesign')
+      ) {
+        // Remove this heading as it's likely a title
+        cleanContent = cleanContent.replace(headingMatches[0][0], '');
         
-        // If they're too similar, remove the second one
-        if (
-          (firstHeading.includes(clientInfo.projectName) && secondHeading.includes(clientInfo.projectName)) ||
-          (firstHeading.toLowerCase().includes('proposal') && secondHeading.toLowerCase().includes('proposal'))
-        ) {
-          // Replace the second heading with nothing
-          cleanContent = cleanContent.replace(headingMatches[1][0], '');
+        // Also check for a second heading that might be too similar to the first
+        if (headingMatches.length >= 2) {
+          const secondHeading = headingMatches[1][1];
+          
+          // If they're too similar, also remove the second one
+          if (
+            secondHeading.toLowerCase().includes('executive summary') ||
+            secondHeading.toLowerCase().includes('overview')
+          ) {
+            // Keep the second heading as it's likely the start of actual content
+          } else if (
+            (firstHeading.includes(clientInfo.projectName) && secondHeading.includes(clientInfo.projectName)) ||
+            (firstHeading.toLowerCase().includes('proposal') && secondHeading.toLowerCase().includes('proposal'))
+          ) {
+            // Replace the second heading with nothing if it's redundant
+            cleanContent = cleanContent.replace(headingMatches[1][0], '');
+          }
         }
       }
-    } else {
-      // If there's a heading but it's missing context, prepend our standard heading
-      cleanContent = `<h1>${clientInfo.projectName} Proposal</h1>\n${cleanContent}`;
     }
+    
+    // Ensure the content is clean
+    cleanContent = cleanContent.trim();
     
     return {
       content: cleanContent,
