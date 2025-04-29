@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,9 @@ export default function ProposalDialog({
   const [editedContent, setEditedContent] = useState<string>("");
   const [discoveryNotes, setDiscoveryNotes] = useState<string>("");
   const [isEdited, setIsEdited] = useState<boolean>(false);
+  
+  // Refs
+  const discoveryNotesRef = useRef<HTMLTextAreaElement>(null);
   
   // UI state
   const [loading, setLoading] = useState<boolean>(false);
@@ -264,13 +267,60 @@ export default function ProposalDialog({
     }
   });
 
-  // With the new in-card loading state, we don't need to generate from the dialog
-  // This handleGenerate function is kept for compatibility but will redirect to in-card loading
+  // Generate a proposal with the discovery notes provided
   const handleGenerate = () => {
-    // The generation should now happen in the parent component using the in-card loading state
-    console.log('Generation should be handled by the parent component');
-    // Close the dialog and let the parent component handle generation
-    onOpenChange(false);
+    // Start loading state
+    setLoading(true);
+    
+    // Get the discovery notes from the form
+    const discoveryNotes = discoveryNotesRef.current?.value || '';
+    
+    // If we have an onTaskGenerated callback, use it to notify the parent
+    if (onTaskGenerated && client?.id) {
+      // Create a task generation options object with the discovery notes
+      const options = {
+        discoveryNotes: discoveryNotes
+      };
+      
+      // This will trigger the API call via the parent component
+      const dummyTask = { 
+        id: 0,
+        clientId: client.id,
+        type: 'proposal',
+        status: 'pending',
+        content: null,
+        createdAt: new Date(),
+        completedAt: null
+      };
+      
+      // Generate the proposal using the parent's handler
+      // which will show the in-card loading state
+      apiRequest(
+        "POST", 
+        `/api/clients/${client.id}/generate/proposal`, 
+        options
+      )
+      .then(response => response.json())
+      .then(data => {
+        // Notify the parent component about the new task
+        onTaskGenerated(data);
+        
+        // Close this dialog - the task will be loaded in the card
+        onOpenChange(false);
+      })
+      .catch(error => {
+        console.error("Error generating proposal:", error);
+        toast({
+          title: "Generation Failed",
+          description: "Failed to generate the proposal. Please try again.",
+          variant: "destructive"
+        });
+        setLoading(false);
+      });
+    } else {
+      // If no callback is provided, just close the dialog
+      onOpenChange(false);
+    }
   };
 
   // Handle copy to clipboard
@@ -360,6 +410,7 @@ export default function ProposalDialog({
                 placeholder="Enter any notes from your discovery call with the client..."
                 value={discoveryNotes}
                 onChange={(e) => setDiscoveryNotes(e.target.value)}
+                ref={discoveryNotesRef}
                 className="h-[150px]"
               />
               <p className="text-sm text-muted-foreground mt-1">
