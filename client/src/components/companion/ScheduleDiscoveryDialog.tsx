@@ -76,16 +76,46 @@ Web Design Consultant`;
 
       setEmailContent(defaultEmail);
       
-      // Create HTML version for preview
-      const htmlVersion = defaultEmail
-        .replace(/\n\n/g, '</p><p>')
-        .replace(/\n/g, '<br>')
-        .replace('[Analysis Report Link]', companyAnalysisTask 
-            ? `<a href="${analysisLink}" style="color: #0066cc; text-decoration: underline;">View Business Analysis Report</a>` 
-            : '')
-        .replace('[Booking Calendar Link]', `<a href="${bookingUrl}" style="color: #0066cc; text-decoration: underline;">Schedule Discovery Call</a>`);
+      // Create HTML version for preview with improved formatting
+      let htmlVersion = defaultEmail;
       
-      setEmailHtml(`<div style="font-family: Arial, sans-serif; line-height: 1.6;"><p>${htmlVersion}</p></div>`);
+      // Format bullet points properly
+      htmlVersion = htmlVersion.replace(/• (.*?)(?:\n|$)/g, '<li>$1</li>');
+      
+      // Replace double line breaks with paragraph breaks
+      htmlVersion = htmlVersion.replace(/\n\n/g, '</p><p>');
+      
+      // Replace remaining single line breaks with <br>
+      htmlVersion = htmlVersion.replace(/\n/g, '<br>');
+      
+      // Find and wrap the bullet list in a ul element with styling
+      htmlVersion = htmlVersion.replace(/<li>(.*?)<\/li>(?:<br>)*<li>/g, '<li>$1</li><li>');
+      if (htmlVersion.includes('<li>')) {
+        htmlVersion = htmlVersion.replace(/<p>(.*?)<li>/g, '<p>$1<ul style="margin: 10px 0; padding-left: 30px;"><li style="margin-bottom: 8px;">');
+        htmlVersion = htmlVersion.replace(/<\/li>(<br>)*<\/p>/g, '</li></ul></p>');
+        // Add styling to all list items
+        htmlVersion = htmlVersion.replace(/<li>(.*?)<\/li>/g, '<li style="margin-bottom: 8px;">$1</li>');
+      }
+      
+      // Replace placeholder links with actual links
+      htmlVersion = htmlVersion.replace('[Analysis Report Link]', companyAnalysisTask 
+          ? `<a href="${analysisLink}" style="color: #0066cc; text-decoration: underline; font-weight: 600;">View Business Analysis Report</a>` 
+          : '');
+      
+      htmlVersion = htmlVersion.replace('[Booking Calendar Link]', 
+        `<a href="${bookingUrl}" style="display: inline-block; background-color: #0066cc; color: white; padding: 10px 16px; text-decoration: none; border-radius: 4px; font-weight: 500; margin: 8px 0;">Schedule Discovery Call</a>`);
+      
+      // Add styled email container
+      setEmailHtml(`
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; border-radius: 8px; padding: 20px; border: 1px solid #eaeaea;">
+          <div style="background-color: white; border-radius: 6px; padding: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <p>${htmlVersion}</p>
+          </div>
+          <div style="text-align: center; font-size: 12px; color: #999; margin-top: 15px;">
+            This is a preview of how your email will appear to the recipient
+          </div>
+        </div>
+      `);
     }
   }, [open, client, companyAnalysisTask]);
 
@@ -160,16 +190,46 @@ Web Design Consultant`;
                 onChange={(e) => {
                   setEmailContent(e.target.value);
                   
-                  // Update HTML preview when text changes
-                  const htmlVersion = e.target.value
-                    .replace(/\n\n/g, '</p><p>')
-                    .replace(/\n/g, '<br>')
-                    .replace('[Analysis Report Link]', companyAnalysisTask 
-                        ? `<a href="/client/${client.id}/analysis/${companyAnalysisTask.id}" style="color: #0066cc; text-decoration: underline;">View Business Analysis Report</a>` 
-                        : '')
-                    .replace('[Booking Calendar Link]', `<a href="https://calendly.com/yourbusiness/discovery-call" style="color: #0066cc; text-decoration: underline;">Schedule Discovery Call</a>`);
+                  // Update HTML preview with improved formatting
+                  let htmlVersion = e.target.value;
                   
-                  setEmailHtml(`<div style="font-family: Arial, sans-serif; line-height: 1.6;"><p>${htmlVersion}</p></div>`);
+                  // Format bullet points properly
+                  htmlVersion = htmlVersion.replace(/• (.*?)(?:\n|$)/g, '<li>$1</li>');
+                  
+                  // Replace double line breaks with paragraph breaks
+                  htmlVersion = htmlVersion.replace(/\n\n/g, '</p><p>');
+                  
+                  // Replace remaining single line breaks with <br>
+                  htmlVersion = htmlVersion.replace(/\n/g, '<br>');
+                  
+                  // Find and wrap the bullet list in a ul element with styling
+                  htmlVersion = htmlVersion.replace(/<li>(.*?)<\/li>(?:<br>)*<li>/g, '<li>$1</li><li>');
+                  if (htmlVersion.includes('<li>')) {
+                    htmlVersion = htmlVersion.replace(/<p>(.*?)<li>/g, '<p>$1<ul style="margin: 10px 0; padding-left: 30px;"><li style="margin-bottom: 8px;">');
+                    htmlVersion = htmlVersion.replace(/<\/li>(<br>)*<\/p>/g, '</li></ul></p>');
+                    // Add styling to all list items
+                    htmlVersion = htmlVersion.replace(/<li>(.*?)<\/li>/g, '<li style="margin-bottom: 8px;">$1</li>');
+                  }
+                  
+                  // Replace placeholder links with actual links
+                  htmlVersion = htmlVersion.replace('[Analysis Report Link]', companyAnalysisTask 
+                      ? `<a href="/client/${client.id}/analysis/${companyAnalysisTask.id}" style="color: #0066cc; text-decoration: underline; font-weight: 600;">View Business Analysis Report</a>` 
+                      : '');
+                  
+                  htmlVersion = htmlVersion.replace('[Booking Calendar Link]', 
+                    `<a href="https://calendly.com/yourbusiness/discovery-call" style="display: inline-block; background-color: #0066cc; color: white; padding: 10px 16px; text-decoration: none; border-radius: 4px; font-weight: 500; margin: 8px 0;">Schedule Discovery Call</a>`);
+                  
+                  // Add styled email container
+                  setEmailHtml(`
+                    <div style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; border-radius: 8px; padding: 20px; border: 1px solid #eaeaea;">
+                      <div style="background-color: white; border-radius: 6px; padding: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        <p>${htmlVersion}</p>
+                      </div>
+                      <div style="text-align: center; font-size: 12px; color: #999; margin-top: 15px;">
+                        This is a preview of how your email will appear to the recipient
+                      </div>
+                    </div>
+                  `);
                 }}
                 className="h-[350px] resize-none font-mono text-sm"
                 placeholder="Email content..."
