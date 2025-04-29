@@ -64,6 +64,24 @@ const taskTypes = {
 // Filter out "All Status" from the status options
 const projectPhases = statusOptions.filter(status => status !== "All Status");
 
+// Helper function for status badge styling
+const getPhaseStatusClass = (status: string): string => {
+  const normalizedStatus = status.toLowerCase();
+  
+  switch (normalizedStatus) {
+    case 'discovery':
+      return 'bg-blue-100 text-blue-800';
+    case 'planning':
+      return 'bg-purple-100 text-purple-800';
+    case 'design and development':
+      return 'bg-amber-100 text-amber-800';
+    case 'post launch management':
+      return 'bg-green-100 text-green-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
 interface ClientCompanionProps {
   client: Client;
 }
@@ -178,7 +196,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">Current phase:</span>
-            <Badge className={`${getStatusClass(client.status)}`}>{client.status}</Badge>
+            <Badge className={getPhaseStatusClass(client.status)}>{client.status}</Badge>
           </div>
         </div>
       </CardHeader>

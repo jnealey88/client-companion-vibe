@@ -100,7 +100,7 @@ export default function ClientDetail() {
               </Link>
               
               <div className="flex gap-3 items-center">
-                <Badge className={`${getStatusClass(client.status)}`}>
+                <Badge className="bg-blue-100 text-blue-800 px-2 py-1">
                   {client.status}
                 </Badge>
                 <Button 
