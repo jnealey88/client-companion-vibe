@@ -1376,3 +1376,63 @@ export async function generateStatusUpdate(clientInfo: any, taskStatus: any): Pr
     throw new Error("Failed to generate status update email");
   }
 }
+
+// Generate an email for scheduling a discovery call with the client
+// Includes references to the company analysis that was already generated
+export async function generateScheduleDiscovery(clientInfo: any, analysisId?: number): Promise<string> {
+  const clientName = clientInfo.name;
+  const contactName = clientInfo.contactName;
+  const projectName = clientInfo.projectName;
+  
+  // Default booking URL - in a real app, this would come from your configuration
+  const bookingUrl = "https://calendly.com/yourbusiness/discovery-call";
+  
+  // Create a reference link to the company analysis if an ID was provided
+  const analysisLinkHtml = analysisId 
+    ? `<p style="margin-bottom: 20px;">I've also prepared a complimentary <a href="/client-portal/analysis/${analysisId}" style="color: #0066cc; text-decoration: underline;">business analysis report</a> for you to review before our call. This will give you a sense of our initial findings and help frame our discussion.</p>`
+    : '';
+
+  const prompt = `Create a professional email template for scheduling a discovery call with a new client named ${clientName} regarding their project "${projectName}".
+
+  The email should:
+  - Have a clear, professional subject line
+  - Start with a warm, personalized greeting to ${contactName}
+  - Thank them for their interest in your web design/development services
+  - Briefly mention that you've analyzed their business and prepared a complimentary report (which they can access via the link that will be included)
+  - Suggest scheduling a discovery call to discuss their project needs in detail
+  - Include a placeholder for a booking link: [BOOKING_URL]
+  - Mention that the call will help you understand their goals, timelines, and budget
+  - End with a professional closing
+  
+  Format the response as an HTML email that I can send directly. Make it visually appealing with proper spacing, paragraphs, and minimal styling.`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 8000,
+    });
+
+    // Get the generated content
+    let emailContent = response.choices[0].message.content || "Failed to generate email content.";
+    
+    // Replace the booking URL placeholder with the actual URL
+    emailContent = emailContent.replace('[BOOKING_URL]', bookingUrl);
+    
+    // Add the analysis link paragraph after the first paragraph (after the greeting)
+    if (analysisId) {
+      const firstParagraphEnd = emailContent.indexOf('</p>') + 4;
+      if (firstParagraphEnd > 4) {
+        emailContent = 
+          emailContent.substring(0, firstParagraphEnd) + 
+          analysisLinkHtml + 
+          emailContent.substring(firstParagraphEnd);
+      }
+    }
+
+    return emailContent;
+  } catch (error) {
+    console.error("Error generating discovery call email:", error);
+    throw new Error("Failed to generate discovery call email");
+  }
+}

@@ -15,6 +15,7 @@ import {
   generateContract,
   generateSiteMap,
   generateStatusUpdate,
+  generateScheduleDiscovery,
   TaskType
 } from "./openai";
 
@@ -88,8 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (content) {
               await storage.updateCompanionTask(newTask.id, {
                 content,
-                status: "completed",
-                completedAt: new Date()
+                status: "completed"
               });
               console.log(`Auto-generated company analysis for client ${newClient.id}`);
             }
@@ -321,10 +321,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
           case TaskType.PROPOSAL:
             // Optionally get company analysis if it exists
-            const companyAnalysisTasks = await storage.getCompanionTasks(clientId);
-            const companyAnalysisTask = companyAnalysisTasks
+            const proposalAnalysisTasks = await storage.getCompanionTasks(clientId);
+            const proposalAnalysisTask = proposalAnalysisTasks
               .find(t => t.type === TaskType.COMPANY_ANALYSIS && t.status === "completed");
-            const companyAnalysis = companyAnalysisTask?.content || undefined;
+            const companyAnalysis = proposalAnalysisTask?.content || undefined;
             content = await generateProposal(client, companyAnalysis);
             break;
           case TaskType.CONTRACT:
@@ -333,6 +333,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           case TaskType.SITE_MAP:
             content = await generateSiteMap(client);
             break;
+          case TaskType.SCHEDULE_DISCOVERY:
+            // Get the company analysis ID to reference in the email
+            const discoveryAnalysisTasks = await storage.getCompanionTasks(clientId);
+            const analysisTask = discoveryAnalysisTasks
+              .find(t => t.type === TaskType.COMPANY_ANALYSIS && t.status === "completed");
+            content = await generateScheduleDiscovery(client, analysisTask?.id);
+            break;
+            
           case TaskType.STATUS_UPDATE:
             // Get task status info for the status update
             const tasks = await storage.getCompanionTasks(clientId);
