@@ -224,63 +224,53 @@ export default function ProposalDialog({
                 </Alert>
               )}
               
-              {/* Editor Content (Proposal) */}
-              <div className="border-b pb-8 mb-8">
-                <EditorJs
-                  content={editedContent}
-                  onChange={handleEditorChange}
-                  className="min-h-[450px] mb-4"
-                />
+              {/* Project Investment Summary - Top Section */}
+              <div className="bg-muted/30 p-6 rounded-lg mb-8">
+                <h3 className="text-xl font-bold mb-4">Project Investment Summary</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  This proposal includes a comprehensive breakdown of your investment. The total project cost covers all deliverables outlined above, while the optional care plan and recommended products ensure your ongoing success.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex items-center gap-1 text-sm bg-background px-3 py-1 rounded-full">
+                    <span className="font-medium">One-time:</span> {formatCurrency(projectValue)}
+                  </div>
+                  {carePlanMonthly > 0 && (
+                    <div className="flex items-center gap-1 text-sm bg-background px-3 py-1 rounded-full">
+                      <span className="font-medium">Care Plan:</span> {formatCurrency(carePlanMonthly)}/mo
+                    </div>
+                  )}
+                  {productsMonthly > 0 && (
+                    <div className="flex items-center gap-1 text-sm bg-background px-3 py-1 rounded-full">
+                      <span className="font-medium">GoDaddy:</span> {formatCurrency(productsMonthly)}/mo
+                    </div>
+                  )}
+                </div>
               </div>
               
-              {/* Payment Summary Widget */}
-              <div className="border-t pt-8 mt-8">
-                <h3 className="text-xl font-bold mb-4">Project Investment Summary</h3>
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-muted-foreground mb-4">
-                      This proposal includes a comprehensive breakdown of your investment. The total project cost covers all deliverables outlined above, while the optional care plan and recommended products ensure your ongoing success.
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <div className="flex items-center gap-1 text-sm bg-muted px-3 py-1 rounded-full">
-                        <span className="font-medium">One-time:</span> {formatCurrency(projectValue)}
-                      </div>
-                      {carePlanMonthly > 0 && (
-                        <div className="flex items-center gap-1 text-sm bg-muted px-3 py-1 rounded-full">
-                          <span className="font-medium">Care Plan:</span> {formatCurrency(carePlanMonthly)}/mo
-                        </div>
-                      )}
-                      {productsMonthly > 0 && (
-                        <div className="flex items-center gap-1 text-sm bg-muted px-3 py-1 rounded-full">
-                          <span className="font-medium">GoDaddy:</span> {formatCurrency(productsMonthly)}/mo
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="text-sm text-muted-foreground mb-4">
-                      <p className="mb-2 font-medium">What's included:</p>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>One-time fee covers all implementation and setup costs</li>
-                        <li>Care plan provides ongoing maintenance, security and updates</li>
-                        <li>GoDaddy products include domain, hosting and SSL certificate</li>
-                        <li>Free email and phone support for the duration of the project</li>
-                      </ul>
-                    </div>
-                  </div>
-                  
-                  <div className="md:col-span-1">
-                    <PaymentSummaryWidget 
-                      projectValue={projectValue} 
-                      carePlanMonthly={carePlanMonthly}
-                      productsMonthly={productsMonthly}
-                      onPayClick={() => {
-                        toast({
-                          title: "Payment Feature",
-                          description: "This would connect to your payment processor in a real application.",
-                        });
-                      }}
-                    />
-                  </div>
+              {/* Main Content Area */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* AI Proposal Content - Left Column (2/3 width) */}
+                <div className="md:col-span-2 min-h-[450px]">
+                  <EditorJs
+                    content={editedContent}
+                    onChange={handleEditorChange}
+                    className="min-h-[450px]"
+                  />
+                </div>
+                
+                {/* Payment Summary Widget - Right Column (1/3 width) */}
+                <div className="md:col-span-1">
+                  <PaymentSummaryWidget 
+                    projectValue={projectValue} 
+                    carePlanMonthly={carePlanMonthly}
+                    productsMonthly={productsMonthly}
+                    onPayClick={() => {
+                      toast({
+                        title: "Payment Feature",
+                        description: "This would connect to your payment processor in a real application.",
+                      });
+                    }}
+                  />
                 </div>
               </div>
               

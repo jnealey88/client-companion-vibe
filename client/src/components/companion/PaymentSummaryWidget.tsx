@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, CheckCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 interface PaymentSummaryWidgetProps {
@@ -31,59 +31,69 @@ export default function PaymentSummaryWidget({
   };
 
   return (
-    <Card className={`border-2 shadow-lg overflow-hidden ${className}`}>
-      <CardHeader className="bg-primary text-primary-foreground pb-4">
+    <Card className={`shadow-lg overflow-hidden ${className}`}>
+      <CardHeader className="bg-black text-white py-4">
         <CardTitle className="text-xl font-bold text-center">
           Project Payment Summary
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="pt-6 space-y-4">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="text-sm font-medium">Project Total:</div>
-          <div className="text-lg font-bold text-right">{formatCurrency(projectValue)}</div>
+      <CardContent className="pt-6 pb-2 space-y-4">
+        <div>
+          <div className="flex justify-between items-center border-b pb-3">
+            <div className="font-medium">Project Total:</div>
+            <div className="text-2xl font-bold">{formatCurrency(projectValue)}</div>
+          </div>
           
           {carePlanMonthly > 0 && (
-            <>
-              <div className="text-sm font-medium">Website Care Plan:</div>
-              <div className="text-right">{formatCurrency(carePlanMonthly)}<span className="text-xs text-muted-foreground"> /month</span></div>
-            </>
+            <div className="flex justify-between items-center border-b py-3">
+              <div className="font-medium">Website Care Plan:</div>
+              <div>
+                {formatCurrency(carePlanMonthly)}
+                <span className="text-sm text-muted-foreground"> /month</span>
+              </div>
+            </div>
           )}
           
           {productsMonthly > 0 && (
-            <>
-              <div className="text-sm font-medium">GoDaddy Products:</div>
-              <div className="text-right">{formatCurrency(productsMonthly)}<span className="text-xs text-muted-foreground"> /month</span></div>
-            </>
+            <div className="flex justify-between items-center border-b py-3">
+              <div className="font-medium">GoDaddy Products:</div>
+              <div>
+                {formatCurrency(productsMonthly)}
+                <span className="text-sm text-muted-foreground"> /month</span>
+              </div>
+            </div>
           )}
           
           {totalMonthly > 0 && (
-            <>
-              <div className="border-t col-span-2 mt-2 pt-2"></div>
-              <div className="text-sm font-medium">Total Monthly:</div>
-              <div className="text-lg font-bold text-right">{formatCurrency(totalMonthly)}<span className="text-xs text-muted-foreground"> /month</span></div>
-            </>
+            <div className="flex justify-between items-center pt-3">
+              <div className="font-medium">Total Monthly:</div>
+              <div className="text-xl font-bold">
+                {formatCurrency(totalMonthly)}
+                <span className="text-sm text-muted-foreground"> /month</span>
+              </div>
+            </div>
           )}
         </div>
         
-        <div className="pt-2 space-y-2">
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Check className="h-4 w-4 mr-2 text-green-500" />
-            Secure payment processing
+        <div className="pt-4 space-y-3">
+          <div className="flex items-center text-sm">
+            <CheckCircle className="h-4 w-4 mr-2 text-green-500 flex-shrink-0" />
+            <span>Secure payment processing</span>
           </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Check className="h-4 w-4 mr-2 text-green-500" />
-            No hidden fees
+          <div className="flex items-center text-sm">
+            <CheckCircle className="h-4 w-4 mr-2 text-green-500 flex-shrink-0" />
+            <span>No hidden fees</span>
           </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Check className="h-4 w-4 mr-2 text-green-500" />
-            Cancel monthly services anytime
+          <div className="flex items-center text-sm">
+            <CheckCircle className="h-4 w-4 mr-2 text-green-500 flex-shrink-0" />
+            <span>Cancel monthly services anytime</span>
           </div>
         </div>
       </CardContent>
       
-      <CardFooter className="bg-muted/50 flex justify-center pt-4 pb-4">
-        <Button onClick={handlePayClick} className="w-full">
+      <CardFooter className="py-4">
+        <Button onClick={handlePayClick} className="w-full bg-black hover:bg-gray-800">
           Proceed to Payment <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </CardFooter>
