@@ -555,7 +555,7 @@ interface CompanyAnalysisOutput {
 }
 
 // Function to generate comprehensive company analysis with integrated data
-export async function generateCompanyAnalysis(clientInfo: any): Promise<string> {
+export async function generateCompanyAnalysis(clientInfo: any): Promise<{ content: string; metadata: string }> {
   try {
     console.log("Generating initial company analysis...");
     // Step 1: Generate initial analysis with OpenAI
@@ -1673,6 +1673,61 @@ export async function generateStatusUpdate(clientInfo: any, taskStatus: any): Pr
 
 // Generate an email for scheduling a discovery call with the client
 // Includes references to the company analysis that was already generated
+// Generate strategic recommendations for a company based on their information
+async function generateStrategicRecommendations(clientInfo: any): Promise<any> {
+  try {
+    const prompt = `
+      As a digital marketing expert, generate actionable strategic recommendations for ${clientInfo.name} in the ${clientInfo.industry} industry.
+      
+      Generate specific recommendations in the following categories:
+      1. Short-term actions (next 30-60 days)
+      2. Medium-term initiatives (2-6 months) 
+      3. Long-term strategic goals (6+ months)
+      
+      Also provide a one or two sentence "Priority Action" that summarizes the most critical immediate step.
+      
+      Return your response in the following JSON format:
+      {
+        "shortTerm": ["recommendation 1", "recommendation 2", "recommendation 3", ...],
+        "mediumTerm": ["recommendation 1", "recommendation 2", "recommendation 3", ...],
+        "longTerm": ["recommendation 1", "recommendation 2", "recommendation 3", ...],
+        "priorityActions": "The single most important action to take immediately."
+      }
+      
+      Make all recommendations specific, actionable, and focused on digital presence and marketing.
+      Each recommendation should be a complete sentence that can stand on its own.
+    `;
+
+    // Get structured recommendations from OpenAI
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+      max_tokens: 1000,
+    });
+
+    // Parse the JSON response
+    const recommendationsJson = JSON.parse(response.choices[0].message.content || "{}");
+    
+    // Ensure we have all expected properties with defaults if missing
+    return {
+      shortTerm: recommendationsJson.shortTerm || [],
+      mediumTerm: recommendationsJson.mediumTerm || [],
+      longTerm: recommendationsJson.longTerm || [],
+      priorityActions: recommendationsJson.priorityActions || ""
+    };
+  } catch (error) {
+    console.error("Error generating strategic recommendations:", error);
+    // Return empty recommendations if there was an error
+    return {
+      shortTerm: [],
+      mediumTerm: [],
+      longTerm: [],
+      priorityActions: ""
+    };
+  }
+}
+
 export async function generateScheduleDiscovery(clientInfo: any, analysisId?: number): Promise<string> {
   const clientName = clientInfo.name;
   const contactName = clientInfo.contactName;
