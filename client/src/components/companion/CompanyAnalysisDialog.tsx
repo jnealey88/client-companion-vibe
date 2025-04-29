@@ -95,8 +95,30 @@ export default function CompanyAnalysisDialog({
       if (existingTask.content) {
         setAnalysisContent(existingTask.content);
         setEditedContent(existingTask.content);
-        
-        // Extract recommendations from the content
+      }
+      
+      // Try to extract recommendations from metadata first (preferred approach)
+      if (existingTask.metadata) {
+        try {
+          const metadata = JSON.parse(existingTask.metadata);
+          if (metadata.recommendations) {
+            console.log("Found recommendations in metadata:", metadata.recommendations);
+            setRecommendations({
+              shortTerm: metadata.recommendations.shortTerm || [],
+              mediumTerm: metadata.recommendations.mediumTerm || [],
+              longTerm: metadata.recommendations.longTerm || [],
+              priorityActions: metadata.recommendations.priorityActions || ""
+            });
+            return;
+          }
+        } catch (e) {
+          console.error("Error parsing task metadata:", e);
+        }
+      }
+      
+      // Fallback: try to extract recommendations from HTML content
+      if (existingTask.content) {
+        console.log("No metadata found, extracting recommendations from HTML content");
         const extractedRecommendations = extractRecommendations(existingTask.content);
         setRecommendations(extractedRecommendations);
       }
@@ -284,6 +306,41 @@ export default function CompanyAnalysisDialog({
     // In a real application, this would send the analysis via an email provider API
   };
   
+  // Helper function to find recommendations lists with different possible headings
+  const findRecommendationList = (document: Document, possibleHeadings: string[]) => {
+    // Try to find an exact heading match first
+    for (const heading of possibleHeadings) {
+      const headingEl = Array.from(document.querySelectorAll('h2, h3, h4, h5'))
+        .find(el => el.textContent?.includes(heading));
+        
+      if (headingEl) {
+        const listItems = headingEl.closest('div')?.querySelector('ul')?.querySelectorAll('li');
+        if (listItems && listItems.length > 0) {
+          return listItems;
+        }
+      }
+    }
+    
+    // If no exact match, try a more general approach with CSS classes or structure
+    // Look for any lists in sections that might contain our recommendations
+    const allLists = document.querySelectorAll('ul');
+    for (const list of Array.from(allLists)) {
+      const parentText = list.parentElement?.textContent || '';
+      
+      // Check if the parent section contains keywords suggesting recommendations
+      for (const heading of possibleHeadings) {
+        if (parentText.includes(heading)) {
+          const items = list.querySelectorAll('li');
+          if (items && items.length > 0) {
+            return items;
+          }
+        }
+      }
+    }
+    
+    return null;
+  };
+
   // Extract recommendations from HTML content
   const extractRecommendations = (htmlContent: string) => {
     try {
@@ -318,41 +375,6 @@ export default function CompanyAnalysisDialog({
       const shortTerm = shortTermList ? Array.from(shortTermList).map(li => li.textContent || '') : [];
       const mediumTerm = mediumTermList ? Array.from(mediumTermList).map(li => li.textContent || '') : [];
       const longTerm = longTermList ? Array.from(longTermList).map(li => li.textContent || '') : [];
-      
-      // Helper function to find recommendations lists with different possible headings
-      function findRecommendationList(document: Document, possibleHeadings: string[]) {
-        // Try to find an exact heading match first
-        for (const heading of possibleHeadings) {
-          const headingEl = Array.from(document.querySelectorAll('h2, h3, h4, h5'))
-            .find(el => el.textContent?.includes(heading));
-            
-          if (headingEl) {
-            const listItems = headingEl.closest('div')?.querySelector('ul')?.querySelectorAll('li');
-            if (listItems && listItems.length > 0) {
-              return listItems;
-            }
-          }
-        }
-        
-        // If no exact match, try a more general approach with CSS classes or structure
-        // Look for any lists in sections that might contain our recommendations
-        const allLists = document.querySelectorAll('ul');
-        for (const list of Array.from(allLists)) {
-          const parentText = list.parentElement?.textContent || '';
-          
-          // Check if the parent section contains keywords suggesting recommendations
-          for (const heading of possibleHeadings) {
-            if (parentText.includes(heading)) {
-              const items = list.querySelectorAll('li');
-              if (items && items.length > 0) {
-                return items;
-              }
-            }
-          }
-        }
-        
-        return null;
-      }
       
       // Return the extracted recommendations
       return {
