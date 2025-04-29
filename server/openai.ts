@@ -161,6 +161,7 @@ async function checkSerpData(keyword: string, websiteUrl: string): Promise<any> 
 async function getWebsitePerformance(url: string): Promise<any> {
   try {
     if (!url) {
+      console.log("No URL provided for PageSpeed analysis");
       return null;
     }
     
@@ -169,29 +170,52 @@ async function getWebsitePerformance(url: string): Promise<any> {
       url = 'https://' + url;
     }
     
+    console.log(`Getting PageSpeed data for URL: ${url}`);
+    
     // Make request to Google PageSpeed API
     const response = await axios.get(
       `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&key=${GOOGLE_API_KEY}`
     );
     
+    console.log("PageSpeed API response status:", response.status);
+    
     if (response.data && response.data.lighthouseResult) {
       const metrics = response.data.lighthouseResult.audits;
       const categories = response.data.lighthouseResult.categories;
       
-      return {
-        performance: categories.performance?.score * 100 || 0,
-        accessibility: categories.accessibility?.score * 100 || 0,
-        bestPractices: categories['best-practices']?.score * 100 || 0,
-        seo: categories.seo?.score * 100 || 0,
+      // Log the available categories to debug
+      console.log("PageSpeed categories available:", Object.keys(categories));
+      
+      // Extract scores with detailed logging
+      const performanceScore = categories.performance?.score * 100 || 0;
+      const accessibilityScore = categories.accessibility?.score * 100 || 0;
+      const bestPracticesScore = categories['best-practices']?.score * 100 || 0;
+      const seoScore = categories.seo?.score * 100 || 0;
+      
+      console.log("PageSpeed scores:", {
+        performance: performanceScore,
+        accessibility: accessibilityScore,
+        bestPractices: bestPracticesScore,
+        seo: seoScore
+      });
+      
+      const result = {
+        performance: performanceScore,
+        accessibility: accessibilityScore,
+        bestPractices: bestPracticesScore,
+        seo: seoScore,
         firstContentfulPaint: metrics['first-contentful-paint']?.displayValue || 'N/A',
         largestContentfulPaint: metrics['largest-contentful-paint']?.displayValue || 'N/A',
         speedIndex: metrics['speed-index']?.displayValue || 'N/A',
         totalBlockingTime: metrics['total-blocking-time']?.displayValue || 'N/A',
         issues: []
       };
+      
+      return result;
+    } else {
+      console.log("PageSpeed API response did not contain expected data");
+      return null;
     }
-    
-    return null;
   } catch (error) {
     console.error("Error fetching website performance data:", error);
     return null;
