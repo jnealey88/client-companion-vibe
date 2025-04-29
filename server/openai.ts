@@ -39,39 +39,86 @@ async function getKeywordData(keyword: string): Promise<any> {
       return null;
     }
     
-    console.log(`Fetching keyword data for: ${keyword}`);
+    // Skip API call if no API credentials available
+    if (!DATAFORSEO_LOGIN || !DATAFORSEO_PASSWORD) {
+      console.log("DataForSEO credentials not found, skipping API call");
+      return null;
+    }
     
-    // DataForSEO Keyword Data API endpoint - Using the Keyword Data API as requested
-    const url = "https://api.dataforseo.com/v3/keywords_data/google/search_volume/live";
+    // Maximum number of retry attempts
+    const maxRetries = 2;
+    let retryCount = 0;
+    let lastError: Error | null = null;
     
-    // Request body with the keyword and parameters
-    const data = [{
-      "keywords": [keyword],
-      "location_name": "United States",
-      "language_name": "English"
-    }];
-    
-    // Create base64 encoded credentials
-    const auth = Buffer.from(`${DATAFORSEO_LOGIN}:${DATAFORSEO_PASSWORD}`).toString('base64');
-    
-    // Make request to DataForSEO API with Basic Auth in headers
-    const response = await axios.post(url, data, {
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Basic ${auth}`
+    // Start retry loop
+    while (retryCount <= maxRetries) {
+      try {
+        console.log(`Fetching keyword data for: ${keyword}${retryCount > 0 ? ` (Retry ${retryCount})` : ''}`);
+        
+        // DataForSEO Keyword Data API endpoint
+        const url = "https://api.dataforseo.com/v3/keywords_data/google/search_volume/live";
+        
+        // Request body with the keyword and parameters
+        const data = [{
+          "keywords": [keyword],
+          "location_name": "United States",
+          "language_name": "English"
+        }];
+        
+        // Create base64 encoded credentials
+        const auth = Buffer.from(`${DATAFORSEO_LOGIN}:${DATAFORSEO_PASSWORD}`).toString('base64');
+        
+        // Make request to DataForSEO API with Basic Auth in headers
+        const response = await axios.post(url, data, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Basic ${auth}`
+          }
+        });
+        
+        // Log response status for debugging
+        console.log("DataForSEO search volume response status:", response.status);
+        
+        // Check for API errors in the response body (DataForSEO uses status_code)
+        if (response.data && response.data.status_code !== 20000) {
+          if (response.data.status_code === 40101) {
+            console.error("DataForSEO Authentication Error:", response.data.status_message);
+            // No point in retrying auth errors
+            return null;
+          }
+          
+          throw new Error(`DataForSEO API returned error: ${response.data.status_code} - ${response.data.status_message}`);
+        }
+        
+        // Check for valid data structure and return results
+        if (response.data && response.data.tasks && response.data.tasks.length > 0) {
+          console.log("Received keyword data from DataForSEO");
+          return response.data.tasks[0].result;
+        } else {
+          console.warn(`No results found for keyword: ${keyword}`);
+          return null;
+        }
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.error(`Error fetching keyword data (Attempt ${retryCount + 1}/${maxRetries + 1}):`, lastError.message);
+        
+        // Only retry if we haven't reached the max retry count
+        if (retryCount < maxRetries) {
+          // Exponential backoff: 1s, 2s
+          const delay = 1000 * Math.pow(2, retryCount);
+          console.log(`Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          retryCount++;
+        } else {
+          console.error(`Max retries reached for keyword: ${keyword}`);
+          break;
+        }
       }
-    });
-    
-    console.log("DataForSEO search volume response status:", response.status);
-    
-    if (response.data && response.data.tasks && response.data.tasks.length > 0) {
-      console.log("Received keyword data from DataForSEO");
-      return response.data.tasks[0].result;
     }
     
     return null;
   } catch (error) {
-    console.error("Error fetching keyword data from DataForSEO:", error);
+    console.error("Error in DataForSEO keyword data function:", error);
     return null;
   }
 }
@@ -84,10 +131,16 @@ async function checkSerpData(keyword: string, websiteUrl: string): Promise<any> 
       return null;
     }
     
-    console.log(`Checking SERP data for keyword "${keyword}" and website ${websiteUrl}`);
+    // Skip API call if no API credentials available
+    if (!DATAFORSEO_LOGIN || !DATAFORSEO_PASSWORD) {
+      console.log("DataForSEO credentials not found, skipping SERP API call");
+      return null;
+    }
     
-    // DataForSEO SERP API endpoint
-    const url = "https://api.dataforseo.com/v3/serp/google/organic/live/advanced";
+    // Maximum number of retry attempts
+    const maxRetries = 2;
+    let retryCount = 0;
+    let lastError: Error | null = null;
     
     // Clean website URL for domain check
     let domain = websiteUrl;
@@ -96,63 +149,105 @@ async function checkSerpData(keyword: string, websiteUrl: string): Promise<any> 
     if (domain.startsWith('www.')) domain = domain.substring(4);
     if (domain.includes('/')) domain = domain.split('/')[0];
     
-    // Request body with the keyword and parameters
-    const data = [
-      {
-        keyword: keyword,
-        language_code: "en",
-        location_code: 2840, // USA
-        device: "desktop",
-        os: "windows"
-      }
-    ];
-    
-    // Create base64 encoded credentials
-    const auth = Buffer.from(`${DATAFORSEO_LOGIN}:${DATAFORSEO_PASSWORD}`).toString('base64');
-    
-    // Make request to DataForSEO API with Basic Auth in headers
-    const response = await axios.post(url, data, {
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Basic ${auth}`
-      }
-    });
-    
-    console.log("DataForSEO SERP response status:", response.status);
-    
-    if (response.data && response.data.tasks && response.data.tasks.length > 0 && 
-        response.data.tasks[0].result && response.data.tasks[0].result.length > 0) {
-      
-      const results = response.data.tasks[0].result[0];
-      
-      // Check if client's domain appears in the results and at what position
-      let clientPosition = null;
-      if (results.items) {
-        for (let i = 0; i < results.items.length; i++) {
-          const item = results.items[i];
-          if (item.domain && item.domain.includes(domain)) {
-            clientPosition = item.rank_position;
-            break;
+    // Start retry loop
+    while (retryCount <= maxRetries) {
+      try {
+        console.log(`Checking SERP data for keyword "${keyword}" and website ${websiteUrl}${retryCount > 0 ? ` (Retry ${retryCount})` : ''}`);
+        
+        // DataForSEO SERP API endpoint
+        const url = "https://api.dataforseo.com/v3/serp/google/organic/live/advanced";
+        
+        // Request body with the keyword and parameters
+        const data = [
+          {
+            keyword: keyword,
+            language_code: "en",
+            location_code: 2840, // USA
+            device: "desktop",
+            os: "windows"
           }
+        ];
+        
+        // Create base64 encoded credentials
+        const auth = Buffer.from(`${DATAFORSEO_LOGIN}:${DATAFORSEO_PASSWORD}`).toString('base64');
+        
+        // Make request to DataForSEO API with Basic Auth in headers
+        const response = await axios.post(url, data, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Basic ${auth}`
+          }
+        });
+        
+        // Log response status for debugging
+        console.log("DataForSEO SERP response status:", response.status);
+        
+        // Check for API errors in the response body (DataForSEO uses status_code)
+        if (response.data && response.data.status_code !== 20000) {
+          if (response.data.status_code === 40101) {
+            console.error("DataForSEO Authentication Error in SERP API:", response.data.status_message);
+            // No point in retrying auth errors
+            return null;
+          }
+          
+          throw new Error(`DataForSEO SERP API returned error: ${response.data.status_code} - ${response.data.status_message}`);
+        }
+        
+        // Process SERP data when available
+        if (response.data && response.data.tasks && response.data.tasks.length > 0 && 
+            response.data.tasks[0].result && response.data.tasks[0].result.length > 0) {
+          
+          const results = response.data.tasks[0].result[0];
+          
+          // Check if client's domain appears in the results and at what position
+          let clientPosition = null;
+          if (results.items) {
+            for (let i = 0; i < results.items.length; i++) {
+              const item = results.items[i];
+              if (item.domain && item.domain.includes(domain)) {
+                clientPosition = item.rank_position;
+                break;
+              }
+            }
+          }
+          
+          // Build and return the SERP data structure
+          return {
+            keywordDifficulty: results.se_results?.keyword_difficulty || "Unknown",
+            searchVolume: results.se_results?.search_volume || "Unknown", 
+            clientPosition: clientPosition,
+            totalResults: results.se_results?.total_count || "Unknown",
+            topCompetitors: results.items ? results.items.slice(0, 3).map((item: any) => ({
+              domain: item.domain,
+              position: item.rank_position,
+              title: item.title
+            })) : []
+          };
+        } else {
+          console.warn(`No SERP results found for keyword: ${keyword}`);
+          return null;
+        }
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        console.error(`Error checking SERP data (Attempt ${retryCount + 1}/${maxRetries + 1}):`, lastError.message);
+        
+        // Only retry if we haven't reached the max retry count
+        if (retryCount < maxRetries) {
+          // Exponential backoff: 1s, 2s
+          const delay = 1000 * Math.pow(2, retryCount);
+          console.log(`Retrying SERP check in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          retryCount++;
+        } else {
+          console.error(`Max retries reached for SERP check: ${keyword}`);
+          break;
         }
       }
-      
-      return {
-        keywordDifficulty: results.se_results?.keyword_difficulty || "Unknown",
-        searchVolume: results.se_results?.search_volume || "Unknown", 
-        clientPosition: clientPosition,
-        totalResults: results.se_results?.total_count || "Unknown",
-        topCompetitors: results.items ? results.items.slice(0, 3).map((item: any) => ({
-          domain: item.domain,
-          position: item.rank_position,
-          title: item.title
-        })) : []
-      };
     }
     
     return null;
   } catch (error) {
-    console.error("Error checking SERP data from DataForSEO:", error);
+    console.error("Error in DataForSEO SERP data function:", error);
     return null;
   }
 }
@@ -291,7 +386,7 @@ async function extractKeywords(text: string): Promise<string[]> {
       messages: [
         { 
           role: "system", 
-          content: "You are a keyword extraction specialist. Extract the 5 most important keywords or keyphrases from the text. Return only the keywords as a JSON array with no additional text or explanation." 
+          content: "You are a keyword extraction specialist for SEO. Extract exactly 8 important keywords or keyphrases from the text. Include a mix of head terms (1-2 words) and long-tail keywords (3-5 words) that would be valuable for SEO and content marketing. Return only a JSON object with a 'keywords' array containing the keywords as strings. Format: {\"keywords\": [\"keyword1\", \"keyword2\", ...]}. Do not include any other fields or format." 
         },
         { role: "user", content: text }
       ],
@@ -299,10 +394,38 @@ async function extractKeywords(text: string): Promise<string[]> {
     });
     
     const result = JSON.parse(response.choices[0].message.content || "{}");
-    return result.keywords || [];
+    let keywords = result.keywords || [];
+    
+    // Ensure we have at least 5 keywords
+    if (keywords.length < 5) {
+      // Extract important words from the text as a fallback
+      const words = text.split(/\s+/);
+      const commonWords = new Set(['the', 'and', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'of', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'but', 'or', 'as', 'if', 'then', 'else', 'when', 'up', 'down', 'in', 'out', 'no', 'yes', 'so', 'such', 'than', 'that', 'which', 'who', 'whom', 'this', 'these', 'those', 'am', 'will', 'shall']);
+      
+      // Extract meaningful words (longer than 4 chars and not in common words)
+      const meaningfulWords = words.filter(word => word.length > 4 && !commonWords.has(word.toLowerCase()));
+      
+      // Get the most frequent meaningful words
+      const wordCount = meaningfulWords.reduce<Record<string, number>>((acc, word) => {
+        const lowerWord = word.toLowerCase();
+        acc[lowerWord] = (acc[lowerWord] || 0) + 1;
+        return acc;
+      }, {});
+      
+      // Sort by frequency and get the top ones
+      const additionalKeywords = Object.entries(wordCount)
+        .sort((a, b) => b[1] - a[1])
+        .map(([word]) => word)
+        .slice(0, 8 - keywords.length);
+      
+      keywords = [...keywords, ...additionalKeywords];
+    }
+    
+    // Trim to 8 keywords max
+    return keywords.slice(0, 8);
   } catch (error) {
     console.error("Error extracting keywords:", error);
-    return [];
+    return ["error extracting keywords"];
   }
 }
 
@@ -454,8 +577,45 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
         keywordInfo.volume = volumeData[0].search_volume.toString();
       }
       
+      // Calculate keyword difficulty even when DataForSEO doesn't provide it
+      const calculateKeywordDifficulty = (keyword: string, volume?: string): number => {
+        // If we have DataForSEO data, use it
+        if (serpData && serpData.keywordDifficulty !== undefined) {
+          return serpData.keywordDifficulty;
+        }
+        
+        // Otherwise, use our algorithm to calculate an estimated difficulty
+        let difficulty = 50; // Start with a neutral score (medium difficulty)
+        
+        // 1. Adjust based on keyword length (longer keywords are usually less competitive)
+        const wordCount = keyword.split(/\s+/).length;
+        difficulty -= (wordCount - 1) * 5; // Reduce difficulty by 5 for each additional word
+        
+        // 2. Adjust based on search volume (higher volume = higher competition)
+        const numericVolume = volume ? parseInt(volume.replace(/,/g, '')) : 0;
+        if (numericVolume > 0) {
+          if (numericVolume > 10000) difficulty += 20;
+          else if (numericVolume > 5000) difficulty += 15;
+          else if (numericVolume > 1000) difficulty += 10;
+          else if (numericVolume > 500) difficulty += 5;
+          else if (numericVolume < 100) difficulty -= 10;
+        }
+        
+        // 3. Adjust based on keyword specificity and commercial intent
+        const commercialTerms = ['buy', 'price', 'purchase', 'shop', 'cost', 'review', 'best', 'top', 'cheap', 'discount'];
+        const hasCommercialIntent = commercialTerms.some(term => keyword.toLowerCase().includes(term));
+        if (hasCommercialIntent) difficulty += 10;
+        
+        // 4. Adjust for long-tail specificity
+        if (keyword.length > 20) difficulty -= 5;
+        
+        // Ensure difficulty stays within 0-100 range
+        return Math.max(0, Math.min(100, difficulty));
+      };
+      
       // Add SERP data if available
       if (serpData) {
+        // Use actual difficulty when available
         keywordInfo.difficulty = serpData.keywordDifficulty?.toString() || "Unknown";
         keywordInfo.clientPosition = serpData.clientPosition ? 
           `Ranked #${serpData.clientPosition}` : "Not in top 100";
@@ -467,6 +627,19 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
           keywordInfo.recommendation = "Optimize content";
         } else {
           keywordInfo.recommendation = "Create targeted content";
+        }
+      } else {
+        // Calculate difficulty using our algorithm when DataForSEO data isn't available
+        const calculatedDifficulty = calculateKeywordDifficulty(keyword, keywordInfo.volume);
+        keywordInfo.difficulty = calculatedDifficulty.toString();
+        
+        // Provide recommendation based on calculated difficulty
+        if (calculatedDifficulty < 30) {
+          keywordInfo.recommendation = "Target as priority (low competition)";
+        } else if (calculatedDifficulty < 60) {
+          keywordInfo.recommendation = "Create quality content (medium competition)";
+        } else {
+          keywordInfo.recommendation = "Consider long-term strategy (high competition)";
         }
       }
       
