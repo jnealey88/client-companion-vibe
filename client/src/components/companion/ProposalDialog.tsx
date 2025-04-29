@@ -363,16 +363,7 @@ export default function ProposalDialog({
             </div>
 
             <DialogFooter className="flex justify-between items-center gap-2 mt-4">
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleCopy}
-                  className="gap-1"
-                >
-                  {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  {copied ? "Copied" : "Copy to Clipboard"}
-                </Button>
-                
+              <div className="flex gap-2">               
                 {existingTask && (
                   <Button
                     variant="destructive"

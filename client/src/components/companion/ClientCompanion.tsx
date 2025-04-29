@@ -462,23 +462,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                     <Calendar className="h-4 w-4" />
                     Send to Client
                   </Button>
-                ) : (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      if (selectedTask.content) {
-                        navigator.clipboard.writeText(selectedTask.content);
-                        toast({
-                          title: "Content copied",
-                          description: "The content has been copied to your clipboard."
-                        });
-                      }
-                    }}
-                  >
-                    Copy Content
-                  </Button>
-                )}
+                ) : null}
               </div>
             </div>
             
@@ -670,17 +654,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     Delete
                                   </Button>
                                   
-                                  <Button variant="ghost" size="sm" onClick={() => {
-                                    if (task?.content) {
-                                      navigator.clipboard.writeText(task.content);
-                                      toast({
-                                        title: "Content copied",
-                                        description: "The content has been copied to your clipboard."
-                                      });
-                                    }
-                                  }}>
-                                    Copy
-                                  </Button>
+
                                   <Button 
                                     variant="ghost"
                                     size="sm"
