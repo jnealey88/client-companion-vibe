@@ -91,6 +91,108 @@
     @apply text-gray-400 hover:text-accent;
   }
   
+  /* Proposal Preview Styles */
+  .proposal-preview h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .proposal-preview h2 {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .proposal-preview h3 {
+    font-size: 1.75rem;
+    font-weight: bold;
+    margin-top: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+  .proposal-preview h4 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .proposal-preview h5, .proposal-preview h6 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .proposal-preview table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+  .proposal-preview th, .proposal-preview td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  .proposal-preview th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  .proposal-preview ul, .proposal-preview ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+  }
+  .proposal-preview blockquote {
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+    border-left: 4px solid #ddd;
+    background-color: #f9f9f9;
+    font-style: italic;
+  }
+  .proposal-preview .ce-delimiter, .proposal-preview hr.ce-delimiter {
+    line-height: 1.6em;
+    width: 100%;
+    text-align: center;
+    margin: 1.5rem 0;
+  }
+  .proposal-preview .ce-delimiter:before, .proposal-preview hr.ce-delimiter:before {
+    display: inline-block;
+    content: "***";
+    font-size: 30px;
+    line-height: 65px;
+    height: 30px;
+    letter-spacing: 0.2em;
+  }
+  .proposal-preview .cdx-warning {
+    position: relative;
+    padding: 20px;
+    background: #fffcd3;
+    border-radius: 8px;
+    margin-bottom: 15px;
+  }
+  .proposal-preview .cdx-warning__title {
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .proposal-preview .cdx-warning__message {
+    font-size: 16px;
+  }
+  .proposal-preview .image-tool {
+    margin: 15px 0;
+  }
+  .proposal-preview .image-tool img {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+  .proposal-preview .image-tool figcaption {
+    text-align: center;
+    font-style: italic;
+    color: #6c757d;
+    margin-top: 8px;
+  }
+  .proposal-preview p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+  
   /* Legacy status badges */
   .status-badge-active {
     @apply bg-amber-100 text-amber-800;

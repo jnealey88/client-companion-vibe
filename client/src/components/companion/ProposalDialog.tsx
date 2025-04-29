@@ -219,7 +219,7 @@ export default function ProposalDialog({
               </TabsList>
               
               <TabsContent value="preview" className="border rounded-md p-4 min-h-[400px] mt-2">
-                <div dangerouslySetInnerHTML={{ __html: proposalContent }} />
+                <div className="editor-js-wrapper proposal-preview" dangerouslySetInnerHTML={{ __html: proposalContent }} />
               </TabsContent>
               
               <TabsContent value="edit" className="mt-2">
