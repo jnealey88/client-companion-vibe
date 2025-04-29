@@ -168,10 +168,6 @@ export default function ProposalDialog({
             // Store the newly generated task for reference
             setGeneratedTask(data);
             
-            // Set the proposal content for display
-            setProposalContent(data.content);
-            setEditedContent(data.content);
-            
             // Extract pricing information from metadata if available
             if (data.metadata) {
               try {
@@ -193,8 +189,7 @@ export default function ProposalDialog({
             }
           } else if (typeof data === 'string') {
             // If data is a string, it's just the content
-            setProposalContent(data);
-            setEditedContent(data);
+            // Do nothing special
           } else {
             console.error("Unexpected response format:", data);
             toast({
@@ -207,6 +202,9 @@ export default function ProposalDialog({
         
         // Hide the loading indicator
         setLoading(false);
+        
+        // IMPORTANT: Close the dialog immediately
+        onOpenChange(false);
         
         // Update the client companion tasks list
         queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });

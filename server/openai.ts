@@ -1491,38 +1491,36 @@ DO NOT include a main title - start directly with the Executive Summary section.
     const hasProjectName = new RegExp(`<h[1-2][^>]*>${clientInfo.projectName}`, 'i').test(cleanContent);
     const hasProposalWord = new RegExp(`<h[1-2][^>]*>.*?Proposal`, 'i').test(cleanContent);
     
-    // Remove any titles or main headings that might have been generated despite our instructions
-    const headingMatches = Array.from(cleanContent.matchAll(/<h[1-2][^>]*>(.*?)<\/h[1-2]>/gi));
+    // Remove any main title or website redesign proposal title
+    let titleRegexes = [
+      /<h[1-3][^>]*>(?:.*?website redesign.*?|.*?proposal.*?|.*?project.*?)<\/h[1-3]>/gi,
+      /<h[1-3][^>]*>(?:.*?)(?:proposal|project)(?:.*?)<\/h[1-3]>/gi,
+      /<h[1-3][^>]*>(?:.*?)redesign(?:.*?)<\/h[1-3]>/gi,
+      /<h[1-3][^>]*>(?:.*?)${clientInfo.projectName}(?:.*?)<\/h[1-3]>/gi
+    ];
     
-    if (headingMatches.length > 0) {
-      // Check if the first heading looks like a title (contains "proposal" or matches project name)
-      const firstHeading = headingMatches[0][1];
+    // Apply all regex patterns to remove titles
+    for (const regex of titleRegexes) {
+      cleanContent = cleanContent.replace(regex, '');
+    }
+    
+    // Remove excessive blank lines at the beginning
+    cleanContent = cleanContent.replace(/^(\s*\n\s*)+/, '');
+    
+    // Specific check for "Executive Summary" - make sure it's the first heading in the document
+    const executiveSummaryMatch = cleanContent.match(/<h[1-3][^>]*>(?:.*?)Executive Summary(?:.*?)<\/h[1-3]>/i);
+    if (executiveSummaryMatch) {
+      // Get everything before and after the executive summary heading
+      const beforeES = cleanContent.substring(0, executiveSummaryMatch.index).trim();
+      const afterES = cleanContent.substring(executiveSummaryMatch.index);
       
-      if (
-        firstHeading.toLowerCase().includes('proposal') || 
-        firstHeading.includes(clientInfo.projectName) ||
-        firstHeading.toLowerCase().includes('website redesign')
-      ) {
-        // Remove this heading as it's likely a title
-        cleanContent = cleanContent.replace(headingMatches[0][0], '');
-        
-        // Also check for a second heading that might be too similar to the first
-        if (headingMatches.length >= 2) {
-          const secondHeading = headingMatches[1][1];
-          
-          // If they're too similar, also remove the second one
-          if (
-            secondHeading.toLowerCase().includes('executive summary') ||
-            secondHeading.toLowerCase().includes('overview')
-          ) {
-            // Keep the second heading as it's likely the start of actual content
-          } else if (
-            (firstHeading.includes(clientInfo.projectName) && secondHeading.includes(clientInfo.projectName)) ||
-            (firstHeading.toLowerCase().includes('proposal') && secondHeading.toLowerCase().includes('proposal'))
-          ) {
-            // Replace the second heading with nothing if it's redundant
-            cleanContent = cleanContent.replace(headingMatches[1][0], '');
-          }
+      // If there's content before Executive Summary, check if it's just whitespace or empty paragraphs
+      if (beforeES) {
+        // Only keep content before executive summary if it contains meaningful text
+        const hasText = /<[^>]*>[^<]*[a-zA-Z][^<]*<\/[^>]*>/.test(beforeES);
+        if (!hasText) {
+          // Remove everything before the executive summary heading
+          cleanContent = afterES;
         }
       }
     }
