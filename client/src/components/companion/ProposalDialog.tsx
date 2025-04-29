@@ -25,13 +25,15 @@ interface ProposalDialogProps {
   onOpenChange: (open: boolean) => void;
   client: Client;
   existingTask?: CompanionTask;
+  onTaskGenerated?: (task: CompanionTask) => void;
 }
 
 export default function ProposalDialog({
   open,
   onOpenChange,
   client,
-  existingTask
+  existingTask,
+  onTaskGenerated
 }: ProposalDialogProps) {
   // Core state
   const [proposalContent, setProposalContent] = useState<string>("");
@@ -203,11 +205,22 @@ export default function ProposalDialog({
         // Hide the loading indicator
         setLoading(false);
         
+        // Get the task ID from the response
+        const taskId = response?.id;
+        
         // IMPORTANT: Close the dialog immediately
         onOpenChange(false);
         
         // Update the client companion tasks list
         queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
+        
+        // A small delay before redirecting to allow the toast to show
+        setTimeout(() => {
+          // If we have a successfully generated task, notify the parent that they should open it
+          if (taskId && onTaskGenerated) {
+            onTaskGenerated(response);
+          }
+        }, 500);
         
         toast({
           title: "Proposal generated",

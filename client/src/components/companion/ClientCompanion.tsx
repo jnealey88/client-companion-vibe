@@ -391,6 +391,13 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         onOpenChange={setIsProposalDialogOpen}
         client={client}
         existingTask={proposalTask}
+        onTaskGenerated={(task) => {
+          // When a new task is generated, set it as the proposal task and open the dialog
+          setTimeout(() => {
+            setProposalTask(task);
+            setIsProposalDialogOpen(true);
+          }, 1000);
+        }}
       />
       
       <CardHeader>

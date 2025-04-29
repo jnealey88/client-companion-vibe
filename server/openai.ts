@@ -1509,10 +1509,11 @@ DO NOT include a main title - start directly with the Executive Summary section.
     
     // Specific check for "Executive Summary" - make sure it's the first heading in the document
     const executiveSummaryMatch = cleanContent.match(/<h[1-3][^>]*>(?:.*?)Executive Summary(?:.*?)<\/h[1-3]>/i);
-    if (executiveSummaryMatch) {
+    if (executiveSummaryMatch && executiveSummaryMatch.index !== undefined) {
       // Get everything before and after the executive summary heading
-      const beforeES = cleanContent.substring(0, executiveSummaryMatch.index).trim();
-      const afterES = cleanContent.substring(executiveSummaryMatch.index);
+      const matchIndex: number = executiveSummaryMatch.index;
+      const beforeES = cleanContent.substring(0, matchIndex).trim();
+      const afterES = cleanContent.substring(matchIndex);
       
       // If there's content before Executive Summary, check if it's just whitespace or empty paragraphs
       if (beforeES) {
