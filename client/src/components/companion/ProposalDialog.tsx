@@ -95,8 +95,13 @@ export default function ProposalDialog({
         
         // Make sure we have valid data and content
         if (data && typeof data === 'object' && data.content) {
-          // Store the newly generated task ID as the existing task
-          setExistingTask(data);
+          // Store the newly generated task
+          setGeneratedTask(data);
+          
+          // Close the dialog - client will need to click on the new proposal
+          onOpenChange(false);
+          // Ensure parent component gets updated data
+          queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
           
           // Set the proposal content for display
           setProposalContent(data.content);
