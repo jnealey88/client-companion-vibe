@@ -238,67 +238,28 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   };
 
   // Create mutation for generating content
-  const generateMutation = useMutation({
-    mutationFn: async ({ clientId, taskType }: { clientId: number, taskType: string }) => {
-      // Start tracking this task generation
-      setGeneratingTasks(prev => ({...prev, [taskType]: true}));
-      
-      // Initialize progress and stage
-      setGenerationProgress(prev => ({...prev, [taskType]: 0}));
-      
-      const stages = loadingStages[taskType] || loadingStages.default;
-      setGenerationStage(prev => ({...prev, [taskType]: stages[0]}));
-      
-      // Simulate progress updates
-      const intervalId = setInterval(() => {
-        setGenerationProgress(prev => {
-          const currentProgress = prev[taskType] || 0;
-          if (currentProgress >= 95) {
-            clearInterval(intervalId);
-            return prev;
-          }
-          
-          const newProgress = Math.min(95, currentProgress + 1);
-          
-          // Update stage based on progress
-          if (newProgress % 25 === 0) {
-            const stageIndex = Math.floor(newProgress / 25);
-            if (stages[stageIndex]) {
-              setGenerationStage(prev => ({...prev, [taskType]: stages[stageIndex]}));
-            }
-          }
-          
-          return {...prev, [taskType]: newProgress};
-        });
-      }, 300);
-      
+  const generateMutation = useMutation<CompanionTask, Error, { clientId: number, taskType: string, [key: string]: any }>({
+    mutationFn: async ({ clientId, taskType, ...options }: { clientId: number, taskType: string, [key: string]: any }) => {
       try {
-        const response = await apiRequest("POST", `/api/clients/${clientId}/generate/${taskType}`);
-        // Set progress to 100% on completion
-        setGenerationProgress(prev => ({...prev, [taskType]: 100}));
-        setGenerationStage(prev => ({...prev, [taskType]: "Complete!"}));
+        // Make the API request with any additional options
+        const response = await apiRequest(
+          "POST", 
+          `/api/clients/${clientId}/generate/${taskType}`, 
+          options
+        );
         
-        // Short delay to show completion before removing from tracking
-        setTimeout(() => {
-          setGeneratingTasks(prev => {
-            const newState = {...prev};
-            delete newState[taskType];
-            return newState;
-          });
-        }, 1000);
+        // Extract JSON data from the response
+        const jsonData = await response.json();
         
-        return response;
+        // The API should return a full companion task object
+        return jsonData as CompanionTask;
       } catch (error) {
-        // Clear this task from tracking on error
-        setGeneratingTasks(prev => {
-          const newState = {...prev};
-          delete newState[taskType];
-          return newState;
-        });
+        console.error("Error generating task:", error);
         throw error;
       }
     },
     onSuccess: () => {
+      // Refresh the task list
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
       toast({
         title: "Content generated",
@@ -347,15 +308,98 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     setSelectedTask(task);
   };
   
-  // Handle content generation
-  const handleGenerate = (taskType: string) => {
-    generateMutation.mutate({ clientId: client.id, taskType });
+  // Handle content generation with discovery notes if applicable
+  const handleGenerate = (taskType: string, options: any = {}) => {
+    // For proposal generation, we might want to include discovery notes
+    const mutationParams = { 
+      clientId: client.id, 
+      taskType,
+      ...options
+    };
+    
+    // Start the loading indicator in the task card
+    setGeneratingTasks(prev => ({...prev, [taskType]: true}));
+    
+    // Initialize progress and stage
+    setGenerationProgress(prev => ({...prev, [taskType]: 0}));
+    
+    const stages = loadingStages[taskType] || loadingStages.default;
+    setGenerationStage(prev => ({...prev, [taskType]: stages[0]}));
+    
+    // Use an interval to simulate progress updates until the API call completes
+    const intervalId = setInterval(() => {
+      setGenerationProgress(prev => {
+        const currentProgress = prev[taskType] || 0;
+        // Stop at 95% until the actual API call completes
+        if (currentProgress >= 95) {
+          clearInterval(intervalId);
+          return prev;
+        }
+        
+        const newProgress = Math.min(95, currentProgress + 1);
+        
+        // Update stage based on progress (change message every ~20%)
+        if (newProgress % 20 === 0) {
+          const stageIndex = Math.floor(newProgress / 20);
+          if (stages[stageIndex]) {
+            setGenerationStage(prev => ({...prev, [taskType]: stages[stageIndex]}));
+          }
+        }
+        
+        return {...prev, [taskType]: newProgress};
+      });
+    }, 300);
+    
+    // Delay the actual API call slightly to allow the loading UI to appear
+    setTimeout(() => {
+      generateMutation.mutate(mutationParams, {
+        onSuccess: (data: any) => {
+          // Complete the progress bar animation
+          setGenerationProgress(prev => ({...prev, [taskType]: 100}));
+          setGenerationStage(prev => ({...prev, [taskType]: "Complete!"}));
+          
+          // Keep "Complete!" shown briefly before removing the loading state
+          setTimeout(() => {
+            setGeneratingTasks(prev => {
+              const newState = {...prev};
+              delete newState[taskType];
+              return newState;
+            });
+            
+            // If the task was successfully generated, show the appropriate dialog
+            if (data && typeof data === 'object') {
+              // Make sure we have a valid CompanionTask object
+              const taskData = data as CompanionTask;
+              
+              if (taskType === 'proposal') {
+                setProposalTask(taskData);
+                setIsProposalDialogOpen(true);
+              } else if (taskType === 'company_analysis') {
+                setCompanyAnalysisTask(taskData);
+                setIsCompanyAnalysisDialogOpen(true); 
+              } else if (taskData.content) {
+                setSelectedTask(taskData);
+              }
+            }
+          }, 1000);
+        },
+        onError: () => {
+          // Clear this task from tracking on error
+          clearInterval(intervalId);
+          setGeneratingTasks(prev => {
+            const newState = {...prev};
+            delete newState[taskType];
+            return newState;
+          });
+        }
+      });
+    }, 500);
   };
   
   // Handle re-generation of content (retry)
   const handleRetry = (taskType: string) => {
-    // Use the same mutation as generate, but for an existing task
-    generateMutation.mutate({ clientId: client.id, taskType });
+    // Use the same handler as generate for retry
+    handleGenerate(taskType);
   };
   
   // Handle delete request - open confirmation dialog
