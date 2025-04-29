@@ -142,70 +142,80 @@ export default function ProposalDialog({
       setLoading(true);
       setLoadingStage(loadingStages[0]);
       setLoadingProgress(0);
+      
+      // We want the loading indicator to run for at least a few seconds
+      // before actually making the API call, to give the user feedback
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
       // We're passing discovery notes in the request body
       return apiRequest("POST", `/api/clients/${clientId}/generate/proposal`, { discoveryNotes });
     },
     onSuccess: (response: any) => {
       console.log("Proposal response:", response);
       
-      // Get proper data from the response
-      if (response) {
-        let data = response;
-        
-        // Make sure we have valid data and content
-        if (data && typeof data === 'object' && data.content) {
-          // Store the newly generated task
-          setGeneratedTask(data);
+      // Finish the loading progress animation
+      setLoadingProgress(100);
+      setLoadingStage("Proposal complete!");
+      
+      // Wait a brief moment to show completion before proceeding
+      setTimeout(() => {
+        // Get proper data from the response
+        if (response) {
+          let data = response;
           
-          // Close the dialog - client will need to click on the new proposal
-          onOpenChange(false);
-          // Ensure parent component gets updated data
-          queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
-          
-          // Set the proposal content for display
-          setProposalContent(data.content);
-          setEditedContent(data.content);
-          
-          // Extract pricing information from metadata if available
-          if (data.metadata) {
-            try {
-              const metadata = JSON.parse(data.metadata);
-              console.log("Metadata parsed:", metadata);
-              
-              if (metadata.projectTotalFee) {
-                setProjectValue(metadata.projectTotalFee);
+          // Make sure we have valid data and content
+          if (data && typeof data === 'object' && data.content) {
+            // Store the newly generated task for reference
+            setGeneratedTask(data);
+            
+            // Set the proposal content for display
+            setProposalContent(data.content);
+            setEditedContent(data.content);
+            
+            // Extract pricing information from metadata if available
+            if (data.metadata) {
+              try {
+                const metadata = JSON.parse(data.metadata);
+                console.log("Metadata parsed:", metadata);
+                
+                if (metadata.projectTotalFee) {
+                  setProjectValue(metadata.projectTotalFee);
+                }
+                if (metadata.carePlanMonthly) {
+                  setCarePlanMonthly(metadata.carePlanMonthly);
+                }
+                if (metadata.productsMonthlyTotal) {
+                  setProductsMonthly(metadata.productsMonthlyTotal);
+                }
+              } catch (e) {
+                console.error("Error parsing metadata:", e);
               }
-              if (metadata.carePlanMonthly) {
-                setCarePlanMonthly(metadata.carePlanMonthly);
-              }
-              if (metadata.productsMonthlyTotal) {
-                setProductsMonthly(metadata.productsMonthlyTotal);
-              }
-            } catch (e) {
-              console.error("Error parsing metadata:", e);
             }
+          } else if (typeof data === 'string') {
+            // If data is a string, it's just the content
+            setProposalContent(data);
+            setEditedContent(data);
+          } else {
+            console.error("Unexpected response format:", data);
+            toast({
+              title: "Warning",
+              description: "Received unexpected response format from server.",
+              variant: "destructive"
+            });
           }
-        } else if (typeof data === 'string') {
-          // If data is a string, it's just the content
-          setProposalContent(data);
-          setEditedContent(data);
-        } else {
-          console.error("Unexpected response format:", data);
-          toast({
-            title: "Warning",
-            description: "Received unexpected response format from server.",
-            variant: "destructive"
-          });
         }
-      }
-      
-      setLoading(false);
-      
-      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
-      toast({
-        title: "Proposal generated",
-        description: "Project proposal has been created successfully.",
-      });
+        
+        // Hide the loading indicator
+        setLoading(false);
+        
+        // Update the client companion tasks list
+        queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
+        
+        toast({
+          title: "Proposal generated",
+          description: "Project proposal has been created successfully.",
+        });
+      }, 500);
     },
     onError: () => {
       setLoading(false);
@@ -386,7 +396,7 @@ export default function ProposalDialog({
           </div>
         )}
 
-        {(proposalContent || existingTask?.content) && (
+        {((proposalContent || existingTask?.content) && !loading) && (
           <>
             <div className="border rounded-md p-6 min-h-[450px] mt-2">
               {isEdited && (
