@@ -329,7 +329,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Get discovery notes if they were provided in the request body
             const discoveryNotes = req.body?.discoveryNotes || undefined;
             
-            content = await generateProposal(client, companyAnalysis, discoveryNotes);
+            // Generate proposal content and pricing data
+            const proposalResponse = await generateProposal(client, companyAnalysis, discoveryNotes);
+            
+            // If the response has both content and pricing data
+            if (typeof proposalResponse === 'object' && proposalResponse.content) {
+              content = proposalResponse.content;
+              
+              // Store pricing data in task metadata
+              if (proposalResponse.pricingData) {
+                // First update the content
+                const updatedTask = await storage.updateCompanionTask(newTask.id, {
+                  content: content
+                });
+                
+                // Then update the metadata in a separate call
+                if (updatedTask) {
+                  await storage.updateCompanionTask(newTask.id, {
+                    metadata: JSON.stringify({
+                      projectTotalFee: proposalResponse.pricingData.projectTotalFee || client.projectValue || 0,
+                      carePlanMonthly: proposalResponse.pricingData.carePlanMonthly || 0,
+                      productsMonthlyTotal: proposalResponse.pricingData.productsMonthlyTotal || 0
+                    })
+                  });
+                }
+              }
+            } else {
+              // Handle the case where the response is a string (for backward compatibility)
+              content = proposalResponse as string;
+            }
             break;
           case TaskType.CONTRACT:
             content = await generateContract(client);

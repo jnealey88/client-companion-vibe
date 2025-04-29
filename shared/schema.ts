@@ -60,6 +60,7 @@ export const companionTasks = pgTable("companion_tasks", {
   type: taskTypeEnum("type").notNull(),
   status: taskStatusEnum("status").notNull().default("pending"),
   content: text("content"),
+  metadata: text("metadata"), // For storing additional data like pricing information
   createdAt: timestamp("created_at").notNull().default(new Date()),
   completedAt: timestamp("completed_at"),
 });
@@ -126,6 +127,7 @@ export const companionTaskSchema = z.object({
   ]),
   status: z.enum(["pending", "in_progress", "completed"]),
   content: z.string().nullable(),
+  metadata: z.string().nullable(),
   createdAt: z.date(),
   completedAt: z.date().nullable(),
 });

@@ -41,7 +41,7 @@ export default function ProposalDialog({
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isEdited, setIsEdited] = useState<boolean>(false);
   
-  // Payment information (these would come from the backend in a real app)
+  // Payment information from the task metadata (if available)
   const [projectValue, setProjectValue] = useState<number>(client.projectValue || 5000);
   const [carePlanMonthly, setCarePlanMonthly] = useState<number>(99);
   const [productsMonthly, setProductsMonthly] = useState<number>(29);
@@ -50,11 +50,31 @@ export default function ProposalDialog({
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
 
-  // Fetch the task content if an existing task was provided
+  // Fetch the task content and metadata if an existing task was provided
   useEffect(() => {
-    if (existingTask?.content) {
-      setProposalContent(existingTask.content);
-      setEditedContent(existingTask.content);
+    if (existingTask) {
+      if (existingTask.content) {
+        setProposalContent(existingTask.content);
+        setEditedContent(existingTask.content);
+      }
+      
+      // Extract pricing information from metadata if available
+      if (existingTask.metadata) {
+        try {
+          const metadata = JSON.parse(existingTask.metadata);
+          if (metadata.projectTotalFee) {
+            setProjectValue(metadata.projectTotalFee);
+          }
+          if (metadata.carePlanMonthly) {
+            setCarePlanMonthly(metadata.carePlanMonthly);
+          }
+          if (metadata.productsMonthlyTotal) {
+            setProductsMonthly(metadata.productsMonthlyTotal);
+          }
+        } catch (error) {
+          console.error('Error parsing task metadata:', error);
+        }
+      }
     }
   }, [existingTask]);
 
@@ -66,9 +86,34 @@ export default function ProposalDialog({
       return apiRequest("POST", `/api/clients/${clientId}/generate/proposal`, { discoveryNotes });
     },
     onSuccess: (data: any) => {
-      setProposalContent(data.content);
-      setEditedContent(data.content);
+      if (data && data.content) {
+        setProposalContent(data.content);
+        setEditedContent(data.content);
+      } else if (data) {
+        setProposalContent(data);
+        setEditedContent(data);
+      }
+      
       setLoading(false);
+      
+      // Extract pricing information from metadata if available
+      if (data && data.metadata) {
+        try {
+          const metadata = JSON.parse(data.metadata);
+          if (metadata.projectTotalFee) {
+            setProjectValue(metadata.projectTotalFee);
+          }
+          if (metadata.carePlanMonthly) {
+            setCarePlanMonthly(metadata.carePlanMonthly);
+          }
+          if (metadata.productsMonthlyTotal) {
+            setProductsMonthly(metadata.productsMonthlyTotal);
+          }
+        } catch (e) {
+          console.error("Error parsing metadata:", e);
+        }
+      }
+      
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
       toast({
         title: "Proposal generated",
