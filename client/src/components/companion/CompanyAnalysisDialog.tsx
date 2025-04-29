@@ -293,8 +293,22 @@ export default function CompanyAnalysisDialog({
 
             <Button 
               onClick={() => {
-                // Just close the dialog - generation happens in ClientCompanion
+                // Close the dialog first
                 onOpenChange(false);
+                
+                // Allow a brief delay for the dialog to close, then tell parent to generate
+                setTimeout(() => {
+                  // If parent provided a callback, tell it to generate a company analysis
+                  if (client && client.id && onTaskGenerated) {
+                    // Execute this from ClientCompanion component
+                    const dummyTask = { 
+                      type: 'company_analysis',
+                      clientId: client.id,
+                      content: null
+                    } as any;
+                    onTaskGenerated(dummyTask);
+                  }
+                }, 300);
               }} 
               className="w-full"
               disabled={loading}

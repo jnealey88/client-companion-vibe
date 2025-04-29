@@ -534,11 +534,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         client={client}
         existingTask={proposalTask}
         onTaskGenerated={(task) => {
-          // When a new task is generated, set it as the proposal task and open the dialog
-          setTimeout(() => {
-            setProposalTask(task);
-            setIsProposalDialogOpen(true);
-          }, 1000);
+          // Check if this is a new task request (dummy task with no content)
+          if (!task.content && task.type === 'proposal') {
+            // Generate a new proposal using the in-card loading state
+            handleGenerate('proposal');
+          } else {
+            // This is a real task, show it in the dialog
+            setTimeout(() => {
+              setProposalTask(task);
+              setIsProposalDialogOpen(true);
+            }, 1000);
+          }
         }}
       />
       
@@ -549,11 +555,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         client={client}
         existingTask={companyAnalysisTask}
         onTaskGenerated={(task) => {
-          // When a new task is generated, set it as the company analysis task and open the dialog
-          setTimeout(() => {
-            setCompanyAnalysisTask(task);
-            setIsCompanyAnalysisDialogOpen(true);
-          }, 1000);
+          // Check if this is a new task request (dummy task with no content)
+          if (!task.content && task.type === 'company_analysis') {
+            // Generate a new analysis using the in-card loading state
+            handleGenerate('company_analysis');
+          } else {
+            // This is a real task, show it in the dialog
+            setTimeout(() => {
+              setCompanyAnalysisTask(task);
+              setIsCompanyAnalysisDialogOpen(true);
+            }, 1000);
+          }
         }}
       />
       
@@ -779,6 +791,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                           handleTaskSelect(task);
                                         } else {
                                           // Generate new content with in-card loading
+                                          // This skips the dialog completely and uses the card loading state
                                           handleGenerate(type);
                                         }
                                       }}
