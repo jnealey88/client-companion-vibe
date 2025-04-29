@@ -253,7 +253,7 @@ export class DatabaseStorage implements IStorage {
       const { eq } = await import('drizzle-orm');
 
       // If the status is being updated to 'completed', add the completedAt timestamp
-      const dataToUpdate = { ...updateData };
+      const dataToUpdate: any = { ...updateData };
       if (updateData.status === 'completed') {
         dataToUpdate.completedAt = new Date();
       }
