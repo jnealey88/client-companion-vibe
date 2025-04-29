@@ -1364,33 +1364,36 @@ We also recommend the following GoDaddy products for this project: ${productsTex
 
 ## Proposal Sections
 
-Format the proposal as a professional HTML business proposal with clear sections, styling, and visual elements. Make it visually appealing with a professional design. 
+Format the proposal as a professional HTML business proposal with clear sections. Use <h1>, <h2>, <h3> tags for headings and proper HTML structure.
+
+IMPORTANT FORMATTING INSTRUCTIONS:
+- Skip any "Project Investment Summary" or similar introductory text
+- Start directly with a compelling <h1> title that includes the project name
+- Avoid excessive whitespace, line breaks, or empty paragraphs at the beginning
+- Make sure each section has a clear <h2> heading
+
+Include these sections:
 
 1. **Executive Summary:**
-   - Brief overview of the project and client needs (≤ 75 words)
-
+   - Brief overview of the project and client needs
 
 2. **Objectives & Success Metrics:**
    - Objective, KPI & Target, Business Impact
      
-
 3. **Project Scope & Deliverables:**
    - Phase, Key Activities, Tangible Deliverables
  
-
 4. **Timeline & Milestones:**
    - Week, Milestone
 
-
 5. **Investment & Pricing:**
-   - Must provide a quote/dollar amounts based on the client's industry and project needs in the following items.
-   - Total Project Fee: $ 
-   - Stage, % Due, Amount
-   - Signing: 50%, $ …
-   - Design approval: 25%, $ …
-   - Pre-launch: 25%, $ …
-   - Optional Care Plan: $ – hosting, updates, backups, SEO tweaks.
-   - ROI Snapshot: Example: One extra sale per week at $  pays for the site in  months.
+   - Total Project Fee: $X,XXX
+   - Payment schedule:
+     - Signing: 50%
+     - Design approval: 25%
+     - Pre-launch: 25%
+   - Optional Care Plan: $XX/month
+   - ROI analysis
 
 6. **Why Choose Us:**
    - Our unique value proposition.
@@ -1398,12 +1401,11 @@ Format the proposal as a professional HTML business proposal with clear sections
 7. **GoDaddy Product Recommendations:**
    - List of recommended GoDaddy products with descriptions and pricing
 
-8. Closing
+8. **Closing**
   - By paying the deposit, you agree to our contract terms and conditions.
 
 # Output Format
-
-The proposal should be delivered as an HTML document with section headers and formatted text.`;
+The proposal should be delivered as an HTML document with proper section headers and formatted text.`;
 
   try {
     // Update prompt to request pricing info extraction
@@ -1477,8 +1479,20 @@ The proposal should be delivered as an HTML document with section headers and fo
       // Fallback to default values
     }
     
-    // Remove the JSON from the content if present
-    const cleanContent = content.replace(/```json\s*[\s\S]*?\s*```/, '');
+    // Remove the JSON from the content if present and clean up extra whitespace/line breaks
+    let cleanContent = content.replace(/```json\s*[\s\S]*?\s*```/, '');
+    
+    // Remove any "Project Investment Summary" heading or similar text at the beginning
+    cleanContent = cleanContent.replace(/(^[\s\n]*?(?:Project\s+Investment\s+Summary|Investment\s+Summary)[\s\n]*)/i, '');
+    
+    // Remove excessive whitespace at the beginning of the document
+    cleanContent = cleanContent.replace(/^\s+/, '');
+    
+    // Ensure the content starts with a proper heading
+    if (!cleanContent.trim().startsWith('<h1') && !cleanContent.trim().startsWith('<h2')) {
+      // Add a proper title if missing
+      cleanContent = `<h1>${clientInfo.projectName} Proposal</h1>\n${cleanContent}`;
+    }
     
     return {
       content: cleanContent,

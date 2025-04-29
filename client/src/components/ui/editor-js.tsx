@@ -75,8 +75,11 @@ export function EditorJs({
 
   // Helper function to convert HTML to EditorJS blocks
   const convertHtmlToBlocks = (html: string) => {
+    // Clean up any excessive whitespace at the beginning
+    const cleanedHtml = html.trim().replace(/^\s+/, '');
+    
     const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
+    const doc = parser.parseFromString(cleanedHtml, 'text/html');
     const blocks: any[] = [];
     
     // Process each element in the body
