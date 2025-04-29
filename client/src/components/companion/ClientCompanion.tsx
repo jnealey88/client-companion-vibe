@@ -613,9 +613,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     Copy
                                   </Button>
                                   <Button 
-                                    variant={type === 'company_analysis' ? "default" : "ghost"}
+                                    variant="ghost"
                                     size="sm"
-                                    className={type === 'company_analysis' ? "gap-1" : ""}
                                     onClick={() => {
                                       if (type === 'schedule_discovery' || type === 'company_analysis') {
                                         setIsDiscoveryDialogOpen(true);
@@ -628,12 +627,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     }}
                                   >
                                     {type === 'schedule_discovery' ? 'Schedule' : 
-                                     type === 'company_analysis' ? (
-                                       <>
-                                         <Calendar className="h-3 w-3" />
-                                         Send to Client
-                                       </>
-                                     ) : type === 'proposal' ? 'Edit Proposal' : 'View'}
+                                     type === 'proposal' ? 'Edit Proposal' : 'View'}
                                   </Button>
                                 </div>
                               </div>
