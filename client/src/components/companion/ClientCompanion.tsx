@@ -21,7 +21,8 @@ import {
   TestTube,
   Wrench,
   LineChart,
-  Link
+  Link,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -209,6 +210,33 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     }
   });
   
+  // Create mutation for deleting content
+  const deleteMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      return apiRequest("DELETE", `/api/companion-tasks/${taskId}`);
+    },
+    onSuccess: () => {
+      // Clear selected task if it was deleted
+      setSelectedTask(null);
+      
+      // Invalidate the tasks query to refresh the list
+      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
+      
+      toast({
+        title: "Content deleted",
+        description: "The content has been deleted successfully.",
+        variant: "default"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Deletion failed",
+        description: "Failed to delete content. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+  
   // Handle task selection
   const handleTaskSelect = (task: CompanionTask) => {
     setSelectedTask(task);
@@ -223,6 +251,16 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   const handleRetry = (taskType: string) => {
     // Use the same mutation as generate, but for an existing task
     generateMutation.mutate({ clientId: client.id, taskType });
+  };
+  
+  // Handle deletion of content
+  const handleDelete = (task: CompanionTask) => {
+    deleteMutation.mutate(task.id);
+    
+    // If this was a proposal task, make sure to reset the proposal task state
+    if (task.type === 'proposal' && proposalTask?.id === task.id) {
+      setProposalTask(undefined);
+    }
   };
   
   // Group tasks by type for easier display
@@ -331,36 +369,48 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                   </p>
                 </div>
               </div>
-              {selectedTask.type === 'company_analysis' ? (
-                <Button 
-                  variant="default" 
-                  size="sm"
-                  className="gap-1"
-                  onClick={() => {
-                    // Open the schedule discovery dialog when this button is clicked
-                    setIsDiscoveryDialogOpen(true);
-                  }}
-                >
-                  <Calendar className="h-4 w-4" />
-                  Send to Client
-                </Button>
-              ) : (
+              <div className="flex gap-2">
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => {
-                    if (selectedTask.content) {
-                      navigator.clipboard.writeText(selectedTask.content);
-                      toast({
-                        title: "Content copied",
-                        description: "The content has been copied to your clipboard."
-                      });
-                    }
-                  }}
+                  className="text-destructive hover:bg-destructive/10"
+                  onClick={() => handleDelete(selectedTask)}
                 >
-                  Copy Content
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
                 </Button>
-              )}
+                
+                {selectedTask.type === 'company_analysis' ? (
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="gap-1"
+                    onClick={() => {
+                      // Open the schedule discovery dialog when this button is clicked
+                      setIsDiscoveryDialogOpen(true);
+                    }}
+                  >
+                    <Calendar className="h-4 w-4" />
+                    Send to Client
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      if (selectedTask.content) {
+                        navigator.clipboard.writeText(selectedTask.content);
+                        toast({
+                          title: "Content copied",
+                          description: "The content has been copied to your clipboard."
+                        });
+                      }
+                    }}
+                  >
+                    Copy Content
+                  </Button>
+                )}
+              </div>
             </div>
             
             <Separator />
@@ -541,6 +591,16 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   </div>
                                 </div>
                                 <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="text-destructive hover:bg-destructive/10"
+                                    onClick={() => task && handleDelete(task)}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                    Delete
+                                  </Button>
+                                  
                                   <Button variant="ghost" size="sm" onClick={() => {
                                     if (task?.content) {
                                       navigator.clipboard.writeText(task.content);
