@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Client, CompanionTask, statusOptions } from "@shared/schema";
 import CompanionTaskCard from "./CompanionTaskCard";
 import ScheduleDiscoveryDialog from "./ScheduleDiscoveryDialog";
+import ProposalDialog from "./ProposalDialog";
 
 // Define task type information with project phase categorization
 const taskTypes = {
@@ -158,6 +159,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
+  const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
+  const [proposalTask, setProposalTask] = useState<CompanionTask | undefined>(undefined);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -273,6 +276,14 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         open={isDiscoveryDialogOpen}
         onOpenChange={setIsDiscoveryDialogOpen}
         client={client}
+      />
+      
+      {/* Project proposal dialog */}
+      <ProposalDialog
+        open={isProposalDialogOpen}
+        onOpenChange={setIsProposalDialogOpen}
+        client={client}
+        existingTask={proposalTask}
       />
       
       <CardHeader>
@@ -453,6 +464,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     onClick={() => {
                                       if (type === 'schedule_discovery') {
                                         setIsDiscoveryDialogOpen(true);
+                                      } else if (type === 'proposal') {
+                                        // Open proposal dialog with existing task if available
+                                        setProposalTask(task);
+                                        setIsProposalDialogOpen(true);
                                       } else if (task?.content) {
                                         handleTaskSelect(task);
                                       } else {
@@ -462,7 +477,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     disabled={generateMutation.isPending}
                                   >
                                     {type === 'schedule_discovery' 
-                                      ? 'Schedule Call' 
+                                      ? 'Schedule Call'
+                                      : type === 'proposal' && task?.content
+                                        ? 'Edit Proposal'
                                       : task?.content 
                                         ? 'View Content' 
                                         : 'Generate'}
@@ -542,6 +559,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     onClick={() => {
                                       if (type === 'schedule_discovery' || type === 'company_analysis') {
                                         setIsDiscoveryDialogOpen(true);
+                                      } else if (type === 'proposal' && task) {
+                                        setProposalTask(task);
+                                        setIsProposalDialogOpen(true);
                                       } else if (task) {
                                         setSelectedTask(task);
                                       }
@@ -553,7 +573,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                          <Calendar className="h-3 w-3" />
                                          Send to Client
                                        </>
-                                     ) : 'View'}
+                                     ) : type === 'proposal' ? 'Edit Proposal' : 'View'}
                                   </Button>
                                 </div>
                               </div>

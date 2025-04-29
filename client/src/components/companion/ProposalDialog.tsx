@@ -59,7 +59,7 @@ export default function ProposalDialog({
       // We're passing discovery notes in the request body
       return apiRequest("POST", `/api/clients/${clientId}/generate/proposal`, { discoveryNotes });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setProposalContent(data.content);
       setEditedContent(data.content);
       setActiveTab("preview");
