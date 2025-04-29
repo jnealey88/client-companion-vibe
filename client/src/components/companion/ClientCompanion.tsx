@@ -10,7 +10,8 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
-  ArrowRight
+  ArrowRight,
+  ListFilter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,42 +19,50 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Client, CompanionTask } from "@shared/schema";
+import { Client, CompanionTask, statusOptions } from "@shared/schema";
 import CompanionTaskCard from "./CompanionTaskCard";
 
-// Define task type information
+// Define task type information with project phase categorization
 const taskTypes = {
   company_analysis: {
     icon: <FileText className="h-5 w-5" />,
     label: "Company Analysis",
     description: "Comprehensive business and website analysis",
-    iconColor: "bg-blue-50 text-blue-600"
+    iconColor: "bg-blue-50 text-blue-600",
+    phase: "Discovery"
   },
   proposal: {
     icon: <Check className="h-5 w-5" />,
     label: "Project Proposal",
     description: "Professional project proposal",
-    iconColor: "bg-green-50 text-green-600"
+    iconColor: "bg-green-50 text-green-600",
+    phase: "Discovery"
   },
   contract: {
     icon: <Scroll className="h-5 w-5" />,
     label: "Contract",
     description: "Professional service agreement",
-    iconColor: "bg-purple-50 text-purple-600"
+    iconColor: "bg-purple-50 text-purple-600",
+    phase: "Planning"
   },
   site_map: {
     icon: <FolderTree className="h-5 w-5" />,
     label: "Site Map & Content",
     description: "Site structure and content plan",
-    iconColor: "bg-amber-50 text-amber-600"
+    iconColor: "bg-amber-50 text-amber-600",
+    phase: "Design and Development"
   },
   status_update: {
     icon: <MessageCircle className="h-5 w-5" />,
     label: "Status Update",
     description: "Client status update email",
-    iconColor: "bg-pink-50 text-pink-600"
+    iconColor: "bg-pink-50 text-pink-600",
+    phase: "Post Launch Management"
   }
 };
+
+// Filter out "All Status" from the status options
+const projectPhases = statusOptions.filter(status => status !== "All Status");
 
 interface ClientCompanionProps {
   client: Client;
@@ -61,6 +70,7 @@ interface ClientCompanionProps {
 
 export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [selectedTask, setSelectedTask] = useState<CompanionTask | null>(null);
+  const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -119,6 +129,25 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     });
   }
   
+  // Group tasks by project phase
+  const tasksByPhase: Record<string, { type: string, task: CompanionTask | undefined }[]> = {};
+  
+  // Initialize all phases
+  projectPhases.forEach(phase => {
+    tasksByPhase[phase] = [];
+  });
+  
+  // Group tasks by their respective phases
+  Object.entries(taskTypes).forEach(([type, info]) => {
+    const phase = info.phase;
+    if (phase && tasksByPhase[phase]) {
+      tasksByPhase[phase].push({
+        type,
+        task: tasksByType[type]
+      });
+    }
+  });
+  
   if (isLoading) {
     return (
       <Card>
@@ -136,88 +165,73 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle className="flex items-center">
-          <span>Client Companion</span>
-          <Badge variant="outline" className="ml-2">AI Assistant</Badge>
-        </CardTitle>
-        <CardDescription>
-          AI-powered workflow assistant that helps you manage client projects efficiently
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="flex items-center">
+              <span>Client Companion</span>
+              <Badge variant="outline" className="ml-2">AI Assistant</Badge>
+            </CardTitle>
+            <CardDescription>
+              AI-powered workflow assistant that helps you manage client projects efficiently
+            </CardDescription>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-500">Current phase:</span>
+            <Badge className={`${getStatusClass(client.status)}`}>{client.status}</Badge>
+          </div>
+        </div>
       </CardHeader>
       
       <CardContent>
         <Tabs defaultValue="tasks" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="tasks">Tasks by Phase</TabsTrigger>
             <TabsTrigger value="content">Generated Content</TabsTrigger>
           </TabsList>
           
           <TabsContent value="tasks" className="mt-4">
-            <div className="space-y-4">
-              {/* Company Analysis task */}
-              <CompanionTaskCard
-                title={taskTypes.company_analysis.label}
-                description={taskTypes.company_analysis.description}
-                icon={taskTypes.company_analysis.icon}
-                iconColor={taskTypes.company_analysis.iconColor}
-                task={tasksByType.company_analysis}
-                isGenerating={generateMutation.isPending}
-                onGenerate={() => handleGenerate("company_analysis")}
-                onRetry={() => handleRetry("company_analysis")}
-                onSelect={handleTaskSelect}
-              />
-              
-              {/* Proposal task */}
-              <CompanionTaskCard
-                title={taskTypes.proposal.label}
-                description={taskTypes.proposal.description}
-                icon={taskTypes.proposal.icon}
-                iconColor={taskTypes.proposal.iconColor}
-                task={tasksByType.proposal}
-                isGenerating={generateMutation.isPending}
-                onGenerate={() => handleGenerate("proposal")}
-                onRetry={() => handleRetry("proposal")}
-                onSelect={handleTaskSelect}
-              />
-              
-              {/* Contract task */}
-              <CompanionTaskCard
-                title={taskTypes.contract.label}
-                description={taskTypes.contract.description}
-                icon={taskTypes.contract.icon}
-                iconColor={taskTypes.contract.iconColor}
-                task={tasksByType.contract}
-                isGenerating={generateMutation.isPending}
-                onGenerate={() => handleGenerate("contract")}
-                onRetry={() => handleRetry("contract")}
-                onSelect={handleTaskSelect}
-              />
-              
-              {/* Site Map task */}
-              <CompanionTaskCard
-                title={taskTypes.site_map.label}
-                description={taskTypes.site_map.description}
-                icon={taskTypes.site_map.icon}
-                iconColor={taskTypes.site_map.iconColor}
-                task={tasksByType.site_map}
-                isGenerating={generateMutation.isPending}
-                onGenerate={() => handleGenerate("site_map")}
-                onRetry={() => handleRetry("site_map")}
-                onSelect={handleTaskSelect}
-              />
-              
-              {/* Status Update task */}
-              <CompanionTaskCard
-                title={taskTypes.status_update.label}
-                description={taskTypes.status_update.description}
-                icon={taskTypes.status_update.icon}
-                iconColor={taskTypes.status_update.iconColor}
-                task={tasksByType.status_update}
-                isGenerating={generateMutation.isPending}
-                onGenerate={() => handleGenerate("status_update")}
-                onRetry={() => handleRetry("status_update")}
-                onSelect={handleTaskSelect}
-              />
+            <div className="space-y-6">
+              {/* Render tasks by project phase */}
+              {projectPhases.map(phase => {
+                const phaseTasks = tasksByPhase[phase] || [];
+                
+                if (phaseTasks.length === 0) return null;
+                
+                const isCurrentPhase = client.status === phase;
+                
+                return (
+                  <div key={phase} className="mb-6">
+                    <div className="flex items-center mb-2">
+                      <h3 className="text-lg font-medium">
+                        {phase}
+                      </h3>
+                      {isCurrentPhase && (
+                        <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200">
+                          Current
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {phaseTasks.map(({ type, task }) => (
+                        <CompanionTaskCard
+                          key={type}
+                          title={taskTypes[type as keyof typeof taskTypes].label}
+                          description={taskTypes[type as keyof typeof taskTypes].description}
+                          icon={taskTypes[type as keyof typeof taskTypes].icon}
+                          iconColor={taskTypes[type as keyof typeof taskTypes].iconColor}
+                          task={task}
+                          isGenerating={generateMutation.isPending}
+                          onGenerate={() => handleGenerate(type)}
+                          onRetry={() => handleRetry(type)}
+                          onSelect={handleTaskSelect}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </TabsContent>
           
@@ -229,9 +243,14 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                     <div className="p-2 rounded-md bg-gray-100">
                       {taskTypes[selectedTask.type as keyof typeof taskTypes]?.icon}
                     </div>
-                    <h3 className="text-lg font-medium">
-                      {taskTypes[selectedTask.type as keyof typeof taskTypes]?.label}
-                    </h3>
+                    <div>
+                      <h3 className="text-lg font-medium">
+                        {taskTypes[selectedTask.type as keyof typeof taskTypes]?.label}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Phase: {taskTypes[selectedTask.type as keyof typeof taskTypes]?.phase}
+                      </p>
+                    </div>
                   </div>
                   <Badge variant="outline">
                     {new Date(selectedTask.createdAt).toLocaleDateString()}
