@@ -1,6 +1,7 @@
 import { pgTable, text, serial, integer, boolean, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 export const clients = pgTable("clients", {
   id: serial("id").primaryKey(),
@@ -17,6 +18,10 @@ export const clients = pgTable("clients", {
   createdAt: timestamp("created_at").notNull().default(new Date()),
 });
 
+export const clientsRelations = relations(clients, ({ many }) => ({
+  projects: many(projects),
+}));
+
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
   clientId: integer("client_id").notNull().references(() => clients.id),
@@ -27,6 +32,13 @@ export const projects = pgTable("projects", {
   endDate: timestamp("end_date"),
   value: integer("value").notNull().default(0),
 });
+
+export const projectsRelations = relations(projects, ({ one }) => ({
+  client: one(clients, {
+    fields: [projects.clientId],
+    references: [clients.id],
+  }),
+}));
 
 // Client Schemas
 export const insertClientSchema = createInsertSchema(clients).omit({

@@ -470,4 +470,364 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export class DatabaseStorage implements IStorage {
+  async getClients(filters?: ClientFilters): Promise<ClientWithProjects[]> {
+    try {
+      // Import db here to avoid circular dependencies
+      const { db } = await import('./db');
+      const { clients, projects } = await import('@shared/schema');
+      const { eq, ilike, and, or, desc, asc } = await import('drizzle-orm');
+      
+      let query = db.select().from(clients)
+      
+      // Apply filters
+      const conditions = [];
+      if (filters?.search) {
+        const searchTerm = `%${filters.search}%`;
+        conditions.push(
+          or(
+            ilike(clients.name, searchTerm),
+            ilike(clients.contactName, searchTerm),
+            ilike(clients.industry, searchTerm)
+          )
+        );
+      }
+      
+      if (filters?.status && filters.status !== "All Status") {
+        conditions.push(eq(clients.status, filters.status.toLowerCase()));
+      }
+      
+      if (filters?.industry && filters.industry !== "All Industries") {
+        conditions.push(eq(clients.industry, filters.industry));
+      }
+      
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      
+      // Apply sorting
+      if (filters?.sort) {
+        switch (filters.sort) {
+          case "Name (A-Z)":
+            query = query.orderBy(asc(clients.name));
+            break;
+          case "Name (Z-A)":
+            query = query.orderBy(desc(clients.name));
+            break;
+          case "Value (High-Low)":
+            query = query.orderBy(desc(clients.totalValue));
+            break;
+          case "Value (Low-High)":
+            query = query.orderBy(asc(clients.totalValue));
+            break;
+          default:
+            // Sort by recent (last contact) by default
+            query = query.orderBy(desc(clients.lastContact));
+        }
+      } else {
+        // Default sort by recent
+        query = query.orderBy(desc(clients.lastContact));
+      }
+      
+      const clientsResult = await query;
+      
+      // Get projects for each client
+      const clientsWithProjects = await Promise.all(
+        clientsResult.map(async (client) => {
+          const clientProjects = await db
+            .select({
+              id: projects.id,
+              name: projects.name,
+              status: projects.status
+            })
+            .from(projects)
+            .where(eq(projects.clientId, client.id));
+          
+          // Filter by project status if needed
+          if (filters?.projectStatus && filters.projectStatus !== "All Projects") {
+            if (filters.projectStatus === "Active Projects" && 
+                !clientProjects.some(p => p.status === "active")) {
+              return null;
+            } else if (filters.projectStatus === "Completed Projects" && 
+                      !clientProjects.some(p => p.status === "completed")) {
+              return null;
+            } else if (filters.projectStatus === "Pending Projects" && 
+                      !clientProjects.some(p => p.status === "pending")) {
+              return null;
+            }
+          }
+          
+          return {
+            ...client,
+            projects: clientProjects
+          };
+        })
+      );
+      
+      return clientsWithProjects.filter(Boolean) as ClientWithProjects[];
+    } catch (error) {
+      console.error("Error fetching clients:", error);
+      throw error;
+    }
+  }
+  
+  async getClient(id: number): Promise<ClientWithProjects | undefined> {
+    try {
+      const { db } = await import('./db');
+      const { clients, projects } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const [client] = await db
+        .select()
+        .from(clients)
+        .where(eq(clients.id, id));
+      
+      if (!client) return undefined;
+      
+      const clientProjects = await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          status: projects.status
+        })
+        .from(projects)
+        .where(eq(projects.clientId, id));
+      
+      return {
+        ...client,
+        projects: clientProjects
+      };
+    } catch (error) {
+      console.error(`Error fetching client with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  async createClient(client: InsertClient): Promise<Client> {
+    try {
+      const { db } = await import('./db');
+      const { clients } = await import('@shared/schema');
+      
+      const [newClient] = await db
+        .insert(clients)
+        .values({
+          ...client,
+          lastContact: client.lastContact || new Date(),
+          createdAt: new Date()
+        })
+        .returning();
+      
+      return newClient;
+    } catch (error) {
+      console.error("Error creating client:", error);
+      throw error;
+    }
+  }
+  
+  async updateClient(id: number, updateData: UpdateClient): Promise<Client | undefined> {
+    try {
+      const { db } = await import('./db');
+      const { clients } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const [updatedClient] = await db
+        .update(clients)
+        .set(updateData)
+        .where(eq(clients.id, id))
+        .returning();
+      
+      return updatedClient;
+    } catch (error) {
+      console.error(`Error updating client with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  async deleteClient(id: number): Promise<boolean> {
+    try {
+      const { db } = await import('./db');
+      const { clients, projects } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // First delete associated projects to maintain referential integrity
+      await db
+        .delete(projects)
+        .where(eq(projects.clientId, id));
+      
+      // Then delete the client
+      const deletedClients = await db
+        .delete(clients)
+        .where(eq(clients.id, id))
+        .returning();
+      
+      return deletedClients.length > 0;
+    } catch (error) {
+      console.error(`Error deleting client with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  async getProjects(clientId?: number): Promise<Project[]> {
+    try {
+      const { db } = await import('./db');
+      const { projects } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      let query = db.select().from(projects);
+      
+      if (clientId) {
+        query = query.where(eq(projects.clientId, clientId));
+      }
+      
+      return await query;
+    } catch (error) {
+      console.error("Error fetching projects:", error);
+      throw error;
+    }
+  }
+  
+  async getProject(id: number): Promise<Project | undefined> {
+    try {
+      const { db } = await import('./db');
+      const { projects } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const [project] = await db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, id));
+      
+      return project;
+    } catch (error) {
+      console.error(`Error fetching project with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  async createProject(project: InsertProject): Promise<Project> {
+    try {
+      const { db } = await import('./db');
+      const { projects, clients } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Begin transaction
+      const [newProject] = await db.transaction(async (tx) => {
+        // Create the project
+        const [newProject] = await tx
+          .insert(projects)
+          .values(project)
+          .returning();
+        
+        // Update client's total value
+        await tx
+          .update(clients)
+          .set({
+            totalValue: (client) => `${client.totalValue} + ${project.value}`
+          })
+          .where(eq(clients.id, project.clientId));
+        
+        return [newProject];
+      });
+      
+      return newProject;
+    } catch (error) {
+      console.error("Error creating project:", error);
+      throw error;
+    }
+  }
+  
+  async updateProject(id: number, updateData: Partial<InsertProject>): Promise<Project | undefined> {
+    try {
+      const { db } = await import('./db');
+      const { projects, clients } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Begin transaction if value is being updated
+      if ('value' in updateData) {
+        return db.transaction(async (tx) => {
+          // Get current project to calculate value difference
+          const [currentProject] = await tx
+            .select()
+            .from(projects)
+            .where(eq(projects.id, id));
+          
+          if (!currentProject) return undefined;
+          
+          const valueDifference = (updateData.value || 0) - currentProject.value;
+          
+          // Update client's total value if value is changing
+          if (valueDifference !== 0) {
+            await tx
+              .update(clients)
+              .set({
+                totalValue: (client) => `${client.totalValue} + ${valueDifference}`
+              })
+              .where(eq(clients.id, currentProject.clientId));
+          }
+          
+          // Update the project
+          const [updatedProject] = await tx
+            .update(projects)
+            .set(updateData)
+            .where(eq(projects.id, id))
+            .returning();
+          
+          return updatedProject;
+        });
+      } else {
+        // Simple update without value change
+        const [updatedProject] = await db
+          .update(projects)
+          .set(updateData)
+          .where(eq(projects.id, id))
+          .returning();
+        
+        return updatedProject;
+      }
+    } catch (error) {
+      console.error(`Error updating project with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  async deleteProject(id: number): Promise<boolean> {
+    try {
+      const { db } = await import('./db');
+      const { projects, clients } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Begin transaction
+      return db.transaction(async (tx) => {
+        // Get current project to update client's total value
+        const [currentProject] = await tx
+          .select()
+          .from(projects)
+          .where(eq(projects.id, id));
+        
+        if (!currentProject) return false;
+        
+        // Update client's total value
+        await tx
+          .update(clients)
+          .set({
+            totalValue: (client) => `${client.totalValue} - ${currentProject.value}`
+          })
+          .where(eq(clients.id, currentProject.clientId));
+        
+        // Delete the project
+        const deletedProjects = await tx
+          .delete(projects)
+          .where(eq(projects.id, id))
+          .returning();
+        
+        return deletedProjects.length > 0;
+      });
+    } catch (error) {
+      console.error(`Error deleting project with ID ${id}:`, error);
+      throw error;
+    }
+  }
+}
+
+// Export the database storage implementation
+export const storage = new DatabaseStorage();
