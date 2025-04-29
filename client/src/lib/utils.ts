@@ -23,14 +23,23 @@ export function getStatusClass(status: string): string {
   const normalizedStatus = status.toLowerCase();
   
   switch (normalizedStatus) {
+    case 'discovery':
+      return 'status-badge-discovery';
+    case 'planning':
+      return 'status-badge-planning';
+    case 'design and development':
+      return 'status-badge-design-and-development';
+    case 'post launch management':
+      return 'status-badge-post-launch-management';
+    // Keep these for backward compatibility with projectStatus
     case 'active':
       return 'status-badge-active';
     case 'pending':
       return 'status-badge-pending';
-    case 'on hold':
-      return 'status-badge-on-hold';
     case 'completed':
       return 'status-badge-completed';
+    case 'on hold':
+      return 'status-badge-on-hold';
     default:
       return 'bg-gray-100 text-gray-800';
   }
