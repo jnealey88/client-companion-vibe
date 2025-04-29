@@ -292,11 +292,14 @@ export default function CompanyAnalysisDialog({
             </p>
 
             <Button 
-              onClick={handleGenerate} 
+              onClick={() => {
+                // Just close the dialog - generation happens in ClientCompanion
+                onOpenChange(false);
+              }} 
               className="w-full"
               disabled={loading}
             >
-              Generate Company Analysis
+              Close and Generate in Card
             </Button>
           </div>
         )}

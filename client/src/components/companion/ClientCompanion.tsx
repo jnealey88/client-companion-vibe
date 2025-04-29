@@ -766,17 +766,19 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       onClick={() => {
                                         if (type === 'schedule_discovery') {
                                           setIsDiscoveryDialogOpen(true);
-                                        } else if (type === 'proposal') {
-                                          // Open proposal dialog with existing task if available
+                                        } else if (type === 'proposal' && task?.content) {
+                                          // Open proposal dialog only for existing tasks
                                           setProposalTask(task);
                                           setIsProposalDialogOpen(true);
-                                        } else if (type === 'company_analysis') {
-                                          // Open company analysis dialog with existing task if available
+                                        } else if (type === 'company_analysis' && task?.content) {
+                                          // Open company analysis dialog only for existing tasks
                                           setCompanyAnalysisTask(task);
                                           setIsCompanyAnalysisDialogOpen(true);
                                         } else if (task?.content) {
+                                          // View any other type of content
                                           handleTaskSelect(task);
                                         } else {
+                                          // Generate new content with in-card loading
                                           handleGenerate(type);
                                         }
                                       }}
