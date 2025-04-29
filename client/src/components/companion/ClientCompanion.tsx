@@ -226,135 +226,255 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       </CardHeader>
       
       <CardContent>
-        <Tabs defaultValue="content" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="content">Generated Content</TabsTrigger>
-            <TabsTrigger value="tasks">Tasks by Phase</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="tasks" className="mt-4">
-            <div className="space-y-6">
-              {/* Render tasks by project phase */}
-              {projectPhases.map(phase => {
-                const phaseTasks = tasksByPhase[phase] || [];
-                
-                if (phaseTasks.length === 0) return null;
-                
-                const isCurrentPhase = client.status === phase;
-                
-                return (
-                  <div key={phase} className="mb-6">
-                    <div className="flex items-center mb-2">
-                      <h3 className="text-lg font-medium">
-                        {phase}
-                      </h3>
-                      {isCurrentPhase && (
-                        <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 border-green-200">
-                          Current
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-3">
-                      {phaseTasks.map(({ type, task }) => (
-                        <CompanionTaskCard
-                          key={type}
-                          title={taskTypes[type as keyof typeof taskTypes].label}
-                          description={taskTypes[type as keyof typeof taskTypes].description}
-                          icon={taskTypes[type as keyof typeof taskTypes].icon}
-                          iconColor={taskTypes[type as keyof typeof taskTypes].iconColor}
-                          task={task}
-                          isGenerating={generateMutation.isPending}
-                          onGenerate={() => handleGenerate(type)}
-                          onRetry={() => handleRetry(type)}
-                          onSelect={handleTaskSelect}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="content" className="mt-4">
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Generated Content Library</h3>
-                <Badge variant="outline" className="bg-transparent">
-                  {tasks?.filter(task => task.content).length || 0} items
-                </Badge>
+        {selectedTask ? (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-1"
+                  onClick={() => setSelectedTask(null)}
+                >
+                  <ArrowRight className="h-4 w-4 rotate-180" />
+                  Back
+                </Button>
+                <div className={`p-2 rounded-md ${taskTypes[selectedTask.type as keyof typeof taskTypes]?.iconColor}`}>
+                  {taskTypes[selectedTask.type as keyof typeof taskTypes]?.icon}
+                </div>
+                <div>
+                  <h3 className="text-lg font-medium">
+                    {taskTypes[selectedTask.type as keyof typeof taskTypes]?.label}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Phase: {taskTypes[selectedTask.type as keyof typeof taskTypes]?.phase} • Generated: {new Date(selectedTask.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
-              
-              {tasks && tasks.filter(task => task.content).length > 0 ? (
-                <div className="space-y-6">
-                  {Object.entries(tasksByType)
-                    .filter(([_, task]) => task?.content)
-                    .map(([type, task]) => {
-                      const taskInfo = taskTypes[type as keyof typeof taskTypes];
-                      
-                      return (
-                        <Card key={type} className="overflow-hidden">
-                          <CardHeader className="bg-gray-50 p-4">
-                            <div className="flex justify-between items-center">
-                              <div className="flex items-center gap-2">
-                                <div className={`p-2 rounded-md ${taskInfo?.iconColor}`}>
-                                  {taskInfo?.icon}
-                                </div>
-                                <div>
-                                  <CardTitle className="text-base">{taskInfo?.label}</CardTitle>
-                                  <CardDescription className="text-xs">
-                                    Phase: {taskInfo?.phase} • Generated: {new Date(task!.createdAt).toLocaleDateString()}
-                                  </CardDescription>
-                                </div>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => {
-                                  if (task?.content) {
-                                    navigator.clipboard.writeText(task.content);
-                                    toast({
-                                      title: "Content copied",
-                                      description: "The content has been copied to your clipboard."
-                                    });
-                                  }
-                                }}>
-                                  Copy
-                                </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => setSelectedTask(selectedTask === task ? null : task!)}
-                                >
-                                  {selectedTask === task ? 'Hide' : 'View'} 
-                                </Button>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          
-                          <CardContent className="p-4 border-t">
-                            <div 
-                              className="bg-white rounded-md p-2 max-h-[400px] overflow-y-auto"
-                              dangerouslySetInnerHTML={{ __html: task!.content || "" }}
-                            ></div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <div className="bg-gray-50 rounded-md p-8 flex flex-col items-center">
-                    <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium text-gray-700">No content generated yet</h3>
-                    <p className="text-gray-500 mt-2 max-w-md">
-                      Generate content using the tasks in the Tasks tab to build your content library.
-                    </p>
-                  </div>
-                </div>
-              )}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  if (selectedTask.content) {
+                    navigator.clipboard.writeText(selectedTask.content);
+                    toast({
+                      title: "Content copied",
+                      description: "The content has been copied to your clipboard."
+                    });
+                  }
+                }}
+              >
+                Copy Content
+              </Button>
             </div>
-          </TabsContent>
-        </Tabs>
+            
+            <Separator />
+            
+            <div 
+              className="bg-white rounded-md p-4 max-h-[600px] overflow-y-auto border"
+              dangerouslySetInnerHTML={{ __html: selectedTask.content || "" }}
+            ></div>
+          </div>
+        ) : (
+          <Tabs defaultValue="tasks" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="tasks">Tasks by Phase</TabsTrigger>
+              <TabsTrigger value="content">Generated Content</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="tasks" className="mt-4">
+              <div className="space-y-6">
+                {/* Phase filter pills */}
+                <div className="flex flex-wrap gap-2 pb-2 border-b mb-6">
+                  <Button 
+                    variant={selectedPhase === null ? "default" : "outline"}
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => setSelectedPhase(null)}
+                  >
+                    All Tools
+                  </Button>
+                  
+                  {projectPhases.map(phase => {
+                    const isCurrentPhase = client.status === phase;
+                    const isSelected = selectedPhase === phase;
+                    
+                    return (
+                      <Button 
+                        key={phase}
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        className={`rounded-full ${isCurrentPhase ? "border-green-200" : ""}`}
+                        onClick={() => setSelectedPhase(phase)}
+                      >
+                        {phase}
+                        {isCurrentPhase && <div className="ml-1 w-2 h-2 rounded-full bg-green-500" />}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                {/* Display tasks from selected phase or all phases */}
+                {(selectedPhase ? [selectedPhase] : projectPhases).map(phase => {
+                  const phaseTasks = tasksByPhase[phase] || [];
+                  
+                  if (phaseTasks.length === 0) return null;
+                  
+                  const isCurrentPhase = client.status === phase;
+                  
+                  return (
+                    <div key={phase} className="mb-8">
+                      <div className="flex items-center mb-4">
+                        <h3 className="text-xl font-medium flex items-center gap-2">
+                          {phase}
+                          {isCurrentPhase && (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              Current Phase
+                            </Badge>
+                          )}
+                        </h3>
+                        <div className="ml-auto h-2 w-24 bg-gray-100 rounded-full">
+                          <div 
+                            className="h-2 bg-blue-500 rounded-full" 
+                            style={{ width: `${Math.min(100, Math.max(0, phaseTasks.filter(({task}) => task?.content).length / phaseTasks.length * 100))}%` }} 
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500 ml-2">
+                          {phaseTasks.filter(({task}) => task?.content).length}/{phaseTasks.length} Complete
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {phaseTasks.map(({ type, task }) => {
+                          const taskInfo = taskTypes[type as keyof typeof taskTypes];
+                          return (
+                            <Card key={type} className="overflow-hidden">
+                              <CardHeader className="p-4 pb-2">
+                                <div className="flex items-start">
+                                  <div className={`p-2 rounded-md ${taskInfo.iconColor} mr-3`}>
+                                    {taskInfo.icon}
+                                  </div>
+                                  <div className="flex-1">
+                                    <CardTitle className="text-base">{taskInfo.label}</CardTitle>
+                                    <CardDescription className="text-xs line-clamp-2">
+                                      {taskInfo.description}
+                                    </CardDescription>
+                                  </div>
+                                </div>
+                              </CardHeader>
+                              <CardContent className="p-4 pt-0">
+                                <div className="flex justify-end gap-2 mt-3">
+                                  <Button 
+                                    className="w-full" 
+                                    onClick={() => task?.content ? handleTaskSelect(task) : handleGenerate(type)}
+                                    disabled={generateMutation.isPending}
+                                  >
+                                    {task?.content ? 'View Content' : 'Generate'}
+                                    <ArrowRight className="h-4 w-4 ml-1" />
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {selectedPhase && tasksByPhase[selectedPhase]?.length === 0 && (
+                  <div className="py-8 text-center">
+                    <div className="bg-gray-50 rounded-md p-6 flex flex-col items-center">
+                      <AlertCircle className="h-10 w-10 text-gray-400 mb-3" />
+                      <h3 className="text-lg font-medium text-gray-700">No tasks in this phase</h3>
+                      <p className="text-gray-500 mt-2 max-w-md">
+                        There are no tasks available for the {selectedPhase} phase.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="content" className="mt-4">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Generated Content Library</h3>
+                  <Badge variant="outline" className="bg-transparent">
+                    {tasks?.filter(task => task.content).length || 0} items
+                  </Badge>
+                </div>
+                
+                {tasks && tasks.filter(task => task.content).length > 0 ? (
+                  <div className="space-y-6">
+                    {Object.entries(tasksByType)
+                      .filter(([_, task]) => task?.content)
+                      .map(([type, task]) => {
+                        const taskInfo = taskTypes[type as keyof typeof taskTypes];
+                        
+                        return (
+                          <Card key={type} className="overflow-hidden">
+                            <CardHeader className="bg-gray-50 p-4">
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  <div className={`p-2 rounded-md ${taskInfo?.iconColor}`}>
+                                    {taskInfo?.icon}
+                                  </div>
+                                  <div>
+                                    <CardTitle className="text-base">{taskInfo?.label}</CardTitle>
+                                    <CardDescription className="text-xs">
+                                      Phase: {taskInfo?.phase} • Generated: {new Date(task!.createdAt).toLocaleDateString()}
+                                    </CardDescription>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button variant="ghost" size="sm" onClick={() => {
+                                    if (task?.content) {
+                                      navigator.clipboard.writeText(task.content);
+                                      toast({
+                                        title: "Content copied",
+                                        description: "The content has been copied to your clipboard."
+                                      });
+                                    }
+                                  }}>
+                                    Copy
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => setSelectedTask(selectedTask === task ? null : task!)}
+                                  >
+                                    {selectedTask === task ? 'Hide' : 'View'} 
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            
+                            <CardContent className="p-4 border-t">
+                              <div 
+                                className="bg-white rounded-md p-2 max-h-[400px] overflow-y-auto"
+                                dangerouslySetInnerHTML={{ __html: task!.content || "" }}
+                              ></div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center">
+                    <div className="bg-gray-50 rounded-md p-8 flex flex-col items-center">
+                      <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-700">No content generated yet</h3>
+                      <p className="text-gray-500 mt-2 max-w-md">
+                        Generate content using the tasks in the Tasks tab to build your content library.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
       </CardContent>
       
       <CardFooter className="border-t pt-4 flex justify-between">
