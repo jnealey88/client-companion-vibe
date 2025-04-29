@@ -129,18 +129,24 @@ export default function CompanionTaskCard({
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
+        ) : isGenerating ? (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span className="text-sm font-medium">Generating...</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-1.5">
+              <div className="bg-primary h-1.5 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+            </div>
+            <span className="text-xs text-muted-foreground">This may take a moment</span>
+          </div>
         ) : (
           <Button
             variant="outline"
             size="sm"
-            disabled={isGenerating}
             onClick={onGenerate}
           >
-            {isGenerating ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <RotateCw className="h-4 w-4 mr-2" />
-            )}
+            <RotateCw className="h-4 w-4 mr-2" />
             Generate
           </Button>
         )}

@@ -33,36 +33,42 @@ export default function ProposalDialog({
   client,
   existingTask
 }: ProposalDialogProps) {
+  // Core state
   const [proposalContent, setProposalContent] = useState<string>("");
-  const [discoveryNotes, setDiscoveryNotes] = useState<string>("");
-  const [copied, setCopied] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
   const [editedContent, setEditedContent] = useState<string>("");
-  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [discoveryNotes, setDiscoveryNotes] = useState<string>("");
   const [isEdited, setIsEdited] = useState<boolean>(false);
   
-  // Loading state tracking
-  const [loadingStage, setLoadingStage] = useState<string>("");
-  const [loadingProgress, setLoadingProgress] = useState<number>(0);
+  // UI state
+  const [loading, setLoading] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
   
-  // Payment information from the task metadata (if available)
+  // Loading state
+  const [loadingProgress, setLoadingProgress] = useState<number>(0);
+  const [loadingStage, setLoadingStage] = useState<string>("");
+  
+  // Task data
+  const [generatedTask, setGeneratedTask] = useState<CompanionTask | undefined>(undefined);
+  
+  // Payment information
   const [projectValue, setProjectValue] = useState<number>(client.projectValue || 5000);
   const [carePlanMonthly, setCarePlanMonthly] = useState<number>(99);
   const [productsMonthly, setProductsMonthly] = useState<number>(29);
 
+  // Hooks
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const [generatedTask, setGeneratedTask] = useState<CompanionTask | undefined>(undefined);
   
   // Loading stage descriptions
   const loadingStages = [
-    "Analyzing client requirements",
-    "Researching industry standards",
-    "Calculating project costs",
-    "Creating project timeline",
-    "Preparing deliverables",
-    "Finalizing proposal"
+    "Analyzing client requirements...",
+    "Researching industry standards...",
+    "Calculating project pricing...",
+    "Identifying recommended products...",
+    "Generating proposal content...",
+    "Finalizing your proposal..."
   ];
 
   // Fetch the task content and metadata if an existing task was provided
