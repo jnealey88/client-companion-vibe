@@ -73,7 +73,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   // Create mutation for generating content
   const generateMutation = useMutation({
     mutationFn: async ({ clientId, taskType }: { clientId: number, taskType: string }) => {
-      return apiRequest(`/api/clients/${clientId}/generate/${taskType}`, "POST");
+      return apiRequest("POST", `/api/clients/${clientId}/generate/${taskType}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
