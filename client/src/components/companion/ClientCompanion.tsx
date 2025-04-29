@@ -34,6 +34,16 @@ import { Client, CompanionTask, statusOptions } from "@shared/schema";
 import CompanionTaskCard from "./CompanionTaskCard";
 import ScheduleDiscoveryDialog from "./ScheduleDiscoveryDialog";
 import ProposalDialog from "./ProposalDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // Define task type information with project phase categorization
 const taskTypes = {
@@ -162,6 +172,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [proposalTask, setProposalTask] = useState<CompanionTask | undefined>(undefined);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<CompanionTask | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -253,14 +265,26 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     generateMutation.mutate({ clientId: client.id, taskType });
   };
   
-  // Handle deletion of content
+  // Handle delete request - open confirmation dialog
   const handleDelete = (task: CompanionTask) => {
-    deleteMutation.mutate(task.id);
+    setTaskToDelete(task);
+    setDeleteDialogOpen(true);
+  };
+  
+  // Handle confirmed deletion
+  const confirmDelete = () => {
+    if (!taskToDelete) return;
+    
+    deleteMutation.mutate(taskToDelete.id);
     
     // If this was a proposal task, make sure to reset the proposal task state
-    if (task.type === 'proposal' && proposalTask?.id === task.id) {
+    if (taskToDelete.type === 'proposal' && proposalTask?.id === taskToDelete.id) {
       setProposalTask(undefined);
     }
+    
+    // Close dialog and reset taskToDelete
+    setDeleteDialogOpen(false);
+    setTaskToDelete(null);
   };
   
   // Group tasks by type for easier display
@@ -309,6 +333,37 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   
   return (
     <Card className="h-full">
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this content?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The content will be permanently deleted.
+              {taskToDelete ? (
+                <div className="mt-2 p-2 bg-gray-50 rounded border">
+                  <div className="font-medium">
+                    {taskTypes[taskToDelete.type as keyof typeof taskTypes]?.label}
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Generated on {new Date(taskToDelete.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       {/* Discovery call scheduling dialog */}
       <ScheduleDiscoveryDialog 
         open={isDiscoveryDialogOpen}
@@ -616,7 +671,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => {
-                                      if (type === 'schedule_discovery' || type === 'company_analysis') {
+                                      if (type === 'schedule_discovery') {
                                         setIsDiscoveryDialogOpen(true);
                                       } else if (type === 'proposal' && task) {
                                         setProposalTask(task);
