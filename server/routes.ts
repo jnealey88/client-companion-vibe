@@ -332,18 +332,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Generate proposal content and pricing data
             const proposalResponse = await generateProposal(client, companyAnalysis, discoveryNotes);
             
-            // If the response has both content and pricing data
+            // At this point, proposalResponse should be an object with content and pricingData
             if (typeof proposalResponse === 'object' && proposalResponse.content) {
+              // Set the content for the task
               content = proposalResponse.content;
               
-              // Store pricing data in task metadata
+              // If we have pricing data, set up the metadata
               if (proposalResponse.pricingData) {
-                // Prepare metadata for later use
-                newTask.metadata = JSON.stringify({
-                  projectTotalFee: proposalResponse.pricingData.projectTotalFee || client.projectValue || 0,
-                  carePlanMonthly: proposalResponse.pricingData.carePlanMonthly || 0,
-                  productsMonthlyTotal: proposalResponse.pricingData.productsMonthlyTotal || 0
+                // Update the task with content and metadata in one operation
+                await storage.updateCompanionTask(newTask.id, {
+                  content,
+                  metadata: JSON.stringify({
+                    projectTotalFee: proposalResponse.pricingData.projectTotalFee || client.projectValue || 0,
+                    carePlanMonthly: proposalResponse.pricingData.carePlanMonthly || 0,
+                    productsMonthlyTotal: proposalResponse.pricingData.productsMonthlyTotal || 0
+                  }),
+                  status: "completed"
                 });
+                
+                // Get the updated task and return it
+                const updatedTask = await storage.getCompanionTask(newTask.id);
+                return res.json(updatedTask);
               }
             } else {
               // Handle the case where the response is a string (for backward compatibility)
