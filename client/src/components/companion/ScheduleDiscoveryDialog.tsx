@@ -97,6 +97,9 @@ Web Design Consultant`;
         htmlVersion = htmlVersion.replace(/<li>(.*?)<\/li>/g, '<li style="margin-bottom: 8px;">$1</li>');
       }
       
+      // Format **bold** text
+      htmlVersion = htmlVersion.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
       // Replace placeholder links with actual links
       htmlVersion = htmlVersion.replace('[Analysis Report Link]', companyAnalysisTask 
           ? `<a href="${analysisLink}" style="color: #0066cc; text-decoration: underline; font-weight: 600;">View Business Analysis Report</a>` 
@@ -105,14 +108,11 @@ Web Design Consultant`;
       htmlVersion = htmlVersion.replace('[Booking Calendar Link]', 
         `<a href="${bookingUrl}" style="display: inline-block; background-color: #0066cc; color: white; padding: 10px 16px; text-decoration: none; border-radius: 4px; font-weight: 500; margin: 8px 0;">Schedule Discovery Call</a>`);
       
-      // Add styled email container
+      // Add styled email container with simpler styling for the integrated view
       setEmailHtml(`
-        <div style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; border-radius: 8px; padding: 20px; border: 1px solid #eaeaea;">
-          <div style="background-color: white; border-radius: 6px; padding: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; padding: 5px;">
+          <div style="background-color: white; padding: 15px;">
             <p>${htmlVersion}</p>
-          </div>
-          <div style="text-align: center; font-size: 12px; color: #999; margin-top: 15px;">
-            This is a preview of how your email will appear to the recipient
           </div>
         </div>
       `);
@@ -155,36 +155,128 @@ Web Design Consultant`;
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-sm font-medium">Email Content</h3>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopy}
-                    className="flex items-center gap-1 h-8"
-                  >
-                    {copied ? (
-                      <>
-                        <CheckCircle2 className="h-4 w-4" /> Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-4 w-4" /> Copy
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSend}
-                    className="flex items-center gap-1 h-8"
-                  >
-                    <Send className="h-4 w-4" /> Send
-                  </Button>
-                </div>
+          <div className="flex justify-between items-center border-b pb-3">
+            <h3 className="text-sm font-medium">Email to {client.contactName}</h3>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopy}
+                className="flex items-center gap-1 h-8"
+              >
+                {copied ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" /> Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" /> Copy
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSend}
+                className="flex items-center gap-1 h-8"
+              >
+                <Send className="h-4 w-4" /> Send
+              </Button>
+            </div>
+          </div>
+          
+          {/* WYSIWYG Controls */}
+          <div className="flex items-center gap-2 bg-gray-50 p-2 rounded-t-md border border-b-0">
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => {
+                  const selectedText = window.getSelection()?.toString() || '';
+                  if (selectedText) {
+                    const updatedContent = emailContent.replace(
+                      selectedText,
+                      `**${selectedText}**`
+                    );
+                    setEmailContent(updatedContent);
+                  }
+                }}
+                title="Bold"
+              >
+                <span className="font-bold">B</span>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => {
+                  // Add bullet point at cursor position or to selection
+                  const textarea = document.querySelector('textarea');
+                  const selectionStart = textarea?.selectionStart || 0;
+                  const selectionEnd = textarea?.selectionEnd || 0;
+                  const selectedText = emailContent.substring(selectionStart, selectionEnd);
+                  
+                  if (selectedText) {
+                    // Add bullets to each line in selection
+                    const lines = selectedText.split('\n');
+                    const bulletedLines = lines.map(line => `• ${line}`).join('\n');
+                    const updatedContent = 
+                      emailContent.substring(0, selectionStart) + 
+                      bulletedLines + 
+                      emailContent.substring(selectionEnd);
+                    setEmailContent(updatedContent);
+                  } else {
+                    // Add a single bullet at cursor position
+                    const updatedContent = 
+                      emailContent.substring(0, selectionStart) + 
+                      '• ' + 
+                      emailContent.substring(selectionStart);
+                    setEmailContent(updatedContent);
+                  }
+                }}
+                title="Bullet List"
+              >
+                <span>•</span>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => {
+                  const updatedContent = emailContent + '\n[Analysis Report Link]';
+                  setEmailContent(updatedContent);
+                }}
+                title="Insert Analysis Link"
+              >
+                <span className="text-xs">Analysis Link</span>
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2"
+                onClick={() => {
+                  const updatedContent = emailContent + '\n[Booking Calendar Link]';
+                  setEmailContent(updatedContent);
+                }}
+                title="Insert Booking Link"
+              >
+                <span className="text-xs">Booking Link</span>
+              </Button>
+            </div>
+            
+            <div className="ml-auto">
+              <div className="text-xs text-gray-500">
+                Live Preview
               </div>
+            </div>
+          </div>
+          
+          {/* Combined Editor and Preview */}
+          <div className="border rounded-b-md bg-white overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2">
               <Textarea
                 value={emailContent}
                 onChange={(e) => {
@@ -201,6 +293,9 @@ Web Design Consultant`;
                   
                   // Replace remaining single line breaks with <br>
                   htmlVersion = htmlVersion.replace(/\n/g, '<br>');
+                  
+                  // Format **bold** text
+                  htmlVersion = htmlVersion.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                   
                   // Find and wrap the bullet list in a ul element with styling
                   htmlVersion = htmlVersion.replace(/<li>(.*?)<\/li>(?:<br>)*<li>/g, '<li>$1</li><li>');
@@ -221,39 +316,33 @@ Web Design Consultant`;
                   
                   // Add styled email container
                   setEmailHtml(`
-                    <div style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; border-radius: 8px; padding: 20px; border: 1px solid #eaeaea;">
-                      <div style="background-color: white; border-radius: 6px; padding: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; padding: 5px;">
+                      <div style="background-color: white; padding: 15px;">
                         <p>${htmlVersion}</p>
-                      </div>
-                      <div style="text-align: center; font-size: 12px; color: #999; margin-top: 15px;">
-                        This is a preview of how your email will appear to the recipient
                       </div>
                     </div>
                   `);
                 }}
-                className="h-[350px] resize-none font-mono text-sm"
-                placeholder="Email content..."
+                className="h-[350px] resize-none text-sm border-0 rounded-none border-r focus-visible:ring-0 focus-visible:ring-offset-0"
+                placeholder="Type your email here..."
               />
-              <div className="text-xs text-gray-500">
-                <p className="font-medium mb-1">Template Tags:</p>
-                <ul className="list-disc pl-5 space-y-1">
-                  <li><code>[Analysis Report Link]</code> - Will be replaced with a link to your company analysis</li>
-                  <li><code>[Booking Calendar Link]</code> - Will be replaced with your booking calendar link</li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-sm font-medium">Preview</h3>
-                <div className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs">
-                  <Calendar className="h-3 w-3" /> Email Preview
-                </div>
-              </div>
+              
               <div
-                className="border rounded-md p-4 bg-white overflow-y-auto h-[400px]"
+                className="h-[350px] overflow-y-auto p-4 border-l"
                 dangerouslySetInnerHTML={{ __html: emailHtml }}
               />
+            </div>
+          </div>
+          
+          <div className="flex justify-between items-center text-xs text-gray-500 pt-1">
+            <div>
+              <span className="font-medium">Template Tags:</span>{' '}
+              <code className="bg-gray-100 px-1 py-0.5 rounded">[Analysis Report Link]</code>{' '}
+              <code className="bg-gray-100 px-1 py-0.5 rounded">[Booking Calendar Link]</code>
+            </div>
+            <div className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              <span>Live email preview</span>
             </div>
           </div>
         </div>
