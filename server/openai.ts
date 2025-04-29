@@ -778,10 +778,30 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
     // Convert the JSON to an HTML report format for better visualization
     const htmlReport = generateHtmlReport(analysisJson, clientInfo);
     
-    return htmlReport;
+    // Generate separate strategic recommendations that will be easier to extract
+    console.log("Generating strategic recommendations...");
+    const strategicRecommendations = await generateStrategicRecommendations(clientInfo);
+    
+    // Return both the HTML content and the structured recommendations
+    return {
+      content: htmlReport,
+      metadata: JSON.stringify({
+        recommendations: strategicRecommendations
+      })
+    };
   } catch (error) {
     console.error("Error in company analysis generation pipeline:", error);
-    throw new Error("Failed to generate complete company analysis");
+    return {
+      content: "Failed to generate company analysis. Please try again later.",
+      metadata: JSON.stringify({
+        recommendations: {
+          shortTerm: [],
+          mediumTerm: [],
+          longTerm: [],
+          priorityActions: ""
+        }
+      })
+    };
   }
 }
 
