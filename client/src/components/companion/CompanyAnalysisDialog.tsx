@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,12 @@ import { useToast } from "@/hooks/use-toast";
 import { EditorJs } from "@/components/ui/editor-js";
 import StrategicActionCards from "./StrategicActionCards";
 import { Separator } from "@/components/ui/separator";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CompanyAnalysisDialogProps {
   open: boolean;
@@ -43,6 +49,10 @@ export default function CompanyAnalysisDialog({
   // UI state
   const [loading, setLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [selectedRecommendation, setSelectedRecommendation] = useState<{
+    content: string;
+    type: "shortTerm" | "mediumTerm" | "longTerm";
+  } | null>(null);
   
   // Loading state
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
@@ -335,29 +345,56 @@ export default function CompanyAnalysisDialog({
     localStorage.setItem('selectedRecommendation', recommendation);
     localStorage.setItem('recommendationType', type);
     
-    // Open the proposal dialog
-    if (client && client.id && onTaskGenerated) {
-      const dummyTask = { 
-        type: 'proposal',
-        clientId: client.id,
-        content: null,
-        metadata: JSON.stringify({
-          from_analysis: true,
-          recommendations: {
-            type,
-            content: recommendation
-          }
-        })
-      } as any;
-      
-      // Close current dialog
-      onOpenChange(false);
-      
-      // Open proposal dialog
-      setTimeout(() => {
-        onTaskGenerated(dummyTask);
-      }, 500);
+    // Save the selected recommendation to state
+    setSelectedRecommendation({
+      content: recommendation,
+      type: type
+    });
+    
+    // Show success toast with helpful information
+    const typeLabel = 
+      type === 'shortTerm' ? 'short-term' : 
+      type === 'mediumTerm' ? 'medium-term' : 'long-term';
+    
+    toast({
+      title: "Recommendation saved",
+      description: `${typeLabel} recommendation saved! Click "Continue to Proposal" when ready.`,
+    });
+  };
+  
+  // Handle clicking the "Continue to Proposal" button after selecting a recommendation
+  const handleUseInProposal = () => {
+    if (!selectedRecommendation) {
+      toast({
+        title: "No recommendation selected",
+        description: "Please select a recommendation from the cards first.",
+        variant: "destructive"
+      });
+      return;
     }
+    
+    // Close current dialog
+    onOpenChange(false);
+    
+    // Delay opening proposal dialog to avoid UI issues
+    setTimeout(() => {
+      if (client && client.id && onTaskGenerated) {
+        const dummyTask = { 
+          type: 'proposal',
+          clientId: client.id,
+          content: null,
+          metadata: JSON.stringify({
+            from_analysis: true,
+            recommendations: {
+              type: selectedRecommendation.type,
+              content: selectedRecommendation.content
+            }
+          })
+        } as any;
+        
+        onTaskGenerated(dummyTask);
+      }
+    }, 500);
   };
 
   // Cleanup function when dialog is closed
@@ -502,14 +539,58 @@ export default function CompanyAnalysisDialog({
               recommendations.longTerm.length > 0) && (
               <div className="mt-6">
                 <Separator className="my-4" />
-                <h3 className="text-lg font-semibold mb-4">Strategic Recommendations</h3>
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Strategic Recommendations</h3>
+                  
+                  {selectedRecommendation && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center text-sm text-green-600">
+                            <CheckCircle2 className="h-4 w-4 mr-1" />
+                            Recommendation selected
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">You've selected a {selectedRecommendation.type === 'shortTerm' ? 'short-term' : selectedRecommendation.type === 'mediumTerm' ? 'medium-term' : 'long-term'} recommendation.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+                
                 <p className="text-sm text-muted-foreground mb-4">
-                  Click on any recommendation card to use it in a proposal for {client.name}.
+                  Select a recommendation card to use in your proposal for {client.name}.
                 </p>
+                
                 <StrategicActionCards 
                   recommendations={recommendations}
                   onSelectRecommendation={handleRecommendationSelect}
                 />
+                
+                {selectedRecommendation && (
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="font-medium">Selected recommendation:</h4>
+                        <p className="text-sm text-blue-700 mt-1">
+                          {selectedRecommendation.type === 'shortTerm' ? 'Short-term' : 
+                          selectedRecommendation.type === 'mediumTerm' ? 'Medium-term' : 
+                          'Long-term'} recommendation
+                        </p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={() => setSelectedRecommendation(null)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>
@@ -522,7 +603,18 @@ export default function CompanyAnalysisDialog({
           
           {!loading && existingTask?.content && (
             <div className="flex gap-2">
-              {!isEdited && (
+              {selectedRecommendation && !isEdited && (
+                <Button 
+                  variant="default"
+                  onClick={handleUseInProposal}
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Continue to Proposal
+                </Button>
+              )}
+              
+              {!isEdited && !selectedRecommendation && (
                 <Button 
                   variant="outline" 
                   onClick={handleSend}
@@ -533,6 +625,7 @@ export default function CompanyAnalysisDialog({
               )}
               
               <Button 
+                variant={selectedRecommendation ? "outline" : "default"}
                 onClick={() => onOpenChange(false)}
               >
                 Close
