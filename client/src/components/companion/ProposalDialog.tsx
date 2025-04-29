@@ -264,12 +264,13 @@ export default function ProposalDialog({
     }
   });
 
-  // Handle form submission
+  // With the new in-card loading state, we don't need to generate from the dialog
+  // This handleGenerate function is kept for compatibility but will redirect to in-card loading
   const handleGenerate = () => {
-    generateProposalMutation.mutate({ 
-      clientId: client.id,
-      discoveryNotes
-    });
+    // The generation should now happen in the parent component using the in-card loading state
+    console.log('Generation should be handled by the parent component');
+    // Close the dialog and let the parent component handle generation
+    onOpenChange(false);
   };
 
   // Handle copy to clipboard

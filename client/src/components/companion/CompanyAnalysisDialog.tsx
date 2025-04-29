@@ -216,11 +216,12 @@ export default function CompanyAnalysisDialog({
     }
   });
 
-  // Handle form submission
+  // With the new in-card loading state, we don't need to generate from the dialog
+  // This handleGenerate function is kept for compatibility but should not be used anymore
   const handleGenerate = () => {
-    generateAnalysisMutation.mutate({ 
-      clientId: client.id
-    });
+    // The generation should now happen in the parent component using the in-card loading state
+    console.log('Generation should be handled by the parent component');
+    onOpenChange(false);
   };
 
   // Handle content editing

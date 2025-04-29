@@ -203,10 +203,100 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     }
   }, [tasks]);
   
+  // State to track which task types are currently generating
+  const [generatingTasks, setGeneratingTasks] = useState<Record<string, boolean>>({});
+  
+  // Loading states for task generation
+  const [generationProgress, setGenerationProgress] = useState<Record<string, number>>({});
+  const [generationStage, setGenerationStage] = useState<Record<string, string>>({});
+  
+  // Task generation loading stages
+  const loadingStages: Record<string, string[]> = {
+    company_analysis: [
+      "Analyzing client information...",
+      "Researching industry competitors...",
+      "Identifying target audience...",
+      "Analyzing website performance...",
+      "Examining SEO positioning...",
+      "Generating business recommendations...",
+      "Finalizing company analysis..."
+    ],
+    proposal: [
+      "Analyzing client requirements...",
+      "Researching industry standards...",
+      "Calculating project pricing...",
+      "Identifying recommended products...",
+      "Generating proposal content...",
+      "Finalizing your proposal..."
+    ],
+    default: [
+      "Gathering information...",
+      "Processing data...",
+      "Generating content...",
+      "Finalizing results..."
+    ]
+  };
+
   // Create mutation for generating content
   const generateMutation = useMutation({
     mutationFn: async ({ clientId, taskType }: { clientId: number, taskType: string }) => {
-      return apiRequest("POST", `/api/clients/${clientId}/generate/${taskType}`);
+      // Start tracking this task generation
+      setGeneratingTasks(prev => ({...prev, [taskType]: true}));
+      
+      // Initialize progress and stage
+      setGenerationProgress(prev => ({...prev, [taskType]: 0}));
+      
+      const stages = loadingStages[taskType] || loadingStages.default;
+      setGenerationStage(prev => ({...prev, [taskType]: stages[0]}));
+      
+      // Simulate progress updates
+      const intervalId = setInterval(() => {
+        setGenerationProgress(prev => {
+          const currentProgress = prev[taskType] || 0;
+          if (currentProgress >= 95) {
+            clearInterval(intervalId);
+            return prev;
+          }
+          
+          const newProgress = Math.min(95, currentProgress + 1);
+          
+          // Update stage based on progress
+          if (newProgress % 25 === 0) {
+            const stageIndex = Math.floor(newProgress / 25);
+            if (stages[stageIndex]) {
+              setGenerationStage(prev => ({...prev, [taskType]: stages[stageIndex]}));
+            }
+          }
+          
+          return {...prev, [taskType]: newProgress};
+        });
+      }, 300);
+      
+      try {
+        const response = await apiRequest("POST", `/api/clients/${clientId}/generate/${taskType}`);
+        // Set progress to 100% on completion
+        setGenerationProgress(prev => ({...prev, [taskType]: 100}));
+        setGenerationStage(prev => ({...prev, [taskType]: "Complete!"}));
+        
+        // Short delay to show completion before removing from tracking
+        setTimeout(() => {
+          setGeneratingTasks(prev => {
+            const newState = {...prev};
+            delete newState[taskType];
+            return newState;
+          });
+        }, 1000);
+        
+        return response;
+      } catch (error) {
+        // Clear this task from tracking on error
+        setGeneratingTasks(prev => {
+          const newState = {...prev};
+          delete newState[taskType];
+          return newState;
+        });
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
@@ -591,39 +681,75 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                 </div>
                               </CardHeader>
                               <CardContent className="p-4 pt-0">
-                                <div className="flex justify-end gap-2 mt-3">
-                                  <Button 
-                                    className="w-full" 
-                                    onClick={() => {
-                                      if (type === 'schedule_discovery') {
-                                        setIsDiscoveryDialogOpen(true);
-                                      } else if (type === 'proposal') {
-                                        // Open proposal dialog with existing task if available
-                                        setProposalTask(task);
-                                        setIsProposalDialogOpen(true);
-                                      } else if (type === 'company_analysis') {
-                                        // Open company analysis dialog with existing task if available
-                                        setCompanyAnalysisTask(task);
-                                        setIsCompanyAnalysisDialogOpen(true);
-                                      } else if (task?.content) {
-                                        handleTaskSelect(task);
-                                      } else {
-                                        handleGenerate(type);
-                                      }
-                                    }}
-                                    disabled={generateMutation.isPending}
-                                  >
-                                    {type === 'schedule_discovery' 
-                                      ? 'Schedule Call'
-                                      : type === 'proposal' && task?.content
-                                        ? 'Edit Proposal'
-                                      : type === 'company_analysis' && task?.content
-                                        ? 'View Analysis'
-                                      : task?.content 
-                                        ? 'View Content' 
-                                        : 'Generate'}
-                                    <ArrowRight className="h-4 w-4 ml-1" />
-                                  </Button>
+                                <div className="flex flex-col gap-2 mt-3">
+                                  {/* Loading state with progress */}
+                                  {generatingTasks[type] && (
+                                    <div className="space-y-2 p-3 border rounded-md bg-background">
+                                      <div className="text-sm font-medium text-center text-primary">
+                                        {generationStage[type] || "Generating..."}
+                                      </div>
+                                      
+                                      <div className="w-full bg-muted rounded-full h-2">
+                                        <div 
+                                          className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out" 
+                                          style={{ 
+                                            width: `${generationProgress[type] || 0}%` 
+                                          }}
+                                        />
+                                      </div>
+                                      
+                                      <div className="flex justify-between text-xs text-muted-foreground">
+                                        <span>Research</span>
+                                        <span>Analysis</span>
+                                        <span>Completion</span>
+                                      </div>
+                                      
+                                      <p className="text-xs text-center text-muted-foreground mt-1">
+                                        {/* Type-specific loading messages */}
+                                        {type === 'company_analysis' 
+                                          ? "Analyzing business data and website performance..."
+                                          : type === 'proposal'
+                                            ? "Creating proposal with pricing recommendations..."
+                                            : "Generating content, please wait..."}
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Button - only show if not currently generating */}
+                                  {!generatingTasks[type] && (
+                                    <Button 
+                                      className="w-full" 
+                                      onClick={() => {
+                                        if (type === 'schedule_discovery') {
+                                          setIsDiscoveryDialogOpen(true);
+                                        } else if (type === 'proposal') {
+                                          // Open proposal dialog with existing task if available
+                                          setProposalTask(task);
+                                          setIsProposalDialogOpen(true);
+                                        } else if (type === 'company_analysis') {
+                                          // Open company analysis dialog with existing task if available
+                                          setCompanyAnalysisTask(task);
+                                          setIsCompanyAnalysisDialogOpen(true);
+                                        } else if (task?.content) {
+                                          handleTaskSelect(task);
+                                        } else {
+                                          handleGenerate(type);
+                                        }
+                                      }}
+                                      disabled={Object.keys(generatingTasks).length > 0}
+                                    >
+                                      {type === 'schedule_discovery' 
+                                        ? 'Schedule Call'
+                                        : type === 'proposal' && task?.content
+                                          ? 'Edit Proposal'
+                                        : type === 'company_analysis' && task?.content
+                                          ? 'View Analysis'
+                                        : task?.content 
+                                          ? 'View Content' 
+                                          : 'Generate'}
+                                      <ArrowRight className="h-4 w-4 ml-1" />
+                                    </Button>
+                                  )}
                                 </div>
                               </CardContent>
                             </Card>
