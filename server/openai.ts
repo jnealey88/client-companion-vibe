@@ -593,73 +593,216 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
       return "<ul>" + arr.map(item => `<li>${item}</li>`).join("") + "</ul>";
     };
     
-    // Create keyword table
+    // Create enhanced keyword analysis visualization
     const keywordTable = () => {
       if (!analysisData.keywordAnalysis.recommendedKeywords || analysisData.keywordAnalysis.recommendedKeywords.length === 0) {
-        return "<p>No keyword data available</p>";
+        return `<div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center;">
+                  <p>No keyword data available. This could be due to API connectivity issues.</p>
+                </div>`;
       }
       
+      // Helper function to generate volume indicator
+      const getVolumeIndicator = (volume: string) => {
+        if (volume === "Unknown" || !volume) return "";
+        
+        const volumeNum = parseInt(volume.replace(/,/g, ""));
+        
+        if (isNaN(volumeNum)) return "";
+        
+        if (volumeNum > 10000) {
+          return `<span style="display: inline-block; width: 50px; text-align: center; background-color: #4CAF50; color: white; padding: 3px; border-radius: 3px; font-size: 12px;">HIGH</span>`;
+        } else if (volumeNum > 1000) {
+          return `<span style="display: inline-block; width: 50px; text-align: center; background-color: #FFC107; color: black; padding: 3px; border-radius: 3px; font-size: 12px;">MED</span>`;
+        } else {
+          return `<span style="display: inline-block; width: 50px; text-align: center; background-color: #F44336; color: white; padding: 3px; border-radius: 3px; font-size: 12px;">LOW</span>`;
+        }
+      };
+      
+      // Helper function to generate difficulty indicator
+      const getDifficultyIndicator = (difficulty: string) => {
+        if (difficulty === "Unknown" || !difficulty) return "";
+        
+        const difficultyNum = parseInt(difficulty);
+        
+        if (isNaN(difficultyNum)) return "";
+        
+        if (difficultyNum > 70) {
+          return `<span style="display: inline-block; width: 50px; text-align: center; background-color: #F44336; color: white; padding: 3px; border-radius: 3px; font-size: 12px;">HARD</span>`;
+        } else if (difficultyNum > 40) {
+          return `<span style="display: inline-block; width: 50px; text-align: center; background-color: #FFC107; color: black; padding: 3px; border-radius: 3px; font-size: 12px;">MED</span>`;
+        } else {
+          return `<span style="display: inline-block; width: 50px; text-align: center; background-color: #4CAF50; color: white; padding: 3px; border-radius: 3px; font-size: 12px;">EASY</span>`;
+        }
+      };
+      
+      // Helper function to get action badge
+      const getActionBadge = (recommendation: string) => {
+        if (!recommendation || recommendation === "Research") return "";
+        
+        if (recommendation.includes("Maintain")) {
+          return `<span style="display: inline-block; background-color: #2ecc71; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; margin-left: 5px;">MAINTAIN</span>`;
+        } else if (recommendation.includes("Optimize")) {
+          return `<span style="display: inline-block; background-color: #3498db; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; margin-left: 5px;">OPTIMIZE</span>`;
+        } else if (recommendation.includes("Create")) {
+          return `<span style="display: inline-block; background-color: #e74c3c; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; margin-left: 5px;">CREATE</span>`;
+        }
+        
+        return "";
+      };
+      
+      // Helper function to visualize ranking position
+      const getRankingVisualization = (position: string) => {
+        if (!position || position === "Unknown" || position.includes("Not")) {
+          return `<div style="width: 200px; height: 20px; background-color: #f2f2f2; border-radius: 10px; position: relative;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; text-align: center; line-height: 20px; font-size: 12px;">Not Ranked</div>
+                  </div>`;
+        }
+        
+        const rankNum = parseInt(position.replace("Ranked #", ""));
+        
+        if (isNaN(rankNum)) return "";
+        
+        let color = "#e74c3c"; // Red (bad rank)
+        let width = "100%";
+        
+        if (rankNum <= 3) {
+          color = "#27ae60"; // Green (excellent rank)
+          width = "20%";
+        } else if (rankNum <= 10) {
+          color = "#2ecc71"; // Light green (good rank)
+          width = "40%";
+        } else if (rankNum <= 20) {
+          color = "#f39c12"; // Orange (ok rank)
+          width = "60%";
+        } else if (rankNum <= 50) {
+          color = "#e67e22"; // Dark orange (poor rank)
+          width = "80%";
+        }
+        
+        return `<div style="width: 200px; height: 20px; background-color: #f2f2f2; border-radius: 10px; overflow: hidden;">
+                  <div style="width: ${width}; height: 100%; background-color: ${color}; border-radius: 10px 0 0 10px; position: relative;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; text-align: center; line-height: 20px; color: white; font-weight: bold; text-shadow: 0 0 2px rgba(0,0,0,0.5); font-size: 12px;">${position}</div>
+                  </div>
+                </div>`;
+      };
+      
       return `
-        <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
-          <tr style="background-color: #f2f2f2;">
-            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Keyword</th>
-            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Search Volume</th>
-            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Difficulty</th>
-            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Client Position</th>
-            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Recommendation</th>
-          </tr>
+        <div style="margin-top: 15px;">
           ${analysisData.keywordAnalysis.recommendedKeywords.map((kw: any) => {
-            // Determine appropriate styling based on position
-            const positionStyle = kw.clientPosition && kw.clientPosition.includes("Not") ? 
-              "color: #e74c3c;" : // Red for not ranked
-              kw.clientPosition && kw.clientPosition.includes("Ranked #") && parseInt(kw.clientPosition.replace("Ranked #", "")) <= 10 ?
-                "color: #2ecc71; font-weight: bold;" : // Green bold for top 10
-                "color: #f39c12;"; // Orange for others
-              
             return `
-              <tr>
-                <td style="padding: 8px; text-align: left; border: 1px solid #ddd;"><b>${kw.keyword}</b></td>
-                <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.volume || "Unknown"}</td>
-                <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.difficulty || "Unknown"}</td>
-                <td style="padding: 8px; text-align: left; border: 1px solid #ddd; ${positionStyle}">${kw.clientPosition || "Unknown"}</td>
-                <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.recommendation || "Research"}</td>
-              </tr>
+              <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <h4 style="margin: 0; color: #2c3e50; font-size: 18px;">${kw.keyword} ${getActionBadge(kw.recommendation)}</h4>
+                  <div>
+                    ${getVolumeIndicator(kw.volume)}
+                    <span style="margin: 0 5px;"></span>
+                    ${getDifficultyIndicator(kw.difficulty)}
+                  </div>
+                </div>
+                
+                <div style="display: flex; flex-wrap: wrap; margin-bottom: 10px;">
+                  <div style="flex: 1; min-width: 200px; margin-right: 20px;">
+                    <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">Search Volume</div>
+                    <div style="font-weight: bold; color: #2c3e50;">${kw.volume || "Data Unavailable"}</div>
+                  </div>
+                  <div style="flex: 1; min-width: 200px;">
+                    <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">Difficulty</div>
+                    <div style="font-weight: bold; color: #2c3e50;">${kw.difficulty || "Data Unavailable"}</div>
+                  </div>
+                </div>
+                
+                <div style="margin-top: 15px;">
+                  <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">Ranking Position</div>
+                  ${getRankingVisualization(kw.clientPosition)}
+                </div>
+                
+                <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd;">
+                  <h5 style="margin: 0 0 5px 0; color: #3498db;">Recommendation</h5>
+                  <p style="margin: 0; color: #2c3e50;">${kw.recommendation || "Perform keyword research to determine opportunity"}</p>
+                </div>
+              </div>
             `;
           }).join("")}
-        </table>
+        </div>
+        
+        <div style="background-color: #e8f4fd; padding: 15px; border-radius: 5px; margin-top: 20px; display: flex; align-items: center;">
+          <div style="flex-shrink: 0; margin-right: 15px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </div>
+          <div>
+            <div style="font-weight: bold; color: #2c3e50; margin-bottom: 5px;">Data Source Information</div>
+            <p style="margin: 0; color: #7f8c8d; font-size: 14px;">
+              Keyword data is sourced from DataForSEO API. 
+              "Not Ranked" means the client's website does not appear in the top 100 search results for this keyword.
+            </p>
+          </div>
+        </div>
       `;
     };
     
-    // Create competitor table
+    // Create enhanced competitor analysis visualization
     const competitorTable = () => {
       if (!analysisData.competitorsAnalysis.mainCompetitors || analysisData.competitorsAnalysis.mainCompetitors.length === 0) {
-        return "<p>No competitor data available</p>";
+        return `<div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center;">
+                  <p>No competitor data available</p>
+                </div>`;
       }
       
       return `
-        <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
-          <tr style="background-color: #f2f2f2;">
-            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Competitor</th>
-            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Strengths</th>
-            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Weaknesses</th>
-          </tr>
+        <div style="margin-top: 15px;">
           ${analysisData.competitorsAnalysis.mainCompetitors.map((comp: any) => `
-            <tr>
-              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${comp.name}</td>
-              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${comp.strengths}</td>
-              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${comp.weaknesses}</td>
-            </tr>
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="margin: 0; color: #2c3e50; font-size: 18px; border-left: 4px solid #3498db; padding-left: 10px;">${comp.name}</h4>
+                <div>
+                  <span style="display: inline-block; background-color: #3498db; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px;">COMPETITOR</span>
+                </div>
+              </div>
+              
+              <div style="display: flex; flex-wrap: wrap; margin-top: 15px;">
+                <div style="flex: 1; min-width: 250px; margin-right: 20px; margin-bottom: 15px;">
+                  <div style="background-color: #e8f6f3; padding: 15px; border-radius: 5px; height: 100%;">
+                    <h5 style="margin: 0 0 10px 0; color: #27ae60; display: flex; align-items: center;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                      Strengths
+                    </h5>
+                    <p style="margin: 0; color: #2c3e50;">${comp.strengths}</p>
+                  </div>
+                </div>
+                
+                <div style="flex: 1; min-width: 250px;">
+                  <div style="background-color: #fef5f5; padding: 15px; border-radius: 5px; height: 100%;">
+                    <h5 style="margin: 0 0 10px 0; color: #e74c3c; display: flex; align-items: center;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Weaknesses
+                    </h5>
+                    <p style="margin: 0; color: #2c3e50;">${comp.weaknesses}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           `).join("")}
-        </table>
+        </div>
       `;
     };
     
-    // Website performance visualization
+    // Enhanced website performance visualization
     const performanceMetrics = () => {
       // Defensive check to ensure metrics object exists
       if (!analysisData.websitePerformance || !analysisData.websitePerformance.performanceMetrics) {
         console.log("Performance metrics data is missing");
-        return `<p>Performance metrics data is unavailable</p>`;
+        return `<div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; text-align: center;">
+                  <p>Performance metrics data is unavailable</p>
+                </div>`;
       }
       
       // Safety check - log metrics for debugging
@@ -672,36 +815,59 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
       const seo = metrics.seo || 0;
       const bestPractices = metrics.bestPractices || 0;
       
+      // Helper function to render score gauge
+      const renderGauge = (score: number, label: string, info: string = '') => {
+        const color = getColorForScore(score);
+        const scoreGrade = score >= 90 ? 'Excellent' : (score >= 70 ? 'Good' : 'Poor');
+        
+        return `
+          <div style="flex: 1; min-width: 220px; background-color: #f8f9fa; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; text-align: center;">
+            <div style="position: relative; width: 100px; height: 100px; margin: 0 auto 15px auto;">
+              <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; 
+                   background: conic-gradient(${color} ${score}%, #e0e0e0 0%);"></div>
+              <div style="position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px; background-color: white; border-radius: 50%; 
+                   display: flex; justify-content: center; align-items: center; flex-direction: column;">
+                <div style="font-size: 24px; font-weight: bold; color: ${color};">${score}%</div>
+                <div style="font-size: 12px; color: #7f8c8d;">${scoreGrade}</div>
+              </div>
+            </div>
+            <div style="font-weight: bold; margin-bottom: 5px; color: #2c3e50;">${label}</div>
+            ${info ? `<div style="font-size: 12px; color: #7f8c8d;">${info}</div>` : ''}
+          </div>
+        `;
+      };
+      
       return `
-        <div style="margin-top: 15px;">
-          <div style="margin-bottom: 12px;">
-            <span style="display: inline-block; width: 150px; font-weight: bold;">Performance:</span>
-            <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
-              <div style="width: ${performance}%; height: 100%; background-color: ${getColorForScore(performance)}; border-radius: 10px;"></div>
+        <div style="background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <div style="margin-bottom: 20px;">
+            <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">Data Source</div>
+            <div style="display: flex; align-items: center;">
+              <img src="https://www.gstatic.com/images/branding/product/2x/pagespeed_64dp.png" width="24" height="24" 
+                   style="margin-right: 8px;">
+              <span style="font-weight: bold; color: #2c3e50;">Google PageSpeed Insights</span>
             </div>
-            <span style="margin-left: 10px; font-weight: bold;">${performance}%</span>
           </div>
-          <div style="margin-bottom: 12px;">
-            <span style="display: inline-block; width: 150px; font-weight: bold;">Accessibility:</span>
-            <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
-              <div style="width: ${accessibility}%; height: 100%; background-color: ${getColorForScore(accessibility)}; border-radius: 10px;"></div>
-            </div>
-            <span style="margin-left: 10px; font-weight: bold;">${accessibility}%</span>
+          
+          <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 20px;">
+            ${renderGauge(performance, 'Performance', 'Loading speed')}
+            ${renderGauge(accessibility, 'Accessibility', 'For all users')}
+            ${renderGauge(seo, 'Technical SEO', 'Search optimization')}
+            ${renderGauge(bestPractices, 'Best Practices', 'Web standards')}
           </div>
-          <div style="margin-bottom: 12px;">
-            <span style="display: inline-block; width: 150px; font-weight: bold;">Technical SEO:</span>
-            <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
-              <div style="width: ${seo}%; height: 100%; background-color: ${getColorForScore(seo)}; border-radius: 10px;"></div>
+          
+          <div style="margin-top: 20px; background-color: #f8f9fa; border-radius: 8px; padding: 15px;">
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" 
+                   stroke="#3498db" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <div style="font-weight: bold; color: #2c3e50;">What Do These Scores Mean?</div>
             </div>
-            <span style="margin-left: 10px; font-weight: bold;">${seo}%</span>
-            <span style="margin-left: 5px; font-size: 12px; color: #7f8c8d;">(PageSpeed Insights)</span>
-          </div>
-          <div style="margin-bottom: 12px;">
-            <span style="display: inline-block; width: 150px; font-weight: bold;">Best Practices:</span>
-            <div style="display: inline-block; width: 200px; height: 20px; background-color: #e0e0e0; border-radius: 10px;">
-              <div style="width: ${bestPractices}%; height: 100%; background-color: ${getColorForScore(bestPractices)}; border-radius: 10px;"></div>
-            </div>
-            <span style="margin-left: 10px; font-weight: bold;">${bestPractices}%</span>
+            <p style="margin: 0; color: #7f8c8d; font-size: 14px; line-height: 1.5;">
+              These scores indicate how well your website performs according to Google's standards. Higher scores mean better performance, which can lead to improved user experience and potentially better search rankings.
+            </p>
           </div>
         </div>
       `;
