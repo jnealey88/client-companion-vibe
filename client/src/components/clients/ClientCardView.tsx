@@ -4,19 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatCurrency, formatDate, getStatusClass } from "@/lib/utils";
-import { ClientWithProjects } from "@shared/schema";
+import { Client } from "@shared/schema";
 
 interface ClientCardViewProps {
-  clients: ClientWithProjects[];
+  clients: Client[];
 }
 
 export default function ClientCardView({ clients }: ClientCardViewProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {clients.map((client) => {
-        const activeProjects = client.projects?.filter(p => p.status === 'active').length || 0;
-        const totalProjects = client.projects?.length || 0;
-        
         return (
           <div key={client.id} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300">
             <div className="p-5">
@@ -38,8 +35,8 @@ export default function ClientCardView({ clients }: ClientCardViewProps) {
               
               <div className="mt-6 grid grid-cols-2 gap-4">
                 <div className="col-span-1">
-                  <p className="text-sm text-gray-500">Projects</p>
-                  <p className="text-sm font-medium">{activeProjects} Active / {totalProjects} Total</p>
+                  <p className="text-sm text-gray-500">Project</p>
+                  <p className="text-sm font-medium">{client.projectName}</p>
                 </div>
                 <div className="col-span-1">
                   <p className="text-sm text-gray-500">Last Contact</p>
@@ -50,8 +47,8 @@ export default function ClientCardView({ clients }: ClientCardViewProps) {
                   <p className="text-sm font-medium">{client.industry}</p>
                 </div>
                 <div className="col-span-1">
-                  <p className="text-sm text-gray-500">Value</p>
-                  <p className="text-sm font-medium">{formatCurrency(client.totalValue)}</p>
+                  <p className="text-sm text-gray-500">Project Value</p>
+                  <p className="text-sm font-medium">{formatCurrency(client.projectValue)}</p>
                 </div>
               </div>
             </div>

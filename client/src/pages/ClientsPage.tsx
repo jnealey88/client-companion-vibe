@@ -7,7 +7,7 @@ import ClientFiltersComponent from "@/components/clients/ClientFilters";
 import ClientListView from "@/components/clients/ClientListView";
 import ClientCardView from "@/components/clients/ClientCardView";
 import AddClientDialog from "@/components/clients/AddClientDialog";
-import { ClientFilters as ClientFiltersType, ClientWithProjects } from "@shared/schema";
+import { ClientFilters as ClientFiltersType, Client } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -122,7 +122,7 @@ export default function ClientsPage() {
     setClientToDelete(null);
   };
   
-  const handleEditClient = (client: ClientWithProjects) => {
+  const handleEditClient = (client: Client) => {
     // This would typically open an edit dialog
     toast({
       title: 'Edit Client',

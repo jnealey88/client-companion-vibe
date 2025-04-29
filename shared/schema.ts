@@ -13,32 +13,15 @@ export const clients = pgTable("clients", {
   industry: text("industry").notNull(),
   status: text("status").notNull().default("active"),
   logo: text("logo"),
-  totalValue: integer("total_value").notNull().default(0),
+  projectName: text("project_name").notNull(),
+  projectDescription: text("project_description"),
+  projectStatus: text("project_status").notNull().default("active"),
+  projectStartDate: timestamp("project_start_date").notNull().default(new Date()),
+  projectEndDate: timestamp("project_end_date"),
+  projectValue: integer("project_value").notNull().default(0),
   lastContact: timestamp("last_contact").notNull().default(new Date()),
   createdAt: timestamp("created_at").notNull().default(new Date()),
 });
-
-export const clientsRelations = relations(clients, ({ many }) => ({
-  projects: many(projects),
-}));
-
-export const projects = pgTable("projects", {
-  id: serial("id").primaryKey(),
-  clientId: integer("client_id").notNull().references(() => clients.id),
-  name: text("name").notNull(),
-  description: text("description"),
-  status: text("status").notNull().default("active"),
-  startDate: timestamp("start_date").notNull().default(new Date()),
-  endDate: timestamp("end_date"),
-  value: integer("value").notNull().default(0),
-});
-
-export const projectsRelations = relations(projects, ({ one }) => ({
-  client: one(clients, {
-    fields: [projects.clientId],
-    references: [clients.id],
-  }),
-}));
 
 // Client Schemas
 export const insertClientSchema = createInsertSchema(clients).omit({
@@ -57,19 +40,14 @@ export const clientSchema = z.object({
   industry: z.string(),
   status: z.string(),
   logo: z.string().nullable(),
-  totalValue: z.number(),
+  projectName: z.string(),
+  projectDescription: z.string().nullable(),
+  projectStatus: z.string(),
+  projectStartDate: z.date(),
+  projectEndDate: z.date().nullable(),
+  projectValue: z.number(),
   lastContact: z.date(),
   createdAt: z.date(),
-  projects: z.array(z.object({
-    id: z.number(),
-    name: z.string(),
-    status: z.string(),
-  })).optional(),
-});
-
-// Project Schemas
-export const insertProjectSchema = createInsertSchema(projects).omit({
-  id: true,
 });
 
 export const updateClientSchema = insertClientSchema.partial();
@@ -78,10 +56,7 @@ export const updateClientSchema = insertClientSchema.partial();
 export type InsertClient = z.infer<typeof insertClientSchema>;
 export type UpdateClient = z.infer<typeof updateClientSchema>;
 export type Client = typeof clients.$inferSelect;
-export type ClientWithProjects = z.infer<typeof clientSchema>;
-
-export type InsertProject = z.infer<typeof insertProjectSchema>;
-export type Project = typeof projects.$inferSelect;
+export type ClientWithProject = z.infer<typeof clientSchema>;
 
 // Filters/Sorting
 export type ClientFilters = {

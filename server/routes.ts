@@ -4,7 +4,6 @@ import { storage } from "./storage";
 import { 
   insertClientSchema, 
   updateClientSchema, 
-  insertProjectSchema,
   ClientFilters
 } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
@@ -116,108 +115,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ===== Project Routes =====
-  
-  // Get all projects (optionally filtered by client)
-  app.get("/api/projects", async (req: Request, res: Response) => {
-    try {
-      const clientId = req.query.clientId ? parseInt(req.query.clientId as string) : undefined;
-      
-      if (req.query.clientId && isNaN(clientId!)) {
-        return res.status(400).json({ message: "Invalid client ID" });
-      }
-      
-      const projects = await storage.getProjects(clientId);
-      return res.json(projects);
-    } catch (error) {
-      console.error("Error fetching projects:", error);
-      return res.status(500).json({ message: "Failed to fetch projects" });
-    }
-  });
-
-  // Get project by ID
-  app.get("/api/projects/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid project ID" });
-      }
-      
-      const project = await storage.getProject(id);
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-      
-      return res.json(project);
-    } catch (error) {
-      console.error("Error fetching project:", error);
-      return res.status(500).json({ message: "Failed to fetch project" });
-    }
-  });
-
-  // Create new project
-  app.post("/api/projects", async (req: Request, res: Response) => {
-    try {
-      const validationResult = insertProjectSchema.safeParse(req.body);
-      if (!validationResult.success) {
-        const errorMessage = fromZodError(validationResult.error).message;
-        return res.status(400).json({ message: errorMessage });
-      }
-      
-      const newProject = await storage.createProject(validationResult.data);
-      return res.status(201).json(newProject);
-    } catch (error) {
-      console.error("Error creating project:", error);
-      return res.status(500).json({ message: "Failed to create project" });
-    }
-  });
-
-  // Update project
-  app.patch("/api/projects/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid project ID" });
-      }
-      
-      // Partial validation for update
-      const validationResult = insertProjectSchema.partial().safeParse(req.body);
-      if (!validationResult.success) {
-        const errorMessage = fromZodError(validationResult.error).message;
-        return res.status(400).json({ message: errorMessage });
-      }
-      
-      const updatedProject = await storage.updateProject(id, validationResult.data);
-      if (!updatedProject) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-      
-      return res.json(updatedProject);
-    } catch (error) {
-      console.error("Error updating project:", error);
-      return res.status(500).json({ message: "Failed to update project" });
-    }
-  });
-
-  // Delete project
-  app.delete("/api/projects/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid project ID" });
-      }
-      
-      const result = await storage.deleteProject(id);
-      if (!result) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-      
-      return res.status(204).send();
-    } catch (error) {
-      console.error("Error deleting project:", error);
-      return res.status(500).json({ message: "Failed to delete project" });
-    }
-  });
+  // Project data is now embedded in client objects
 
   return httpServer;
 }

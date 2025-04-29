@@ -18,12 +18,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, getStatusClass } from "@/lib/utils";
-import { ClientWithProjects } from "@shared/schema";
+import { Client } from "@shared/schema";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ClientListViewProps {
-  clients: ClientWithProjects[];
-  onEdit: (client: ClientWithProjects) => void;
+  clients: Client[];
+  onEdit: (client: Client) => void;
   onDelete: (clientId: number) => void;
 }
 
@@ -72,7 +72,7 @@ export default function ClientListView({
             </th>
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               <div className="flex items-center">
-                Projects
+                Project
                 <button className="ml-1">
                   <ArrowUp className="h-3 w-3 text-gray-400" />
                 </button>
@@ -101,9 +101,6 @@ export default function ClientListView({
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {clients.map((client) => {
-            const activeProjects = client.projects?.filter(p => p.status === 'active').length || 0;
-            const totalProjects = client.projects?.length || 0;
-            
             return (
               <tr key={client.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -126,8 +123,8 @@ export default function ClientListView({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{activeProjects} Active</div>
-                  <div className="text-sm text-gray-500">{totalProjects} Total</div>
+                  <div className="text-sm text-gray-900">{client.projectName}</div>
+                  <div className="text-sm text-gray-500"><Badge className={getStatusClass(client.projectStatus)}>{client.projectStatus}</Badge></div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Badge className={getStatusClass(client.status)}>
