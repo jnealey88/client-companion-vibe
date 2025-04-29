@@ -41,6 +41,10 @@ export default function ProposalDialog({
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isEdited, setIsEdited] = useState<boolean>(false);
   
+  // Loading state tracking
+  const [loadingStage, setLoadingStage] = useState<string>("");
+  const [loadingProgress, setLoadingProgress] = useState<number>(0);
+  
   // Payment information from the task metadata (if available)
   const [projectValue, setProjectValue] = useState<number>(client.projectValue || 5000);
   const [carePlanMonthly, setCarePlanMonthly] = useState<number>(99);
@@ -50,6 +54,16 @@ export default function ProposalDialog({
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [generatedTask, setGeneratedTask] = useState<CompanionTask | undefined>(undefined);
+  
+  // Loading stage descriptions
+  const loadingStages = [
+    "Analyzing client requirements",
+    "Researching industry standards",
+    "Calculating project costs",
+    "Creating project timeline",
+    "Preparing deliverables",
+    "Finalizing proposal"
+  ];
 
   // Fetch the task content and metadata if an existing task was provided
   useEffect(() => {
@@ -79,10 +93,49 @@ export default function ProposalDialog({
     }
   }, [existingTask]);
 
+  // Use interval for fake loading progress
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if (loading) {
+      // Start the loading stage rotation
+      let stageIndex = 0;
+      let progressValue = 0;
+      
+      setLoadingStage(loadingStages[0]);
+      setLoadingProgress(0);
+      
+      interval = setInterval(() => {
+        // Increment progress
+        progressValue += 1;
+        
+        // Change loading stage text every ~20%
+        if (progressValue % 20 === 0 && stageIndex < loadingStages.length - 1) {
+          stageIndex++;
+          setLoadingStage(loadingStages[stageIndex]);
+        }
+        
+        // Ensure we never go above 95% before completion
+        // The final 5% will be completed when the API call finishes
+        if (progressValue <= 95) {
+          setLoadingProgress(progressValue);
+        }
+      }, 500); // Update every 500ms
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [loading, loadingStages]);
+
   // Generate proposal mutation
   const generateProposalMutation = useMutation({
     mutationFn: async ({ clientId, discoveryNotes }: { clientId: number, discoveryNotes: string }) => {
       setLoading(true);
+      setLoadingStage(loadingStages[0]);
+      setLoadingProgress(0);
       // We're passing discovery notes in the request body
       return apiRequest("POST", `/api/clients/${clientId}/generate/proposal`, { discoveryNotes });
     },
@@ -270,7 +323,7 @@ export default function ProposalDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {!existingTask?.content && (
+        {!existingTask?.content && !loading && (
           <div className="space-y-4 mb-4">
             <div>
               <Label htmlFor="discoveryNotes">Discovery Call Notes (Optional)</Label>
@@ -291,12 +344,39 @@ export default function ProposalDialog({
               className="w-full"
               disabled={loading}
             >
-              {loading ? (
-                <>Generating Proposal...</>
-              ) : (
-                <>Generate Project Proposal</>
-              )}
+              Generate Project Proposal
             </Button>
+          </div>
+        )}
+        
+        {/* Informative Loading State */}
+        {loading && (
+          <div className="space-y-4 mb-4 py-2">
+            <div className="text-center text-lg font-medium text-primary">{loadingStage}</div>
+            
+            <div className="w-full bg-muted rounded-full h-2.5">
+              <div 
+                className="bg-primary h-2.5 rounded-full transition-all duration-300 ease-in-out" 
+                style={{ width: `${loadingProgress}%` }}
+              ></div>
+            </div>
+            
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Gathering data</span>
+              <span>Review</span>
+              <span>Finalization</span>
+            </div>
+            
+            <p className="text-sm text-center text-muted-foreground mt-2">
+              We're crafting a professional proposal for {client.name}. 
+              This may take a minute as we analyze requirements and calculate pricing.
+            </p>
+            
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mt-4">
+                Feel free to explore other parts of the application while we work on your proposal.
+              </p>
+            </div>
           </div>
         )}
 

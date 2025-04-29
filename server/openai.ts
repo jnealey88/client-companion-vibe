@@ -1358,17 +1358,12 @@ ${discoveryNotes ? "During our discovery call, I took these notes:\n" + discover
 
 ${strategicRecommendations ? "Based on our market research, we've identified these strategic recommendations for your business:\n" + strategicRecommendations + "\n\n" : ""}
 
-For this project, we recommend a budget of $${lowRange} - $${highRange} based on the requirements and industry standards.
-
-We also recommend the following GoDaddy products for this project: ${productsText}
 
 ## Proposal Sections
 
-Format the proposal as a professional HTML business proposal with clear sections. Use <h1>, <h2>, <h3> tags for headings and proper HTML structure.
+Format the proposal as a professional HTML business proposal with clear sections. Use <h2>, <h3> tags for headings and proper HTML structure.
 
 IMPORTANT FORMATTING INSTRUCTIONS:
-- Skip any "Project Investment Summary" or similar introductory text
-- Start directly with a compelling <h1> title that includes the project name
 - Avoid excessive whitespace, line breaks, or empty paragraphs at the beginning
 - Make sure each section has a clear <h2> heading
 
@@ -1392,8 +1387,8 @@ Include these sections:
      - Signing: 50%
      - Design approval: 25%
      - Pre-launch: 25%
-   - Optional Care Plan: $XX/month
-   - ROI analysis
+   - Recommended Care Plan: $XX/month
+   - ROI analysis with favorable profit margin examples
 
 6. **Why Choose Us:**
    - Our unique value proposition.
