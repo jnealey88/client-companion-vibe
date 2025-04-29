@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { EditorJs } from "@/components/ui/editor-js";
 
 interface ProposalDialogProps {
   open: boolean;
@@ -233,7 +233,7 @@ export default function ProposalDialog({
                   </Alert>
                 )}
                 
-                <RichTextEditor
+                <EditorJs
                   content={editedContent}
                   onChange={handleEditorChange}
                   className="min-h-[400px] mb-4"
