@@ -1347,30 +1347,77 @@ export async function generateProposal(clientInfo: any, marketResearch?: string,
     `- ${p.name}: ${p.description} (${p.price})`
   ).join("\\n");
 
-  const prompt = `Create a professional project proposal for ${clientInfo.name} in the ${clientInfo.industry} industry. 
-  The project is "${clientInfo.projectName}" with the following description: "${clientInfo.projectDescription || "No detailed description available"}".
-  
-  ${discoveryNotes ? "During our discovery call, I took these notes:\\n" + discoveryNotes + "\\n\\n" : ""}
-  
-  ${strategicRecommendations ? "Based on our market research, we've identified these strategic recommendations for your business:\\n" + strategicRecommendations + "\\n\\n" : ""}
-  
-  For this project, we recommend a budget of $${lowRange} - $${highRange} based on the requirements and industry standards.
-  
-  We also recommend the following GoDaddy products for this project:
-  ${productsText}
-  
-  The proposal should include these sections with appropriate HTML formatting:
-  1. Executive Summary - Brief overview of the project and client needs
-  2. Project Understanding - Detailed analysis of client requirements and business goals
-  3. Proposed Solution - Our approach to meeting these requirements
-  4. Project Scope & Deliverables - Clear outline of what will be delivered
-  5. Timeline & Milestones - Visual project schedule with key dates
-  6. Investment & Pricing - Detailed cost breakdown with the recommended price range
-  7. GoDaddy Product Recommendations - List of recommended GoDaddy products with descriptions and pricing
-  8. Why Choose Us - Our unique value proposition
-  9. Next Steps - Clear action items to move forward
-  
-  Format as a professional HTML business proposal with clear sections, styling, and visual elements. Make it visually appealing with a professional design.`;
+  const prompt = `Create a professional project proposal for ${clientInfo.name} to generate a winning proposal for client approval. The project is "${clientInfo.projectName}" with the following description: "${clientInfo.projectDescription || "No detailed description available"}".
+
+Client Information:
+- Business Name: ${clientInfo.name}
+- Website URL: ${clientInfo.websiteUrl || "No website URL provided"}
+- Industry: ${clientInfo.industry || "Not specified"}
+- Project Name: ${clientInfo.projectName}
+
+${discoveryNotes ? "During our discovery call, I took these notes:\n" + discoveryNotes + "\n\n" : ""}
+
+${strategicRecommendations ? "Based on our market research, we've identified these strategic recommendations for your business:\n" + strategicRecommendations + "\n\n" : ""}
+
+For this project, we recommend a budget of $${lowRange} - $${highRange} based on the requirements and industry standards.
+
+We also recommend the following GoDaddy products for this project: ${productsText}
+
+## Proposal Sections
+
+Format the proposal as a professional HTML business proposal with clear sections, styling, and visual elements. Make it visually appealing with a professional design. 
+
+1. **Cover Page:**
+   - [Agency Logo]
+   - Web Design Proposal for ${clientInfo.name}
+   - Prepared by [Your Name] on [Date], Proposal # [ID]
+
+2. **Executive Summary:**
+   - Brief overview of the project and client needs (≤ 75 words)
+   - Example of desired result: “${clientInfo.name} needs to turn casual visitors into bookings. We’ll launch a mobile-first site that raises online reservations by 25% within three months.”
+
+3. **Objectives & Success Metrics:**
+   - Objective, KPI & Target, Business Impact
+     
+
+4. **Project Scope & Deliverables:**
+   - Phase, Key Activities, Tangible Deliverables
+ 
+
+5. **Timeline & Milestones:**
+   - Week, Milestone
+
+
+6. **Investment & Pricing:**
+   - Total Project Fee: $ [Amount]
+   - Stage, % Due, Amount
+   - Signing: 50%, $ …
+   - Design approval: 25%, $ …
+   - Pre-launch: 25%, $ …
+   - Optional Care Plan: $ [Monthly] – hosting, updates, backups, SEO tweaks.
+   - ROI Snapshot: Example: One extra sale per week at $ [AvgOrder] pays for the site in [X] months.
+
+7. **Why Choose Us:**
+   - Our unique value proposition.
+
+8. **GoDaddy Product Recommendations:**
+   - List of recommended GoDaddy products with descriptions and pricing
+
+9. **Social Proof:**
+
+
+10. **Next Steps:**
+    - Sign the acceptance below.
+    - Pay the 50% deposit (secure link).
+    - Book the kickoff call (calendar link).
+    - We’ll hold your start date for seven days.
+
+11. **Acceptance:**
+    - I, [Client Name], authorize [Agency] to proceed as outlined.
+
+# Output Format
+
+The proposal should be delivered as an HTML document with section headers and formatted text. Include placeholders for [Agency Logo], [Your Name], [Date], [Client Name], etc., and ensure that placeholders for financial and metric data (e.g., $ [Amount], [AvgOrder], [X]) are clearly defined.`;
 
   try {
     const response = await openai.chat.completions.create({
@@ -1389,6 +1436,12 @@ export async function generateProposal(clientInfo: any, marketResearch?: string,
 export async function generateContract(clientInfo: any): Promise<string> {
   const prompt = `Create a professional web design/development services contract for ${clientInfo.name}.
   The project is "${clientInfo.projectName}" with value approximately ${clientInfo.projectValue}.
+  
+  Client Information:
+  - Business Name: ${clientInfo.name}
+  - Website URL: ${clientInfo.websiteUrl || "No website URL provided"}
+  - Industry: ${clientInfo.industry || "Not specified"}
+  - Project Name: ${clientInfo.projectName}
   
   The contract should include:
   - Parties involved (use placeholder for the agency name)
@@ -1418,6 +1471,12 @@ export async function generateContract(clientInfo: any): Promise<string> {
 export async function generateSiteMap(clientInfo: any): Promise<string> {
   const prompt = `Create a detailed website sitemap and content plan for ${clientInfo.name} in the ${clientInfo.industry} industry.
   The project is "${clientInfo.projectName}".
+  
+  Client Information:
+  - Business Name: ${clientInfo.name}
+  - Website URL: ${clientInfo.websiteUrl || "No website URL provided"}
+  - Industry: ${clientInfo.industry || "Not specified"}
+  - Project Name: ${clientInfo.projectName}
   
   Include:
   - Main page structure and navigation
@@ -1452,6 +1511,12 @@ export async function generateStatusUpdate(clientInfo: any, taskStatus: any): Pr
     "No tasks are currently in progress. ";
 
   const prompt = `Create a professional project status update email for ${clientInfo.name} regarding their project "${clientInfo.projectName}".
+  
+  Client Information:
+  - Business Name: ${clientInfo.name}
+  - Website URL: ${clientInfo.websiteUrl || "No website URL provided"}
+  - Industry: ${clientInfo.industry || "Not specified"}
+  - Project Name: ${clientInfo.projectName}
   
   Current project status: ${clientInfo.projectStatus}
   ${completedTasksText}
@@ -1496,6 +1561,13 @@ export async function generateScheduleDiscovery(clientInfo: any, analysisId?: nu
     : '';
 
   const prompt = `Create a professional email template for scheduling a discovery call with a new client named ${clientName} regarding their project "${projectName}".
+
+  Client Information:
+  - Business Name: ${clientInfo.name}
+  - Website URL: ${clientInfo.websiteUrl || "No website URL provided"}
+  - Industry: ${clientInfo.industry || "Not specified"}
+  - Contact Name: ${contactName}
+  - Project Name: ${projectName}
 
   The email should:
   - Have a clear, professional subject line
