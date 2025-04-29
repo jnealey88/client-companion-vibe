@@ -17,6 +17,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { EditorJs } from "@/components/ui/editor-js";
+import StrategicActionCards from "./StrategicActionCards";
+import { Separator } from "@/components/ui/separator";
 
 interface CompanyAnalysisDialogProps {
   open: boolean;
@@ -49,6 +51,19 @@ export default function CompanyAnalysisDialog({
   // Task data
   const [generatedTask, setGeneratedTask] = useState<CompanionTask | undefined>(undefined);
   
+  // Strategic recommendations state
+  const [recommendations, setRecommendations] = useState<{
+    shortTerm: string[];
+    mediumTerm: string[];
+    longTerm: string[];
+    priorityActions: string;
+  }>({
+    shortTerm: [],
+    mediumTerm: [],
+    longTerm: [],
+    priorityActions: ""
+  });
+  
   // Hooks
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -70,6 +85,10 @@ export default function CompanyAnalysisDialog({
       if (existingTask.content) {
         setAnalysisContent(existingTask.content);
         setEditedContent(existingTask.content);
+        
+        // Extract recommendations from the content
+        const extractedRecommendations = extractRecommendations(existingTask.content);
+        setRecommendations(extractedRecommendations);
       }
     }
   }, [existingTask]);
@@ -254,6 +273,92 @@ export default function CompanyAnalysisDialog({
     });
     // In a real application, this would send the analysis via an email provider API
   };
+  
+  // Extract recommendations from HTML content
+  const extractRecommendations = (htmlContent: string) => {
+    try {
+      // Create a DOM parser to parse the HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, 'text/html');
+      
+      // Look for the recommendations section
+      const shortTermList = Array.from(doc.querySelectorAll('h3'))
+        .find(el => el.textContent?.includes('Short-term Actions'))
+        ?.closest('div')
+        ?.querySelector('ul')
+        ?.querySelectorAll('li');
+        
+      const mediumTermList = Array.from(doc.querySelectorAll('h3'))
+        .find(el => el.textContent?.includes('Medium-term Actions'))
+        ?.closest('div')
+        ?.querySelector('ul')
+        ?.querySelectorAll('li');
+        
+      const longTermList = Array.from(doc.querySelectorAll('h3'))
+        .find(el => el.textContent?.includes('Long-term Actions'))
+        ?.closest('div')
+        ?.querySelector('ul')
+        ?.querySelectorAll('li');
+      
+      const priorityActions = Array.from(doc.querySelectorAll('h3'))
+        .find(el => el.textContent?.includes('Priority Actions'))
+        ?.closest('div')
+        ?.querySelector('p')
+        ?.textContent || '';
+      
+      // Convert NodeLists to arrays of strings
+      const shortTerm = shortTermList ? Array.from(shortTermList).map(li => li.textContent || '') : [];
+      const mediumTerm = mediumTermList ? Array.from(mediumTermList).map(li => li.textContent || '') : [];
+      const longTerm = longTermList ? Array.from(longTermList).map(li => li.textContent || '') : [];
+      
+      // Return the extracted recommendations
+      return {
+        shortTerm,
+        mediumTerm,
+        longTerm,
+        priorityActions
+      };
+    } catch (error) {
+      console.error("Error extracting recommendations:", error);
+      return {
+        shortTerm: [],
+        mediumTerm: [],
+        longTerm: [],
+        priorityActions: ""
+      };
+    }
+  };
+  
+  // This function will be called when a recommendation is selected from the cards
+  const handleRecommendationSelect = (recommendation: string, type: "shortTerm" | "mediumTerm" | "longTerm") => {
+    // Store the selected recommendation in local storage to be used later in the Proposal
+    localStorage.setItem('selectedRecommendation', recommendation);
+    localStorage.setItem('recommendationType', type);
+    
+    // Open the proposal dialog
+    if (client && client.id && onTaskGenerated) {
+      const dummyTask = { 
+        type: 'proposal',
+        clientId: client.id,
+        content: null,
+        metadata: JSON.stringify({
+          from_analysis: true,
+          recommendations: {
+            type,
+            content: recommendation
+          }
+        })
+      } as any;
+      
+      // Close current dialog
+      onOpenChange(false);
+      
+      // Open proposal dialog
+      setTimeout(() => {
+        onTaskGenerated(dummyTask);
+      }, 500);
+    }
+  };
 
   // Cleanup function when dialog is closed
   const handleOpenChange = (isOpen: boolean) => {
@@ -351,7 +456,7 @@ export default function CompanyAnalysisDialog({
 
         {((analysisContent || existingTask?.content) && !loading) && (
           <>
-            <div className="border rounded-md p-6 min-h-[450px] mt-2">
+            <div className="border rounded-md p-6 mt-2">
               {isEdited && (
                 <Alert className="mb-4">
                   <AlertCircle className="h-4 w-4" />
@@ -362,7 +467,7 @@ export default function CompanyAnalysisDialog({
               )}
               
               {/* Analysis Content */}
-              <div>
+              <div className="min-h-[300px]">
                 <EditorJs
                   content={editedContent}
                   onChange={handleEditorChange}
@@ -390,6 +495,23 @@ export default function CompanyAnalysisDialog({
                 </div>
               )}
             </div>
+            
+            {/* Strategic Action Cards Section */}
+            {(recommendations.shortTerm.length > 0 || 
+              recommendations.mediumTerm.length > 0 || 
+              recommendations.longTerm.length > 0) && (
+              <div className="mt-6">
+                <Separator className="my-4" />
+                <h3 className="text-lg font-semibold mb-4">Strategic Recommendations</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Click on any recommendation card to use it in a proposal for {client.name}.
+                </p>
+                <StrategicActionCards 
+                  recommendations={recommendations}
+                  onSelectRecommendation={handleRecommendationSelect}
+                />
+              </div>
+            )}
           </>
         )}
 

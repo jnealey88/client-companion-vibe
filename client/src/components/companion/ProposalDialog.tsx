@@ -97,9 +97,41 @@ export default function ProposalDialog({
           if (metadata.productsMonthlyTotal) {
             setProductsMonthly(metadata.productsMonthlyTotal);
           }
+          
+          // Check if there are recommendations from analysis
+          if (metadata.from_analysis && metadata.recommendations) {
+            // Pre-populate the discovery notes with the recommendations
+            const recommendationContent = metadata.recommendations.content;
+            if (recommendationContent) {
+              const recommendationType = metadata.recommendations.type;
+              const prefix = 
+                recommendationType === 'shortTerm' ? 'Short-term recommendations from analysis:\n- ' :
+                recommendationType === 'mediumTerm' ? 'Medium-term recommendations from analysis:\n- ' :
+                'Long-term recommendations from analysis:\n- ';
+              
+              setDiscoveryNotes(`${prefix}${recommendationContent}\n\nAdditional notes:`);
+            }
+          }
         } catch (error) {
           console.error('Error parsing task metadata:', error);
         }
+      }
+    } else {
+      // Check if there's anything stored in localStorage (from previous selection)
+      const storedRecommendation = localStorage.getItem('selectedRecommendation');
+      const storedType = localStorage.getItem('recommendationType');
+      
+      if (storedRecommendation && storedType) {
+        const prefix = 
+          storedType === 'shortTerm' ? 'Short-term recommendations from analysis:\n- ' :
+          storedType === 'mediumTerm' ? 'Medium-term recommendations from analysis:\n- ' :
+          'Long-term recommendations from analysis:\n- ';
+        
+        setDiscoveryNotes(`${prefix}${storedRecommendation}\n\nAdditional notes:`);
+        
+        // Clear localStorage after using it
+        localStorage.removeItem('selectedRecommendation');
+        localStorage.removeItem('recommendationType');
       }
     }
   }, [existingTask]);
