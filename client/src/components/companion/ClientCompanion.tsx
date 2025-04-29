@@ -320,21 +320,36 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                   </p>
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  if (selectedTask.content) {
-                    navigator.clipboard.writeText(selectedTask.content);
-                    toast({
-                      title: "Content copied",
-                      description: "The content has been copied to your clipboard."
-                    });
-                  }
-                }}
-              >
-                Copy Content
-              </Button>
+              {selectedTask.type === 'company_analysis' ? (
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className="gap-1"
+                  onClick={() => {
+                    // Open the schedule discovery dialog when this button is clicked
+                    setIsDiscoveryDialogOpen(true);
+                  }}
+                >
+                  <Calendar className="h-4 w-4" />
+                  Send to Client
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    if (selectedTask.content) {
+                      navigator.clipboard.writeText(selectedTask.content);
+                      toast({
+                        title: "Content copied",
+                        description: "The content has been copied to your clipboard."
+                      });
+                    }
+                  }}
+                >
+                  Copy Content
+                </Button>
+              )}
             </div>
             
             <Separator />
@@ -521,17 +536,24 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     Copy
                                   </Button>
                                   <Button 
-                                    variant="ghost" 
+                                    variant={type === 'company_analysis' ? "default" : "ghost"}
                                     size="sm"
+                                    className={type === 'company_analysis' ? "gap-1" : ""}
                                     onClick={() => {
-                                      if (type === 'schedule_discovery') {
+                                      if (type === 'schedule_discovery' || type === 'company_analysis') {
                                         setIsDiscoveryDialogOpen(true);
                                       } else if (task) {
                                         setSelectedTask(task);
                                       }
                                     }}
                                   >
-                                    {type === 'schedule_discovery' ? 'Schedule' : 'View'}
+                                    {type === 'schedule_discovery' ? 'Schedule' : 
+                                     type === 'company_analysis' ? (
+                                       <>
+                                         <Calendar className="h-3 w-3" />
+                                         Send to Client
+                                       </>
+                                     ) : 'View'}
                                   </Button>
                                 </div>
                               </div>
