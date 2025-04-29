@@ -31,11 +31,70 @@ export interface CompanionTask {
   completedAt: Date | null;
 }
 
-// Function to get keyword data from DataForSEO
+// Function to get keyword data from DataForSEO using the Keyword Data API
 async function getKeywordData(keyword: string): Promise<any> {
   try {
-    // DataForSEO API endpoint
+    if (!keyword) {
+      console.log("No keyword provided");
+      return null;
+    }
+    
+    console.log(`Fetching keyword data for: ${keyword}`);
+    
+    // DataForSEO Keyword Data API endpoint - Using the Keyword Data API as requested
+    const url = "https://api.dataforseo.com/v3/keywords_data/google/search_volume/live";
+    
+    // Request body with the keyword and parameters
+    const data = [{
+      "keywords": [keyword],
+      "location_name": "United States",
+      "language_name": "English"
+    }];
+    
+    // Create base64 encoded credentials
+    const auth = Buffer.from(`${DATAFORSEO_LOGIN}:${DATAFORSEO_PASSWORD}`).toString('base64');
+    
+    // Make request to DataForSEO API with Basic Auth in headers
+    const response = await axios.post(url, data, {
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${auth}`
+      }
+    });
+    
+    console.log("DataForSEO search volume response status:", response.status);
+    
+    if (response.data && response.data.tasks && response.data.tasks.length > 0) {
+      console.log("Received keyword data from DataForSEO");
+      return response.data.tasks[0].result;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error fetching keyword data from DataForSEO:", error);
+    return null;
+  }
+}
+
+// Function to check SERP data for a keyword using DataForSEO
+async function checkSerpData(keyword: string, websiteUrl: string): Promise<any> {
+  try {
+    if (!keyword || !websiteUrl) {
+      console.log("Missing keyword or website URL for SERP check");
+      return null;
+    }
+    
+    console.log(`Checking SERP data for keyword "${keyword}" and website ${websiteUrl}`);
+    
+    // DataForSEO SERP API endpoint
     const url = "https://api.dataforseo.com/v3/serp/google/organic/live/advanced";
+    
+    // Clean website URL for domain check
+    let domain = websiteUrl;
+    if (domain.startsWith('http://')) domain = domain.substring(7);
+    if (domain.startsWith('https://')) domain = domain.substring(8);
+    if (domain.startsWith('www.')) domain = domain.substring(4);
+    if (domain.includes('/')) domain = domain.split('/')[0];
     
     // Request body with the keyword and parameters
     const data = [
@@ -48,24 +107,52 @@ async function getKeywordData(keyword: string): Promise<any> {
       }
     ];
     
-    // Make request to DataForSEO API
+    // Create base64 encoded credentials
+    const auth = Buffer.from(`${DATAFORSEO_LOGIN}:${DATAFORSEO_PASSWORD}`).toString('base64');
+    
+    // Make request to DataForSEO API with Basic Auth in headers
     const response = await axios.post(url, data, {
-      auth: {
-        username: DATAFORSEO_LOGIN as string,
-        password: DATAFORSEO_PASSWORD as string
-      },
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${auth}`
       }
     });
     
-    if (response.data && response.data.tasks && response.data.tasks.length > 0) {
-      return response.data.tasks[0].result;
+    console.log("DataForSEO SERP response status:", response.status);
+    
+    if (response.data && response.data.tasks && response.data.tasks.length > 0 && 
+        response.data.tasks[0].result && response.data.tasks[0].result.length > 0) {
+      
+      const results = response.data.tasks[0].result[0];
+      
+      // Check if client's domain appears in the results and at what position
+      let clientPosition = null;
+      if (results.items) {
+        for (let i = 0; i < results.items.length; i++) {
+          const item = results.items[i];
+          if (item.domain && item.domain.includes(domain)) {
+            clientPosition = item.rank_position;
+            break;
+          }
+        }
+      }
+      
+      return {
+        keywordDifficulty: results.se_results?.keyword_difficulty || "Unknown",
+        searchVolume: results.se_results?.search_volume || "Unknown", 
+        clientPosition: clientPosition,
+        totalResults: results.se_results?.total_count || "Unknown",
+        topCompetitors: results.items ? results.items.slice(0, 3).map((item: any) => ({
+          domain: item.domain,
+          position: item.rank_position,
+          title: item.title
+        })) : []
+      };
     }
     
     return null;
   } catch (error) {
-    console.error("Error fetching keyword data from DataForSEO:", error);
+    console.error("Error checking SERP data from DataForSEO:", error);
     return null;
   }
 }
@@ -142,25 +229,32 @@ async function generateInitialAnalysis(clientInfo: any): Promise<string> {
   const websiteUrl = clientInfo.websiteUrl || "N/A";
   const industry = clientInfo.industry;
   
-  const prompt = `Create a professional company analysis for "${businessName}".
-  
-  Important business information:
-  - Business name: ${businessName}
-  - Business description: ${businessDescription}
-  - Website URL: ${websiteUrl}
-  - Industry: ${industry}
-  
-  Focus ONLY on the specific business information provided above, not generic industry analysis.
-  
-  The analysis should include:
-  - Detailed business overview based on the business description
-  - Key competitors likely faced by this specific business (not generic industry competitors)
-  - Target audience analysis specifically for this business
-  - Challenges specific to this business based on their description 
-  - Initial SEO strategy recommendations tailored for their specific business
-  - Suggested keywords they should focus on (list 5 specific keywords relevant to their business)
-  
-  Format the response as a professional business document with sections and bullet points where appropriate.`;
+  const prompt = `Create an in-depth company analysis for "${businessName}" that a web designer will use to learn about their client's business and create a professional deliverable.
+
+Important client information:
+- Business name: ${businessName}
+- Business description: ${businessDescription}
+- Website URL: ${websiteUrl}
+- Industry: ${industry}
+
+IMPORTANT: Focus ONLY on the specific business information provided above. The analysis must be specific to this client, not generic industry information.
+
+The analysis should include:
+- Detailed business overview based on the business description (NOT generic industry information)
+- Key competitors likely faced by this specific business based on their description
+- Target audience analysis specifically for this business
+- Challenges specific to this business based on their description
+- Initial SEO strategy recommendations tailored for their specific business
+- Suggested keywords they should focus on (list exactly 5 specific keywords that are most relevant to this business)
+
+When suggesting keywords, focus on terms that:
+1. Reflect the client's specific business offerings
+2. Match their target audience's search intent
+3. Have balance between competition difficulty and search volume
+4. Include a mix of short and long-tail keywords
+5. Are directly relevant to their business description
+
+Format the response as a professional business document with clear sections and bullet points where appropriate, suitable for creating a client deliverable.`;
 
   try {
     const response = await openai.chat.completions.create({
@@ -233,10 +327,20 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
     console.log("Extracting keywords...");
     const keywords = await extractKeywords(initialAnalysis);
     
-    // Step 3: Get keyword data from DataForSEO for each keyword
-    console.log("Getting keyword data...");
+    // Step 3: Get keyword data from DataForSEO and check SERP data
+    console.log("Getting keyword data and SERP analysis...");
+    
+    // Make parallel requests to both APIs for each keyword
     const keywordDataPromises = keywords.map(keyword => getKeywordData(keyword));
-    const keywordDataResults = await Promise.all(keywordDataPromises);
+    const serpDataPromises = clientInfo.websiteUrl ? 
+      keywords.map(keyword => checkSerpData(keyword, clientInfo.websiteUrl)) : 
+      keywords.map(() => Promise.resolve(null));
+    
+    // Wait for all API calls to complete
+    const [keywordDataResults, serpDataResults] = await Promise.all([
+      Promise.all(keywordDataPromises),
+      Promise.all(serpDataPromises)
+    ]);
     
     // Step 4: Get website performance data
     console.log("Getting website performance data...");
@@ -246,23 +350,42 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
     // Step 5: Generate structured analysis using OpenAI
     console.log("Generating final comprehensive analysis...");
     
-    // Format keyword data for prompt
+    // Format keyword data for prompt with both search volume and SERP data
     const keywordDataFormatted = keywords.map((keyword, index) => {
-      const data = keywordDataResults[index];
-      if (data && data[0] && data[0].items) {
-        const searchVolume = data[0].search_volume || "Unknown";
-        const topResults = data[0].items.slice(0, 3).map((item: any) => item.title).join(", ");
-        return {
-          keyword: keyword,
-          volume: searchVolume,
-          topResults: topResults
-        };
-      }
-      return {
+      const volumeData = keywordDataResults[index];
+      const serpData = serpDataResults[index];
+      
+      // Default data
+      let keywordInfo = {
         keyword: keyword,
         volume: "Unknown",
-        topResults: "No data available"
+        difficulty: "Unknown",
+        clientPosition: "Not ranked",
+        recommendation: "Needs research"
       };
+      
+      // Add volume data if available
+      if (volumeData && volumeData[0] && volumeData[0].search_volume) {
+        keywordInfo.volume = volumeData[0].search_volume.toString();
+      }
+      
+      // Add SERP data if available
+      if (serpData) {
+        keywordInfo.difficulty = serpData.keywordDifficulty?.toString() || "Unknown";
+        keywordInfo.clientPosition = serpData.clientPosition ? 
+          `Ranked #${serpData.clientPosition}` : "Not in top 100";
+        
+        // Generate recommendation based on data
+        if (serpData.clientPosition && serpData.clientPosition <= 10) {
+          keywordInfo.recommendation = "Maintain position";
+        } else if (serpData.clientPosition && serpData.clientPosition <= 30) {
+          keywordInfo.recommendation = "Optimize content";
+        } else {
+          keywordInfo.recommendation = "Create targeted content";
+        }
+      }
+      
+      return keywordInfo;
     });
     
     // Format performance data for prompt
@@ -383,18 +506,29 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
         <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
           <tr style="background-color: #f2f2f2;">
             <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Keyword</th>
-            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Volume</th>
+            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Search Volume</th>
             <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Difficulty</th>
+            <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Client Position</th>
             <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Recommendation</th>
           </tr>
-          ${analysisData.keywordAnalysis.recommendedKeywords.map((kw: any) => `
-            <tr>
-              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.keyword}</td>
-              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.volume}</td>
-              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.difficulty}</td>
-              <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.recommendation}</td>
-            </tr>
-          `).join("")}
+          ${analysisData.keywordAnalysis.recommendedKeywords.map((kw: any) => {
+            // Determine appropriate styling based on position
+            const positionStyle = kw.clientPosition && kw.clientPosition.includes("Not") ? 
+              "color: #e74c3c;" : // Red for not ranked
+              kw.clientPosition && kw.clientPosition.includes("Ranked #") && parseInt(kw.clientPosition.replace("Ranked #", "")) <= 10 ?
+                "color: #2ecc71; font-weight: bold;" : // Green bold for top 10
+                "color: #f39c12;"; // Orange for others
+              
+            return `
+              <tr>
+                <td style="padding: 8px; text-align: left; border: 1px solid #ddd;"><b>${kw.keyword}</b></td>
+                <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.volume || "Unknown"}</td>
+                <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.difficulty || "Unknown"}</td>
+                <td style="padding: 8px; text-align: left; border: 1px solid #ddd; ${positionStyle}">${kw.clientPosition || "Unknown"}</td>
+                <td style="padding: 8px; text-align: left; border: 1px solid #ddd;">${kw.recommendation || "Research"}</td>
+              </tr>
+            `;
+          }).join("")}
         </table>
       `;
     };
