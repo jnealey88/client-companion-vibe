@@ -13,6 +13,9 @@ import Table from '@editorjs/table';
 import Marker from '@editorjs/marker';
 import Code from '@editorjs/code';
 import Embed from '@editorjs/embed';
+import Image from '@editorjs/image';
+import Delimiter from '@editorjs/delimiter';
+import Warning from '@editorjs/warning';
 
 const ReactEditorJS = createReactEditorJS();
 
@@ -295,6 +298,22 @@ export function EditorJs({
           case 'embed':
             htmlContent += `<div class="embed">${block.data.embed}</div>`;
             break;
+          case 'delimiter':
+            htmlContent += '<hr class="ce-delimiter" />';
+            break;
+          case 'warning':
+            htmlContent += `<div class="cdx-warning">
+              <div class="cdx-warning__title">${block.data.title}</div>
+              <div class="cdx-warning__message">${block.data.message}</div>
+            </div>`;
+            break;
+          case 'image':
+            const caption = block.data.caption ? `<figcaption>${block.data.caption}</figcaption>` : '';
+            htmlContent += `<figure class="image-tool">
+              <img src="${block.data.file.url}" alt="${block.data.caption || 'Image'}" />
+              ${caption}
+            </figure>`;
+            break;
           default:
             // Try to handle text-based blocks generically
             if (block.data && block.data.text) {
@@ -314,7 +333,7 @@ export function EditorJs({
       inlineToolbar: true,
       config: {
         placeholder: 'Enter a header',
-        levels: [1, 2, 3],
+        levels: [1, 2, 3, 4, 5, 6], // Support all header levels
         defaultLevel: 2
       }
     },
@@ -352,6 +371,39 @@ export function EditorJs({
         cols: 3,
       },
     },
+    delimiter: {
+      class: Delimiter,
+    },
+    warning: {
+      class: Warning,
+      inlineToolbar: true,
+      config: {
+        titlePlaceholder: 'Title',
+        messagePlaceholder: 'Message',
+      },
+    },
+    image: {
+      class: Image,
+      config: {
+        uploader: {
+          // This uploader doesn't really upload, just converts image to base64
+          uploadByFile(file: File) {
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = function(event) {
+                resolve({
+                  success: 1,
+                  file: {
+                    url: event.target?.result
+                  }
+                });
+              };
+              reader.readAsDataURL(file);
+            });
+          }
+        }
+      }
+    },
     marker: {
       class: Marker,
       inlineToolbar: true,
@@ -373,6 +425,137 @@ export function EditorJs({
     }
   };
 
+  // Add some styling for better visual representation of blocks
+  useEffect(() => {
+    // Add CSS to properly style the editor blocks
+    const css = `
+      .editor-js-wrapper h1 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .editor-js-wrapper h2 {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .editor-js-wrapper h3 {
+        font-size: 1.75rem;
+        font-weight: bold;
+        margin-top: 1.25rem;
+        margin-bottom: 0.75rem;
+      }
+      .editor-js-wrapper h4 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+      }
+      .editor-js-wrapper h5, .editor-js-wrapper h6 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+      }
+      .editor-js-wrapper table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+      }
+      .editor-js-wrapper th, .editor-js-wrapper td {
+        border: 1px solid #ddd;
+        padding: 8px;
+      }
+      .editor-js-wrapper th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+      }
+      .editor-js-wrapper ul, .editor-js-wrapper ol {
+        margin: 1rem 0;
+        padding-left: 2rem;
+      }
+      .editor-js-wrapper blockquote {
+        margin: 1rem 0;
+        padding: 0.5rem 1rem;
+        border-left: 4px solid #ddd;
+        background-color: #f9f9f9;
+        font-style: italic;
+      }
+      .editor-js-wrapper .ce-block__content {
+        max-width: 95%;
+        margin: 0 auto;
+      }
+      .editor-js-wrapper .ce-toolbar__content {
+        max-width: 95%;
+      }
+      .editor-js-wrapper .ce-header {
+        font-weight: bold;
+      }
+      .editor-js-wrapper .ce-header--h1 {
+        font-size: 2.5rem;
+      }
+      .editor-js-wrapper .ce-header--h2 {
+        font-size: 2rem;
+      }
+      .editor-js-wrapper .ce-header--h3 {
+        font-size: 1.75rem;
+      }
+      .editor-js-wrapper .ce-delimiter {
+        line-height: 1.6em;
+        width: 100%;
+        text-align: center;
+      }
+      .editor-js-wrapper .ce-delimiter:before {
+        display: inline-block;
+        content: "***";
+        font-size: 30px;
+        line-height: 65px;
+        height: 30px;
+        letter-spacing: 0.2em;
+      }
+      .editor-js-wrapper .cdx-warning {
+        position: relative;
+        padding: 20px;
+        background: #fffcd3;
+        border-radius: 8px;
+        margin-bottom: 15px;
+      }
+      .editor-js-wrapper .cdx-warning__title {
+        font-weight: bold;
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+      .editor-js-wrapper .cdx-warning__message {
+        font-size: 16px;
+      }
+      .editor-js-wrapper .image-tool {
+        margin: 15px 0;
+      }
+      .editor-js-wrapper .image-tool img {
+        max-width: 100%;
+        border-radius: 8px;
+      }
+      .editor-js-wrapper .image-tool figcaption {
+        text-align: center;
+        font-style: italic;
+        color: #6c757d;
+        margin-top: 8px;
+      }
+    `;
+    
+    // Create a style element and append it to the head
+    const style = document.createElement('style');
+    style.textContent = css;
+    document.head.appendChild(style);
+    
+    // Cleanup on unmount
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+  
   return (
     <div className={`editor-js-wrapper ${className}`}>
       {editorData && (

@@ -13,6 +13,7 @@
   "dependencies": {
     "@editorjs/checklist": "^1.6.0",
     "@editorjs/code": "^2.9.3",
+    "@editorjs/delimiter": "^1.4.2",
     "@editorjs/editorjs": "^2.30.8",
     "@editorjs/embed": "^2.7.6",
     "@editorjs/header": "^2.8.8",
@@ -23,6 +24,7 @@
     "@editorjs/paragraph": "^2.11.7",
     "@editorjs/quote": "^2.7.6",
     "@editorjs/table": "^2.4.4",
+    "@editorjs/warning": "^1.4.1",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^0.10.4",
