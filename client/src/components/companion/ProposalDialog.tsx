@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { FileText, Copy, Edit, CheckCircle2, Send, AlertCircle } from "lucide-react";
+import { FileText, Copy, Edit, CheckCircle2, Send, AlertCircle, Code } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface ProposalDialogProps {
   open: boolean;
@@ -212,9 +213,10 @@ export default function ProposalDialog({
         {(proposalContent || existingTask?.content) && (
           <>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="preview">Preview</TabsTrigger>
-                <TabsTrigger value="edit">Edit</TabsTrigger>
+                <TabsTrigger value="edit">Visual Editor</TabsTrigger>
+                <TabsTrigger value="source">HTML Source</TabsTrigger>
               </TabsList>
               
               <TabsContent value="preview" className="border rounded-md p-4 min-h-[400px] mt-2">
@@ -230,11 +232,62 @@ export default function ProposalDialog({
                     </AlertDescription>
                   </Alert>
                 )}
+                
+                <RichTextEditor
+                  content={editedContent}
+                  onChange={handleEditorChange}
+                  className="min-h-[400px] mb-4"
+                />
+                
+                <div className="flex gap-2 mt-4">
+                  <Button 
+                    onClick={handleSaveEdit}
+                    disabled={!isEdited || isSaving}
+                    className="flex-1"
+                  >
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCancelEdit}
+                    disabled={!isEdited || isSaving}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="source" className="mt-2">
+                {isEdited && (
+                  <Alert className="mb-4">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      You have unsaved changes. Click "Save Changes" when you're done editing.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                <div className="flex justify-between items-center mb-2">
+                  <div className="text-sm text-muted-foreground">HTML Source Code</div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setActiveTab("edit");
+                    }}
+                    className="gap-1"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Switch to Visual Editor
+                  </Button>
+                </div>
+                
                 <Textarea
                   value={editedContent}
                   onChange={(e) => handleEditorChange(e.target.value)}
                   className="min-h-[400px] font-mono text-sm"
                 />
+                
                 <div className="flex gap-2 mt-4">
                   <Button 
                     onClick={handleSaveEdit}
