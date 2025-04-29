@@ -325,7 +325,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const proposalAnalysisTask = proposalAnalysisTasks
               .find(t => t.type === TaskType.COMPANY_ANALYSIS && t.status === "completed");
             const companyAnalysis = proposalAnalysisTask?.content || undefined;
-            content = await generateProposal(client, companyAnalysis);
+            
+            // Get discovery notes if they were provided in the request body
+            const discoveryNotes = req.body?.discoveryNotes || undefined;
+            
+            content = await generateProposal(client, companyAnalysis, discoveryNotes);
             break;
           case TaskType.CONTRACT:
             content = await generateContract(client);

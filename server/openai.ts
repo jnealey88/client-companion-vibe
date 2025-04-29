@@ -1253,21 +1253,124 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
   }
 }
 
-export async function generateProposal(clientInfo: any, marketResearch?: string): Promise<string> {
+export async function generateProposal(clientInfo: any, marketResearch?: string, discoveryNotes?: string): Promise<string> {
+  // Extract strategic recommendations from market research if available
+  let strategicRecommendations = "";
+  if (marketResearch) {
+    // Try to extract the strategic recommendations section
+    const recommendationsMatch = marketResearch.match(/Strategic Recommendations([\s\S]*?)(?=<\/div>\s*<div|$)/i);
+    if (recommendationsMatch && recommendationsMatch[1]) {
+      strategicRecommendations = recommendationsMatch[1].trim();
+    } else {
+      // If we can't find the section, use a portion of the market research
+      strategicRecommendations = marketResearch.substring(0, 500) + "...";
+    }
+  }
+
+  // Calculate recommended project value based on client's industry and project description
+  let basePrice = clientInfo.projectValue || 5000; // Use client's value as starting point or default to 5000
+  
+  // Determine project complexity based on description and industry
+  let complexity = "medium";
+  const description = (clientInfo.projectDescription || "").toLowerCase();
+  
+  if (
+    description.includes("e-commerce") || 
+    description.includes("payment") || 
+    description.includes("booking") || 
+    description.includes("reservation") ||
+    description.includes("member") ||
+    description.includes("portal") ||
+    description.includes("dashboard") ||
+    description.includes("custom") ||
+    clientInfo.industry === "E-commerce" ||
+    clientInfo.industry === "Finance"
+  ) {
+    complexity = "high";
+    if (basePrice < 7500) basePrice = 7500;
+  } else if (
+    description.includes("blog") || 
+    description.includes("simple") || 
+    description.includes("basic") ||
+    description.includes("landing page")
+  ) {
+    complexity = "low";
+    if (basePrice > 3500) basePrice = 3500;
+  }
+  
+  // Recommended price range
+  const lowRange = Math.round(basePrice * 0.9);
+  const highRange = Math.round(basePrice * 1.2);
+  
+  // Recommended GoDaddy products based on project needs
+  const recommendedProducts = [];
+  
+  // Basic needs for all websites
+  recommendedProducts.push({
+    name: "GoDaddy Domain Registration",
+    description: "Secure your business domain name",
+    price: "$20/year"
+  });
+  
+  recommendedProducts.push({
+    name: "GoDaddy Business Hosting",
+    description: "Fast, reliable hosting for your professional website",
+    price: "$15-30/month"
+  });
+  
+  if (complexity === "high" || description.includes("e-commerce") || description.includes("shop") || description.includes("store")) {
+    recommendedProducts.push({
+      name: "GoDaddy E-commerce Plan",
+      description: "Complete online store solution with payment processing",
+      price: "$25-45/month"
+    });
+  }
+  
+  if (description.includes("email") || description.includes("newsletter") || description.includes("marketing")) {
+    recommendedProducts.push({
+      name: "GoDaddy Email Marketing",
+      description: "Professional email marketing tools to grow your business",
+      price: "$10-20/month"
+    });
+  }
+  
+  if (complexity !== "low") {
+    recommendedProducts.push({
+      name: "GoDaddy Website Security",
+      description: "SSL certificate and malware protection",
+      price: "$5-10/month"
+    });
+  }
+  
+  // Convert products to formatted string
+  const productsText = recommendedProducts.map(p => 
+    `- ${p.name}: ${p.description} (${p.price})`
+  ).join("\\n");
+
   const prompt = `Create a professional project proposal for ${clientInfo.name} in the ${clientInfo.industry} industry. 
   The project is "${clientInfo.projectName}" with the following description: "${clientInfo.projectDescription || "No detailed description available"}".
-  The proposal value is approximately ${clientInfo.projectValue}.
   
-  ${marketResearch ? "Please incorporate insights from this market research: " + marketResearch.substring(0, 500) + "..." : ""}
+  ${discoveryNotes ? "During our discovery call, I took these notes:\\n" + discoveryNotes + "\\n\\n" : ""}
   
-  The proposal should include:
-  - Project understanding and objectives
-  - Proposed approach and methodology
-  - Deliverables and timeline
-  - Pricing and payment terms
-  - Next steps
+  ${strategicRecommendations ? "Based on our market research, we've identified these strategic recommendations for your business:\\n" + strategicRecommendations + "\\n\\n" : ""}
   
-  Format as a professional business proposal with clear sections and formatting.`;
+  For this project, we recommend a budget of $${lowRange} - $${highRange} based on the requirements and industry standards.
+  
+  We also recommend the following GoDaddy products for this project:
+  ${productsText}
+  
+  The proposal should include these sections with appropriate HTML formatting:
+  1. Executive Summary - Brief overview of the project and client needs
+  2. Project Understanding - Detailed analysis of client requirements and business goals
+  3. Proposed Solution - Our approach to meeting these requirements
+  4. Project Scope & Deliverables - Clear outline of what will be delivered
+  5. Timeline & Milestones - Visual project schedule with key dates
+  6. Investment & Pricing - Detailed cost breakdown with the recommended price range
+  7. GoDaddy Product Recommendations - List of recommended GoDaddy products with descriptions and pricing
+  8. Why Choose Us - Our unique value proposition
+  9. Next Steps - Clear action items to move forward
+  
+  Format as a professional HTML business proposal with clear sections, styling, and visual elements. Make it visually appealing with a professional design.`;
 
   try {
     const response = await openai.chat.completions.create({
