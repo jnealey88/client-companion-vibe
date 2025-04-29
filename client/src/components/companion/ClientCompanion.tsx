@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { 
@@ -89,14 +89,38 @@ interface ClientCompanionProps {
 export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [selectedTask, setSelectedTask] = useState<CompanionTask | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
+  const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   // Fetch companion tasks for the client
   const { data: tasks, isLoading } = useQuery<CompanionTask[]>({
     queryKey: [`/api/clients/${client.id}/companion-tasks`],
-    enabled: !!client.id,
+    enabled: !!client.id
   });
+  
+  // Initialize expanded task view when data is loaded
+  useEffect(() => {
+    if (tasks && tasks.length > 0) {
+      // Initialize all completed tasks as expanded
+      const newExpandedTasks: Record<string, boolean> = {};
+      let lastTaskWithContent: CompanionTask | null = null;
+      
+      tasks.forEach(task => {
+        if (task.content) {
+          newExpandedTasks[task.type] = true;
+          lastTaskWithContent = task; // Track the most recent task with content
+        }
+      });
+      
+      // Set the last task with content as selected for viewing
+      if (lastTaskWithContent) {
+        setSelectedTask(lastTaskWithContent);
+      }
+      
+      setExpandedTasks(newExpandedTasks);
+    }
+  }, [tasks]);
   
   // Create mutation for generating content
   const generateMutation = useMutation({
@@ -202,10 +226,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       </CardHeader>
       
       <CardContent>
-        <Tabs defaultValue="tasks" className="w-full">
+        <Tabs defaultValue="content" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="tasks">Tasks by Phase</TabsTrigger>
             <TabsTrigger value="content">Generated Content</TabsTrigger>
+            <TabsTrigger value="tasks">Tasks by Phase</TabsTrigger>
           </TabsList>
           
           <TabsContent value="tasks" className="mt-4">
@@ -254,62 +278,81 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           </TabsContent>
           
           <TabsContent value="content" className="mt-4">
-            {selectedTask ? (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 rounded-md bg-gray-100">
-                      {taskTypes[selectedTask.type as keyof typeof taskTypes]?.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-medium">
-                        {taskTypes[selectedTask.type as keyof typeof taskTypes]?.label}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        Phase: {taskTypes[selectedTask.type as keyof typeof taskTypes]?.phase}
-                      </p>
-                    </div>
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium">Generated Content Library</h3>
+                <Badge variant="outline" className="bg-transparent">
+                  {tasks?.filter(task => task.content).length || 0} items
+                </Badge>
+              </div>
+              
+              {tasks && tasks.filter(task => task.content).length > 0 ? (
+                <div className="space-y-6">
+                  {Object.entries(tasksByType)
+                    .filter(([_, task]) => task?.content)
+                    .map(([type, task]) => {
+                      const taskInfo = taskTypes[type as keyof typeof taskTypes];
+                      
+                      return (
+                        <Card key={type} className="overflow-hidden">
+                          <CardHeader className="bg-gray-50 p-4">
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-2">
+                                <div className={`p-2 rounded-md ${taskInfo?.iconColor}`}>
+                                  {taskInfo?.icon}
+                                </div>
+                                <div>
+                                  <CardTitle className="text-base">{taskInfo?.label}</CardTitle>
+                                  <CardDescription className="text-xs">
+                                    Phase: {taskInfo?.phase} • Generated: {new Date(task!.createdAt).toLocaleDateString()}
+                                  </CardDescription>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => {
+                                  if (task?.content) {
+                                    navigator.clipboard.writeText(task.content);
+                                    toast({
+                                      title: "Content copied",
+                                      description: "The content has been copied to your clipboard."
+                                    });
+                                  }
+                                }}>
+                                  Copy
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => setSelectedTask(selectedTask === task ? null : task!)}
+                                >
+                                  {selectedTask === task ? 'Hide' : 'View'} 
+                                </Button>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          
+                          <CardContent className="p-4 border-t">
+                            <div 
+                              className="bg-white rounded-md p-2 max-h-[400px] overflow-y-auto"
+                              dangerouslySetInnerHTML={{ __html: task!.content || "" }}
+                            ></div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <div className="bg-gray-50 rounded-md p-8 flex flex-col items-center">
+                    <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-medium text-gray-700">No content generated yet</h3>
+                    <p className="text-gray-500 mt-2 max-w-md">
+                      Generate content using the tasks in the Tasks tab to build your content library.
+                    </p>
                   </div>
-                  <Badge variant="outline">
-                    {new Date(selectedTask.createdAt).toLocaleDateString()}
-                  </Badge>
                 </div>
-                
-                <Separator />
-                
-                <div 
-                  className="bg-white rounded-md p-4 max-h-[600px] overflow-y-auto"
-                  dangerouslySetInnerHTML={{ __html: selectedTask.content || "" }}
-                ></div>
-                
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setSelectedTask(null)}>
-                    Back to Tasks
-                  </Button>
-                  <Button onClick={() => {
-                    if (selectedTask.content) {
-                      navigator.clipboard.writeText(selectedTask.content || "");
-                      toast({
-                        title: "Content copied",
-                        description: "The content has been copied to your clipboard."
-                      });
-                    }
-                  }}>
-                    Copy Content
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="py-12 text-center">
-                <div className="bg-gray-50 rounded-md p-8 flex flex-col items-center">
-                  <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-700">No content selected</h3>
-                  <p className="text-gray-500 mt-2 max-w-md">
-                    Generate and select a task from the Tasks tab to view its content here.
-                  </p>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </CardContent>
