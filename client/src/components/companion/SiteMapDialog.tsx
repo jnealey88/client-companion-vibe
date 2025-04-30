@@ -1266,11 +1266,22 @@ Your Web Professional`);
                                   </div>
                                   
                                   <div className="mb-6">
-                                    <h3 className="text-md font-semibold border-b pb-2 mb-4">Page Sections</h3>
+                                    <h3 className="text-md font-semibold border-b pb-2 mb-4">
+                                      Page Sections 
+                                      <span className="text-xs ml-2 text-muted-foreground">
+                                        ({page.sections.length} sections available)
+                                      </span>
+                                    </h3>
+                                    
                                     <div className="space-y-6">
-                                      {page.sections.map((section) => (
+                                      {page.sections.map((section, sectionIndex) => (
                                         <div key={section.id} className="p-4 border rounded-md bg-white shadow-sm">
-                                          <h4 className="text-sm font-medium mb-2">{section.title}</h4>
+                                          <h4 className="text-sm font-medium mb-2">
+                                            {section.title}
+                                            <span className="text-xs ml-2 text-slate-500">
+                                              (Section #{sectionIndex + 1})
+                                            </span>
+                                          </h4>
                                           <div className="text-xs mb-3 flex items-center gap-2">
                                             <span className="bg-slate-100 px-2 py-1 rounded">~{section.wordCount} words</span>
                                             {section.elements.length > 0 && (
