@@ -8,7 +8,9 @@ import {
   PlusCircle,
   CheckCircle,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 import { 
   Card, 
@@ -160,128 +162,225 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
     }
   };
 
+  // Group products by type
+  const domainProducts = mockProducts.filter(p => p.type === 'domain' && p.status === 'active');
+  const hostingProducts = mockProducts.filter(p => p.type === 'hosting' && p.status === 'active');
+  const emailProducts = mockProducts.filter(p => p.type === 'email' && p.status === 'active');
+  const securityProducts = mockProducts.filter(p => p.type === 'security');
+  
+  // Check if security is active
+  const hasActiveSecurity = securityProducts.some(p => p.status === 'active');
+  
+  // Count active products
+  const activeProductsCount = mockProducts.filter(p => p.status === 'active').length;
+
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-2">
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="text-lg font-semibold flex items-center">
-                <ShoppingCart className="h-5 w-5 mr-2 text-blue-600" />
-                GoDaddy Products
+              <CardTitle className="text-2xl font-bold">
+                Active Products
               </CardTitle>
-              <CardDescription>
-                Manage your client's digital products
+              <CardDescription className="text-base text-gray-600 mt-1">
+                {activeProductsCount} active product{activeProductsCount !== 1 ? 's' : ''}
               </CardDescription>
             </div>
             <Button 
-              size="sm" 
-              variant="outline" 
-              className="flex items-center gap-1 text-blue-600 border-blue-200 hover:bg-blue-50"
+              className="bg-blue-600 hover:bg-blue-700"
               onClick={() => setPurchaseDialogOpen(true)}
             >
-              <PlusCircle className="h-4 w-4" />
               Add Products
             </Button>
           </div>
         </CardHeader>
         
-        <CardContent>
-          <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-            <TabsList className="grid grid-cols-3 mb-4">
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="expiring">Expiring</TabsTrigger>
-              <TabsTrigger value="recommended">Recommended</TabsTrigger>
-            </TabsList>
-            
-            <div className="space-y-3">
-              {filteredProducts.length === 0 ? (
-                <div className="text-center py-6 px-4 bg-gray-50 rounded-lg">
-                  <p className="text-gray-500">No products found in this category</p>
+        <CardContent className="pt-4">
+          <div className="space-y-4">
+            {/* Domains Section */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-gray-700" />
+                  <h3 className="text-lg font-medium">Domains</h3>
+                  <Badge variant="outline" className="ml-1 bg-green-50 text-green-700 border-green-200">
+                    {domainProducts.length} Active
+                  </Badge>
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              </div>
+
+              <div className="space-y-3">
+                {domainProducts.map(domain => (
+                  <div key={domain.id} className="bg-white p-3 rounded-md border border-gray-200 flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{client.websiteUrl || "techvision.example.com"}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1">
+                        <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                        Active
+                      </Badge>
+                      <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                
+                {domainProducts.length === 0 && (
+                  <div className="text-center py-2">
+                    <p className="text-sm text-gray-500">No domains registered</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Hosting Section */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Server className="h-5 w-5 text-gray-700" />
+                  <h3 className="text-lg font-medium">Hosting</h3>
+                  <Badge variant="outline" className="ml-1 bg-green-50 text-green-700 border-green-200">
+                    {hostingProducts.length} Active
+                  </Badge>
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              </div>
+
+              <div className="space-y-3">
+                {hostingProducts.map(hosting => (
+                  <div key={hosting.id} className="bg-white p-3 rounded-md border border-gray-200">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">{hosting.name}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Renews {hosting.expiryDate ? new Date(hosting.expiryDate).toLocaleDateString(undefined, {
+                            month: 'short', 
+                            day: 'numeric',
+                            year: 'numeric'
+                          }) : 'Feb 1, 2024'}
+                        </p>
+                      </div>
+                      <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                
+                {hostingProducts.length === 0 && (
+                  <div className="text-center py-2">
+                    <p className="text-sm text-gray-500">No hosting plans active</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Security Section */}
+            <div className={`${hasActiveSecurity ? 'bg-gray-50' : 'bg-amber-50'} rounded-lg p-4`}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-gray-700" />
+                  <h3 className="text-lg font-medium">Security</h3>
+                  {hasActiveSecurity ? (
+                    <Badge variant="outline" className="ml-1 bg-green-50 text-green-700 border-green-200">
+                      Protected
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="ml-1 bg-amber-100 text-amber-800 border-amber-200">
+                      Not Protected
+                    </Badge>
+                  )}
+                </div>
+                <ChevronRight className="h-5 w-5 text-gray-400" />
+              </div>
+
+              {!hasActiveSecurity && (
+                <div>
+                  <p className="text-gray-700 mb-3">Essential protection needed for your website</p>
                   <Button 
-                    variant="link" 
-                    className="mt-2"
-                    onClick={() => setPurchaseDialogOpen(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    onClick={() => {
+                      const securityProduct = securityProducts.find(p => p.status === 'recommended');
+                      if (securityProduct) {
+                        setSelectedProduct(securityProduct);
+                        setOpenDialog(true);
+                      } else {
+                        setPurchaseDialogOpen(true);
+                      }
+                    }}
                   >
-                    Browse available products
+                    View Security Bundle
                   </Button>
                 </div>
-              ) : (
-                filteredProducts.map(product => (
-                  <div 
-                    key={product.id} 
-                    className={`p-4 border rounded-lg transition-all duration-200 cursor-pointer ${
-                      hoveredProductId === product.id 
-                        ? 'shadow-md border-blue-200 bg-blue-50/30' 
-                        : 'hover:shadow-sm hover:border-gray-300'
-                    }`}
-                    onClick={() => {
-                      setSelectedProduct(product);
-                      setOpenDialog(true);
-                    }}
-                    onMouseEnter={() => setHoveredProductId(product.id)}
-                    onMouseLeave={() => setHoveredProductId(null)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2.5 rounded-full transition-colors duration-200 ${
-                          product.type === 'domain' ? 'bg-blue-100 text-blue-600' :
-                          product.type === 'hosting' ? 'bg-green-100 text-green-600' :
-                          product.type === 'email' ? 'bg-purple-100 text-purple-600' :
-                          product.type === 'security' ? 'bg-red-100 text-red-600' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
-                          {product.icon}
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900">{product.name}</h3>
-                          <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{product.description}</p>
-                          {!product.expiryDate && product.status === 'recommended' && (
-                            <div className="mt-2">
-                              {getStatusBadge(product.status, product.expiryDate)}
-                            </div>
-                          )}
-                          {product.expiryDate && product.status !== 'recommended' && (
-                            <div className="mt-2">
-                              {getStatusBadge(product.status, product.expiryDate)}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">${product.price.toFixed(2)}<span className="text-gray-500 font-normal text-sm">/year</span></p>
-                        {product.expiryDate && (
-                          <p className="text-xs text-gray-500 mt-1">Renews: {new Date(product.expiryDate).toLocaleDateString()}</p>
-                        )}
-                        {hoveredProductId === product.id && (
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="text-xs mt-2 h-7 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          >
-                            {product.status === 'recommended' ? 'Add to cart' : 'View details'}
-                          </Button>
-                        )}
-                      </div>
+              )}
+
+              {hasActiveSecurity && (
+                <div className="bg-white p-3 rounded-md border border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">Website Security</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Essential protection active
+                      </p>
                     </div>
-                    
-                    {product.status === 'expiring' && product.expiryDate && (
-                      <div className="mt-4">
-                        <div className="flex justify-between text-xs text-gray-500 mb-1">
-                          <span>Expires soon</span>
-                          <span className="font-medium text-amber-600">Renew now</span>
-                        </div>
-                        <Progress 
-                          value={Math.min(100, 100 - (getDaysRemaining(product.expiryDate) || 0) / 90 * 100)} 
-                          className="h-2 bg-gray-100" 
-                        />
-                      </div>
-                    )}
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1">
+                      <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                      Active
+                    </Badge>
                   </div>
-                ))
+                </div>
               )}
             </div>
-          </Tabs>
+
+            {/* Email Section */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-gray-700" />
+                  <h3 className="text-lg font-medium">Email</h3>
+                  <Badge variant="outline" className="ml-1 bg-green-50 text-green-700 border-green-200">
+                    {emailProducts.length > 0 ? `${emailProducts.length * 5} Mailboxes` : '0 Mailboxes'}
+                  </Badge>
+                </div>
+                <ChevronDown className="h-5 w-5 text-gray-400" />
+              </div>
+
+              <div className="space-y-3">
+                {emailProducts.map(email => (
+                  <div key={email.id} className="bg-white p-3 rounded-md border border-gray-200">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium">{email.name}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          5 professional email accounts
+                        </p>
+                      </div>
+                      <Button size="icon" variant="ghost" className="h-8 w-8">
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                
+                {emailProducts.length === 0 && (
+                  <div className="text-center py-2">
+                    <p className="text-sm text-gray-500">No email plans active</p>
+                    <Button 
+                      variant="link" 
+                      className="text-blue-600"
+                      onClick={() => setPurchaseDialogOpen(true)}
+                    >
+                      Add Email Plan
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </CardContent>
         
         {cartItems.length > 0 && (
