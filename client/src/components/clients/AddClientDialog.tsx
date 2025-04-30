@@ -90,10 +90,10 @@ export default function AddClientDialog({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px] max-h-[85vh] overflow-y-auto">
-        <DialogHeader className="pb-1">
-          <DialogTitle className="text-lg font-semibold text-primary">Add New Client</DialogTitle>
-          <DialogDescription className="text-gray-500 text-sm">
+      <DialogContent className="sm:max-w-[650px] max-h-[85vh] overflow-y-auto p-6 rounded-lg border-0 shadow-lg">
+        <DialogHeader className="pb-4 border-b mb-4">
+          <DialogTitle className="text-xl font-bold text-gray-800">Add New Client</DialogTitle>
+          <DialogDescription className="text-gray-500 text-sm mt-1">
             Enter client details. Required fields marked with *
           </DialogDescription>
         </DialogHeader>
@@ -299,18 +299,18 @@ export default function AddClientDialog({
               />
             </div>
             
-            <DialogFooter className="mt-6 px-1">
+            <DialogFooter className="mt-6 px-1 flex justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
-                className="px-5"
+                className="px-6 h-10 rounded-md border-gray-300 hover:bg-gray-50"
               >
                 Cancel
               </Button>
               <Button 
                 type="submit" 
-                className="px-8 py-6 text-base font-medium"
+                className="px-6 h-10 rounded-md text-base font-medium bg-blue-600 hover:bg-blue-700"
               >
                 Add Client
               </Button>
