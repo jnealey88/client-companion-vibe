@@ -24,13 +24,16 @@ import {
   Link,
   Trash2,
   Clock,
-  Timer
+  Timer,
+  FileCheck,
+  FileX
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Client, CompanionTask, statusOptions } from "@shared/schema";
 import CompanionTaskCard from "./CompanionTaskCard";
@@ -212,6 +215,7 @@ interface ClientCompanionProps {
 export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [selectedTask, setSelectedTask] = useState<CompanionTask | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
+  const [selectedView, setSelectedView] = useState<'all' | 'pending' | 'completed'>('all');
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
