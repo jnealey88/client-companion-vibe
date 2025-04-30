@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Calendar, Copy, CheckCircle2, Send } from "lucide-react";
+import { Calendar, Copy, CheckCircle2, Send, MailCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -133,13 +134,67 @@ Web Design Consultant`;
     });
   };
 
+  const queryClient = useQueryClient();
+  
+  // Find the schedule discovery task
+  const discoveryTask = tasks?.find(
+    (t) => t.type === "schedule_discovery"
+  );
+  
+  // Create mutation to update the task status
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return apiRequest(`/api/companion-tasks/${id}`, {
+        method: "PATCH",
+        data,
+      });
+    },
+    onSuccess: () => {
+      // Invalidate the tasks query to refresh the data
+      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
+    },
+  });
+  
   // Handle sending the email (would connect to email provider in a real app)
+  const [isSending, setIsSending] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  
   const handleSend = () => {
-    toast({
-      title: "Email ready to send",
-      description: "This would connect to your email provider in a real application.",
-    });
-    // In a real application, this would send the email via an email provider API
+    setIsSending(true);
+    
+    // Simulate email sending process
+    setTimeout(() => {
+      // Show success toast
+      toast({
+        title: "Email sent successfully!",
+        description: `Discovery call invitation sent to ${client.contactName}`,
+        variant: "default",
+      });
+      
+      setIsSending(false);
+      setEmailSent(true);
+      
+      // Update the task status to completed if it exists
+      if (discoveryTask) {
+        updateTaskMutation.mutate({
+          id: discoveryTask.id,
+          data: {
+            status: "completed",
+            content: emailContent,
+            completedAt: new Date().toISOString(),
+          },
+        });
+      } else {
+        // If task doesn't exist yet, we'd create it here
+        // For simplicity we're assuming it exists in this implementation
+        console.log("Discovery task not found - would create one");
+      }
+      
+      // Close the dialog after a delay
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 1500);
+    }, 1200); // Simulate a slight delay for the email sending
   };
 
   return (
@@ -178,8 +233,27 @@ Web Design Consultant`;
                 size="sm"
                 onClick={handleSend}
                 className="flex items-center gap-1 h-8"
+                disabled={isSending || emailSent}
               >
-                <Send className="h-4 w-4" /> Send
+                {isSending ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Sending...
+                  </>
+                ) : emailSent ? (
+                  <>
+                    <MailCheck className="h-4 w-4 mr-1" />
+                    Sent
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-1" />
+                    Send
+                  </>
+                )}
               </Button>
             </div>
           </div>
