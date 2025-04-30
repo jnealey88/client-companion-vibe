@@ -703,7 +703,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
             </CardDescription>
           </div>
           
-          <div className="flex gap-4 items-center">
+          <div className="flex justify-end items-center">
             {/* Display total time saved */}
             {tasks && tasks.some(task => task.content) && (
               <div className="flex items-center bg-white border border-green-300 rounded-lg shadow-sm px-4 py-3">
@@ -720,13 +720,6 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                 </div>
               </div>
             )}
-            
-            <div className="bg-white border rounded-lg px-4 py-3 shadow-sm">
-              <div className="text-sm text-gray-500 mb-1">Current phase</div>
-              <Badge className={`${getPhaseStatusClass(client.status)} px-3 py-1 text-sm font-medium`}>
-                {client.status}
-              </Badge>
-            </div>
           </div>
         </div>
       </CardHeader>

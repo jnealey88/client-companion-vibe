@@ -170,7 +170,7 @@ Web Design Consultant`;
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          to: client.email || client.contactEmail || 'client@example.com', // Use available email or fallback
+          to: client.email || 'client@example.com', // Use client email or fallback
           from: 'noreply@youragency.com', // Note: must be verified with SendGrid
           subject: `Discovery Call Invitation - ${client.name}`,
           text: emailContent,
