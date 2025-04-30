@@ -48,6 +48,7 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
   const [openDialog, setOpenDialog] = useState(false);
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [cartItems, setCartItems] = useState<GoDaddyProduct[]>([]);
+  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
   
   // Sample data - in a real app, this would come from an API
   const mockProducts: GoDaddyProduct[] = [
@@ -63,10 +64,10 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
     },
     {
       id: '2',
-      name: 'Web Hosting Plus',
-      description: 'High-performance hosting with unlimited storage',
+      name: 'Managed WordPress Ultimate',
+      description: 'Premium WordPress hosting with advanced features and security',
       type: 'hosting',
-      price: 9.99,
+      price: 249.00,
       status: 'active',
       expiryDate: '2025-05-10',
       icon: <Server className="h-5 w-5 text-green-500" />
@@ -83,8 +84,8 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
     },
     {
       id: '4',
-      name: 'SSL Certificate',
-      description: 'Premium SSL protection for secure transactions',
+      name: 'Website Security',
+      description: 'Complete website protection with malware scanning and removal',
       type: 'security',
       price: 69.99,
       status: 'recommended',
@@ -209,44 +210,70 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
                 filteredProducts.map(product => (
                   <div 
                     key={product.id} 
-                    className="p-4 border rounded-lg hover:shadow-sm transition-shadow cursor-pointer"
+                    className={`p-4 border rounded-lg transition-all duration-200 cursor-pointer ${
+                      hoveredProductId === product.id 
+                        ? 'shadow-md border-blue-200 bg-blue-50/30' 
+                        : 'hover:shadow-sm hover:border-gray-300'
+                    }`}
                     onClick={() => {
                       setSelectedProduct(product);
                       setOpenDialog(true);
                     }}
+                    onMouseEnter={() => setHoveredProductId(product.id)}
+                    onMouseLeave={() => setHoveredProductId(null)}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex items-start gap-3">
-                        <div className="p-2 bg-gray-50 rounded-md">
+                        <div className={`p-2.5 rounded-full transition-colors duration-200 ${
+                          product.type === 'domain' ? 'bg-blue-100 text-blue-600' :
+                          product.type === 'hosting' ? 'bg-green-100 text-green-600' :
+                          product.type === 'email' ? 'bg-purple-100 text-purple-600' :
+                          product.type === 'security' ? 'bg-red-100 text-red-600' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
                           {product.icon}
                         </div>
                         <div>
-                          <h3 className="font-medium">{product.name}</h3>
-                          <p className="text-sm text-gray-500">{product.description}</p>
-                          {product.expiryDate && (
-                            <div className="mt-1">
+                          <h3 className="font-medium text-gray-900">{product.name}</h3>
+                          <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{product.description}</p>
+                          {!product.expiryDate && product.status === 'recommended' && (
+                            <div className="mt-2">
+                              {getStatusBadge(product.status, product.expiryDate)}
+                            </div>
+                          )}
+                          {product.expiryDate && product.status !== 'recommended' && (
+                            <div className="mt-2">
                               {getStatusBadge(product.status, product.expiryDate)}
                             </div>
                           )}
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">${product.price.toFixed(2)}/year</p>
+                        <p className="font-semibold text-gray-900">${product.price.toFixed(2)}<span className="text-gray-500 font-normal text-sm">/year</span></p>
                         {product.expiryDate && (
-                          <p className="text-xs text-gray-500">Renews: {new Date(product.expiryDate).toLocaleDateString()}</p>
+                          <p className="text-xs text-gray-500 mt-1">Renews: {new Date(product.expiryDate).toLocaleDateString()}</p>
+                        )}
+                        {hoveredProductId === product.id && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="text-xs mt-2 h-7 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            {product.status === 'recommended' ? 'Add to cart' : 'View details'}
+                          </Button>
                         )}
                       </div>
                     </div>
                     
                     {product.status === 'expiring' && product.expiryDate && (
-                      <div className="mt-3">
+                      <div className="mt-4">
                         <div className="flex justify-between text-xs text-gray-500 mb-1">
                           <span>Expires soon</span>
-                          <span>Renew now</span>
+                          <span className="font-medium text-amber-600">Renew now</span>
                         </div>
                         <Progress 
                           value={Math.min(100, 100 - (getDaysRemaining(product.expiryDate) || 0) / 90 * 100)} 
-                          className="h-2" 
+                          className="h-2 bg-gray-100" 
                         />
                       </div>
                     )}
@@ -258,15 +285,38 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
         </CardContent>
         
         {cartItems.length > 0 && (
-          <CardFooter className="border-t p-4 bg-gray-50">
+          <CardFooter className="border-t p-4 bg-gradient-to-b from-gray-50 to-white">
             <div className="w-full">
               <div className="flex justify-between items-center">
-                <p className="text-sm font-medium">Cart Total</p>
-                <p className="font-semibold">${cartTotal.toFixed(2)}/year</p>
+                <div>
+                  <p className="text-sm font-medium">Cart Total</p>
+                  <p className="text-xs text-gray-500">{cartItems.length} product{cartItems.length > 1 ? 's' : ''}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-lg text-blue-700">${cartTotal.toFixed(2)}<span className="text-sm text-gray-500 font-normal">/year</span></p>
+                  {cartTotal > 100 && (
+                    <p className="text-xs text-green-600 font-medium">Save 10% with annual billing</p>
+                  )}
+                </div>
               </div>
-              <div className="flex justify-between items-center mt-2">
-                <p className="text-xs text-gray-500">{cartItems.length} item(s) in cart</p>
-                <Button size="sm" className="mt-2">Checkout</Button>
+              <div className="mt-4">
+                <Button 
+                  size="sm" 
+                  className="w-full gap-2 bg-blue-600 hover:bg-blue-700"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Proceed to Checkout
+                </Button>
+                <div className="flex justify-center mt-2">
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    className="text-xs text-gray-500"
+                    onClick={() => setCartItems([])}
+                  >
+                    Clear cart
+                  </Button>
+                </div>
               </div>
             </div>
           </CardFooter>
@@ -277,65 +327,160 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{selectedProduct?.name}</DialogTitle>
-            <DialogDescription>
-              {selectedProduct?.description}
-            </DialogDescription>
+            <div className="flex items-center gap-3">
+              {selectedProduct && (
+                <div className={`p-2.5 rounded-full ${
+                  selectedProduct.type === 'domain' ? 'bg-blue-100 text-blue-600' :
+                  selectedProduct.type === 'hosting' ? 'bg-green-100 text-green-600' :
+                  selectedProduct.type === 'email' ? 'bg-purple-100 text-purple-600' :
+                  selectedProduct.type === 'security' ? 'bg-red-100 text-red-600' :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {selectedProduct.icon}
+                </div>
+              )}
+              <div>
+                <DialogTitle className="text-xl">{selectedProduct?.name}</DialogTitle>
+                <DialogDescription>
+                  {selectedProduct?.description}
+                </DialogDescription>
+              </div>
+            </div>
           </DialogHeader>
           
           {selectedProduct && (
-            <div className="space-y-4">
+            <div className="space-y-5 mt-2">
               <div className="grid grid-cols-2 gap-4">
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Price</p>
-                  <p className="font-medium">${selectedProduct.price.toFixed(2)}/year</p>
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Price</p>
+                  <p className="font-semibold text-gray-900 mt-1">${selectedProduct.price.toFixed(2)}<span className="text-gray-500 font-normal text-sm">/year</span></p>
+                  {selectedProduct.price > 100 && (
+                    <p className="text-xs text-green-600 font-medium mt-1">Save 10% with annual billing</p>
+                  )}
                 </div>
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-500">Status</p>
-                  <div className="mt-1">
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Status</p>
+                  <div className="mt-2">
                     {getStatusBadge(selectedProduct.status, selectedProduct.expiryDate)}
                   </div>
                 </div>
               </div>
               
               {selectedProduct.expiryDate && (
-                <div className="p-3 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between">
-                    <p className="text-xs text-gray-500">Expiry Date</p>
-                    <p className="text-xs font-medium">
-                      {new Date(selectedProduct.expiryDate).toLocaleDateString()}
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Expiry Date</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {new Date(selectedProduct.expiryDate).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
                     </p>
                   </div>
                   
                   {selectedProduct.status === 'expiring' && (
-                    <div className="mt-2">
+                    <div className="mt-3">
                       <Progress 
                         value={Math.min(100, 100 - (getDaysRemaining(selectedProduct.expiryDate) || 0) / 90 * 100)} 
-                        className="h-2" 
+                        className="h-2 bg-gray-200" 
                       />
-                      <div className="flex justify-between text-xs mt-1">
-                        <span className="text-gray-500">
-                          {getDaysRemaining(selectedProduct.expiryDate)} days left
+                      <div className="flex justify-between text-xs mt-2">
+                        <span className="text-amber-600 font-medium">
+                          {getDaysRemaining(selectedProduct.expiryDate)} days remaining
                         </span>
-                        <span className="text-blue-600 font-medium">Renew now</span>
+                        <span className="text-blue-600 font-medium underline cursor-pointer">Renew now</span>
                       </div>
                     </div>
                   )}
                 </div>
               )}
+              
+              {/* Benefits section */}
+              <div className="p-4 rounded-lg border border-gray-200">
+                <h4 className="text-sm font-medium mb-3">Product Benefits</h4>
+                <ul className="space-y-2">
+                  {selectedProduct.type === 'domain' && (
+                    <>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>Domain renewal for 1 year</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>Free email forwarding</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>Domain theft protection</span>
+                      </li>
+                    </>
+                  )}
+                  
+                  {selectedProduct.type === 'hosting' && (
+                    <>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>Unlimited websites</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>Unlimited storage</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>Free SSL certificate</span>
+                      </li>
+                    </>
+                  )}
+                  
+                  {selectedProduct.type === 'security' && (
+                    <>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>Malware removal & cleanup</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>Continuous security monitoring</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>CDN performance boost</span>
+                      </li>
+                    </>
+                  )}
+                  
+                  {selectedProduct.type === 'email' && (
+                    <>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>Professional email addresses</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>Large mailbox storage</span>
+                      </li>
+                      <li className="flex items-start gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <span>Calendar and contacts sync</span>
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
             </div>
           )}
           
-          <DialogFooter className="flex sm:justify-between items-center">
+          <DialogFooter className="flex sm:justify-between items-center mt-4">
             {selectedProduct?.status === 'active' || selectedProduct?.status === 'expiring' ? (
-              <Button variant="outline" className="flex items-center gap-1" onClick={() => setOpenDialog(false)}>
+              <Button className="bg-blue-600 hover:bg-blue-700 flex items-center gap-1" onClick={() => setOpenDialog(false)}>
                 <RefreshCw className="h-4 w-4" />
-                Renew
+                Renew Now
               </Button>
             ) : (
               <Button 
-                variant="outline" 
-                className="flex items-center gap-1"
+                className="bg-blue-600 hover:bg-blue-700 flex items-center gap-1"
                 onClick={() => {
                   if (selectedProduct) addToCart(selectedProduct);
                   setOpenDialog(false);
@@ -345,7 +490,7 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
                 Add to Cart
               </Button>
             )}
-            <Button variant="ghost" onClick={() => setOpenDialog(false)}>
+            <Button variant="outline" onClick={() => setOpenDialog(false)}>
               Close
             </Button>
           </DialogFooter>
@@ -356,21 +501,24 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
       <Dialog open={purchaseDialogOpen} onOpenChange={setPurchaseDialogOpen}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Add GoDaddy Products</DialogTitle>
+            <DialogTitle className="flex items-center gap-1.5 text-xl">
+              <ShoppingCart className="h-5 w-5 text-blue-600" />
+              Add GoDaddy Products
+            </DialogTitle>
             <DialogDescription>
-              Select products to add to {client.name}'s account
+              Recommended products for {client.name}
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4 my-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div 
-                className="p-4 border rounded-lg hover:shadow-sm transition-shadow cursor-pointer flex items-start gap-3"
+                className="p-5 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all duration-200 cursor-pointer"
                 onClick={() => {
                   const newProduct: GoDaddyProduct = {
                     id: '5',
-                    name: 'Premium SSL Certificate',
-                    description: 'Enhanced website security with extended validation',
+                    name: 'Website Security Essential',
+                    description: 'Complete website protection with malware scanning and removal',
                     type: 'security',
                     price: 119.99,
                     status: 'recommended',
@@ -379,18 +527,44 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
                   addToCart(newProduct);
                 }}
               >
-                <div className="p-2 bg-gray-50 rounded-md">
-                  <Shield className="h-5 w-5 text-red-500" />
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col">
+                    <div className="p-3 bg-red-100 text-red-600 rounded-full w-fit">
+                      <Shield className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-medium text-gray-900 mt-4">Website Security Essential</h3>
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">Complete website protection with malware scanning and removal</p>
+                    <div className="flex items-center mt-3">
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <PlusCircle className="h-3 w-3 mr-1" /> Recommended
+                      </Badge>
+                    </div>
+                  </div>
+                  <p className="font-semibold">$119.99<span className="text-gray-500 font-normal text-sm">/year</span></p>
                 </div>
-                <div>
-                  <h3 className="font-medium">Premium SSL Certificate</h3>
-                  <p className="text-sm text-gray-500">Enhanced website security with extended validation</p>
-                  <p className="font-medium mt-1">$119.99/year</p>
-                </div>
+                <Button 
+                  className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newProduct: GoDaddyProduct = {
+                      id: '5',
+                      name: 'Website Security Essential',
+                      description: 'Complete website protection with malware scanning and removal',
+                      type: 'security',
+                      price: 119.99,
+                      status: 'recommended',
+                      icon: <Shield className="h-5 w-5 text-red-500" />
+                    };
+                    addToCart(newProduct);
+                  }}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart
+                </Button>
               </div>
               
               <div 
-                className="p-4 border rounded-lg hover:shadow-sm transition-shadow cursor-pointer flex items-start gap-3"
+                className="p-5 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all duration-200 cursor-pointer"
                 onClick={() => {
                   const newProduct: GoDaddyProduct = {
                     id: '6',
@@ -404,43 +578,95 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
                   addToCart(newProduct);
                 }}
               >
-                <div className="p-2 bg-gray-50 rounded-md">
-                  <Mail className="h-5 w-5 text-purple-500" />
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col">
+                    <div className="p-3 bg-purple-100 text-purple-600 rounded-full w-fit">
+                      <Mail className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-medium text-gray-900 mt-4">Business Email Pro</h3>
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">10 professional email accounts with 100GB storage each</p>
+                    <div className="flex items-center mt-3">
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <PlusCircle className="h-3 w-3 mr-1" /> Recommended
+                      </Badge>
+                    </div>
+                  </div>
+                  <p className="font-semibold">$9.99<span className="text-gray-500 font-normal text-sm">/year</span></p>
                 </div>
-                <div>
-                  <h3 className="font-medium">Business Email Pro</h3>
-                  <p className="text-sm text-gray-500">10 professional email accounts with 100GB storage each</p>
-                  <p className="font-medium mt-1">$9.99/year</p>
-                </div>
+                <Button 
+                  className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newProduct: GoDaddyProduct = {
+                      id: '6',
+                      name: 'Business Email Pro',
+                      description: '10 professional email accounts with 100GB storage each',
+                      type: 'email',
+                      price: 9.99,
+                      status: 'recommended',
+                      icon: <Mail className="h-5 w-5 text-purple-500" />
+                    };
+                    addToCart(newProduct);
+                  }}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart
+                </Button>
               </div>
               
               <div 
-                className="p-4 border rounded-lg hover:shadow-sm transition-shadow cursor-pointer flex items-start gap-3"
+                className="p-5 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all duration-200 cursor-pointer" 
                 onClick={() => {
                   const newProduct: GoDaddyProduct = {
                     id: '7',
-                    name: 'Enterprise Hosting',
-                    description: 'Dedicated server with unlimited bandwidth',
+                    name: 'Business WordPress Pro',
+                    description: 'Managed WordPress with premium themes and advanced security',
                     type: 'hosting',
-                    price: 29.99,
+                    price: 249.00,
                     status: 'recommended',
                     icon: <Server className="h-5 w-5 text-green-500" />
                   };
                   addToCart(newProduct);
                 }}
               >
-                <div className="p-2 bg-gray-50 rounded-md">
-                  <Server className="h-5 w-5 text-green-500" />
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col">
+                    <div className="p-3 bg-green-100 text-green-600 rounded-full w-fit">
+                      <Server className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-medium text-gray-900 mt-4">Business WordPress Pro</h3>
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">Managed WordPress with premium themes and advanced security</p>
+                    <div className="flex items-center mt-3">
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <PlusCircle className="h-3 w-3 mr-1" /> Recommended
+                      </Badge>
+                    </div>
+                  </div>
+                  <p className="font-semibold">$249.00<span className="text-gray-500 font-normal text-sm">/year</span></p>
                 </div>
-                <div>
-                  <h3 className="font-medium">Enterprise Hosting</h3>
-                  <p className="text-sm text-gray-500">Dedicated server with unlimited bandwidth</p>
-                  <p className="font-medium mt-1">$29.99/year</p>
-                </div>
+                <Button 
+                  className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newProduct: GoDaddyProduct = {
+                      id: '7',
+                      name: 'Business WordPress Pro',
+                      description: 'Managed WordPress with premium themes and advanced security',
+                      type: 'hosting',
+                      price: 249.00,
+                      status: 'recommended',
+                      icon: <Server className="h-5 w-5 text-green-500" />
+                    };
+                    addToCart(newProduct);
+                  }}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart
+                </Button>
               </div>
               
               <div 
-                className="p-4 border rounded-lg hover:shadow-sm transition-shadow cursor-pointer flex items-start gap-3"
+                className="p-5 border border-gray-200 rounded-lg hover:border-blue-300 hover:shadow-sm transition-all duration-200 cursor-pointer"
                 onClick={() => {
                   const newProduct: GoDaddyProduct = {
                     id: '8',
@@ -454,19 +680,46 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
                   addToCart(newProduct);
                 }}
               >
-                <div className="p-2 bg-gray-50 rounded-md">
-                  <Shield className="h-5 w-5 text-blue-500" />
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col">
+                    <div className="p-3 bg-blue-100 text-blue-600 rounded-full w-fit">
+                      <Shield className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-medium text-gray-900 mt-4">Domain Privacy</h3>
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">Protect your personal information from public WHOIS directories</p>
+                    <div className="flex items-center mt-3">
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <PlusCircle className="h-3 w-3 mr-1" /> Recommended
+                      </Badge>
+                    </div>
+                  </div>
+                  <p className="font-semibold">$9.99<span className="text-gray-500 font-normal text-sm">/year</span></p>
                 </div>
-                <div>
-                  <h3 className="font-medium">Domain Privacy</h3>
-                  <p className="text-sm text-gray-500">Protect your personal information from public WHOIS directories</p>
-                  <p className="font-medium mt-1">$9.99/year</p>
-                </div>
+                <Button 
+                  className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const newProduct: GoDaddyProduct = {
+                      id: '8',
+                      name: 'Domain Privacy',
+                      description: 'Protect your personal information from public WHOIS directories',
+                      type: 'security',
+                      price: 9.99,
+                      status: 'recommended',
+                      icon: <Shield className="h-5 w-5 text-blue-500" />
+                    };
+                    addToCart(newProduct);
+                  }}
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  Add to Cart
+                </Button>
               </div>
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex justify-between">
+            <p className="text-sm text-gray-500">Products selected for {client.name}'s account needs</p>
             <Button variant="ghost" onClick={() => setPurchaseDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
