@@ -1005,6 +1005,56 @@ Your Web Professional`);
           Array.isArray(data.pages) && 
           data.contentGuidelines && 
           data.technicalRequirements) {
+          
+        // Log the sitemap structure for debugging
+        console.log("========== SITEMAP STRUCTURE LOG ==========");
+        console.log("SITEMAP OVERVIEW:", {
+          pageCount: data.pages.length,
+          sectionsByPage: data.pages.map(page => ({
+            pageId: page.id,
+            pageTitle: page.title,
+            sectionCount: page.sections.length
+          }))
+        });
+        
+        console.log("DETAILED SECTION CONTENT CHECK:");
+        // Process each page
+        data.pages.forEach((page, pageIndex) => {
+          console.log(`PAGE ${pageIndex + 1}: "${page.title}" (${page.id})`);
+          console.log(`  This page has ${page.sections.length} sections`);
+          
+          // Process sections within each page
+          page.sections.forEach((section, sectionIndex) => {
+            console.log(`  SECTION ${sectionIndex + 1}: "${section.title}"`);
+            console.log(`    Content length: ${section.content?.length || 0} chars`);
+            console.log(`    Content preview: ${typeof section.content === 'string' ? section.content.substring(0, 50) + '...' : 'Not a string'}`);
+            
+            // Pre-process sections to ensure they have proper content format
+            // If the content is not in Editor.js format, convert it
+            if (section.content && typeof section.content === 'string' && 
+                !section.content.startsWith('{') && 
+                !section.content.includes('"blocks"')) {
+              // Convert plain text to Editor.js format
+              const editorJsContent = {
+                time: Date.now(),
+                blocks: [
+                  {
+                    type: "paragraph",
+                    data: {
+                      text: section.content
+                    }
+                  }
+                ],
+                version: "2.22.2"
+              };
+              
+              // Update the section with formatted content
+              section.content = JSON.stringify(editorJsContent);
+            }
+          });
+        });
+        console.log("=========================================");
+        
         return data as SiteMapData;
       }
       return null;
