@@ -1574,7 +1574,7 @@ export async function generateProjectScope(clientInfo: any, proposalContent?: st
       }
     }
     
-    const prompt = `Create a detailed project scope document for the web project "${clientInfo.projectName}" for ${clientInfo.name}.
+    const prompt = `Create a comprehensive and detailed project scope document for the web project "${clientInfo.projectName}" for ${clientInfo.name}.
     
     Client Information:
     - Business Name: ${clientInfo.name}
@@ -1586,38 +1586,62 @@ export async function generateProjectScope(clientInfo: any, proposalContent?: st
     ${scopeSection ? `The proposal for this project included the following scope information:
     ${scopeSection}` : ""}
     
-    The scope document should include the following sections, formatted as a professional HTML document:
+    Please generate a highly visual, professionally styled HTML document that follows these specific requirements:
+    
+    1. Use a modern, clean design with professional styling (CSS embedded in style tags)
+    2. Include informative headings, subheadings, and sections
+    3. Use visual elements like cards, borders, highlighted sections, and color coding
+    4. Include SVG icons where appropriate to enhance readability
+    5. Format content clearly with:
+       - Bulleted lists for requirements
+       - Tables for deliverables and specifications
+       - Visual timeline for project phases
+       - Color-coded sections for responsibilities
+    
+    The document must include these specific sections:
     
     1. **Project Overview**
-       - A concise summary of the project objectives and expected outcomes
-       - Key project parameters and constraints
+       - Executive summary of objectives and goals
+       - Key business outcomes and success metrics
+       - Project constraints and assumptions
     
     2. **Detailed Requirements**
-       - Functional requirements (features, capabilities, user interactions)
-       - Non-functional requirements (performance, security, accessibility, etc.)
-       - Technical specifications and platform requirements
+       - Functional requirements with clear specifications
+       - Technical requirements and platform details
+       - User interface and experience requirements
+       - Content and SEO requirements
+       - Compliance and accessibility requirements
     
     3. **Deliverables**
-       - Clearly defined list of all deliverables with descriptions
-       - Acceptance criteria for each deliverable
+       - List of all project deliverables with descriptions
+       - Clear acceptance criteria for each deliverable
+       - Delivery format and specifications
     
-    4. **Exclusions**
-       - What is explicitly NOT included in this project scope
+    4. **Project Exclusions**
+       - Clear statement of what is NOT included in scope
+       - Potential future enhancements outside current scope
     
     5. **Project Phases and Timeline**
-       - Breakdown of the project into phases
-       - Estimated timeline for each phase
-       - Key milestones and deadlines
+       - Project phases with clear milestones
+       - Timeline visualization
+       - Dependencies between phases
     
     6. **Roles and Responsibilities**
-       - Client responsibilities
-       - Agency/developer responsibilities
+       - Client responsibilities with timing expectations
+       - Development team responsibilities
+       - Approval processes and timelines
     
     7. **Change Management Process**
-       - How scope changes will be handled
-       - Impact assessment process
+       - Scope change request procedure
+       - Impact assessment framework
+       - Approval process for changes
     
-    Format the document professionally with proper HTML headings (<h1>, <h2>, <h3>), paragraphs, and bullet points/numbered lists where appropriate.`;
+    8. **Risk Management**
+       - Identified project risks
+       - Mitigation strategies
+       - Contingency plans
+    
+    Make the document visually engaging and professional with modern HTML/CSS styling that enhances readability and comprehension. Include appropriate visual hierarchy and information design principles.`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
@@ -1668,8 +1692,7 @@ export async function generateContract(clientInfo: any, proposalContent?: string
       }
     }
     
-    const prompt = `Create a professional web design/development services contract for ${clientInfo.name}.
-    The project is "${clientInfo.projectName}" with value approximately ${clientInfo.projectValue}.
+    const prompt = `Create a professional web design/development services contract for ${clientInfo.name} for the project "${clientInfo.projectName}" with value approximately ${clientInfo.projectValue}.
     
     Client Information:
     - Business Name: ${clientInfo.name}
@@ -1686,16 +1709,80 @@ export async function generateContract(clientInfo: any, proposalContent?: string
     ${scopeSection ? `The proposal for this project included the following scope information:
     ${scopeSection}` : ""}
     
-    The contract should include:
-    - Parties involved (use placeholder for the agency name)
-    - Scope of work
-    - Timeline and deliverables
-    - Payment terms and schedule
-    - Intellectual property rights
-    - Termination clauses
-    - Standard legal protections
+    Please generate a highly visual, professionally styled HTML document that follows these specific requirements:
     
-    Format as a formal legal document that could be used as a starting point for a real contract.`;
+    1. Use a modern, clean design with professional styling (CSS embedded in style tags)
+    2. Include appropriate legal document formatting while maintaining visual appeal
+    3. Use visual elements like bordered sections, highlighted clauses, and subtle color coding for different sections
+    4. Include appropriate SVG icons where relevant to enhance readability
+    5. Format content clearly with:
+       - Numbered clauses and subclauses
+       - Visually distinct signature blocks
+       - Highlighted important terms
+       - Visual separation between sections
+    
+    The contract must include these specific sections, formatted as a professional legal document:
+    
+    1. **Parties**
+       - Clear identification of both parties (client and service provider)
+       - Contact information and legal identifiers
+       
+    2. **Services & Deliverables**
+       - Detailed description of all services to be provided
+       - Clear list of deliverables with specifications
+       - Acceptance criteria and approval process
+       
+    3. **Timeline & Milestones**
+       - Project start and end dates
+       - Key milestone dates and deliverables
+       - Review periods and feedback loops
+       
+    4. **Payment Terms**
+       - Total project fee and payment structure
+       - Payment schedule with clear due dates
+       - Late payment provisions and accepted payment methods
+       
+    5. **Client Responsibilities**
+       - Content provision requirements and deadlines
+       - Review and feedback timelines
+       - Approval processes
+       
+    6. **Change Management**
+       - Process for requesting and approving changes
+       - Impact on timeline and cost
+       - Change authorization requirements
+       
+    7. **Intellectual Property Rights**
+       - Ownership of deliverables
+       - License terms for third-party assets
+       - Post-delivery usage rights
+       
+    8. **Confidentiality**
+       - Definition of confidential information
+       - Protection requirements
+       - Exclusions from confidentiality
+       
+    9. **Termination**
+       - Termination conditions and notice periods
+       - Payment obligations upon termination
+       - Delivery of completed work
+       
+    10. **Limitation of Liability**
+        - Liability caps and exclusions
+        - Indemnification terms
+        - Warranty information
+        
+    11. **General Provisions**
+        - Governing law
+        - Dispute resolution process
+        - Force majeure clauses
+        
+    12. **Signatures**
+        - Signature blocks for both parties
+        - Date fields
+        - Witness provisions if required
+    
+    Make the document visually engaging while maintaining its legal professionalism with appropriate HTML/CSS styling that enhances readability and comprehension. Include appropriate visual hierarchy and information design principles while ensuring it retains the formality required for a legal contract.`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
