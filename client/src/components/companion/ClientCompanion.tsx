@@ -112,7 +112,7 @@ const taskTypes = {
     label: "Site Map & Content",
     description: "Site structure and content plan",
     iconColor: "bg-amber-50 text-amber-600",
-    phase: "Design and Development",
+    phase: "Planning",
     timeSaved: 150 // Time saved in minutes (2.5 hours)
   },
   ai_site_designer: {

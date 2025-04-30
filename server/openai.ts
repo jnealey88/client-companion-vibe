@@ -1899,13 +1899,17 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
   
   OBJECTIVE: Generate a complete site map with PRODUCTION-READY CONTENT for all pages and sections that can be directly implemented without further editing. The content should be comprehensive, SEO-optimized, and conversion-focused.
   
+  CRITICAL REQUIREMENT: EACH SECTION OF EACH PAGE MUST HAVE COMPLETELY UNIQUE CONTENT. Do not repeat or reuse content across different sections. Every section needs its own distinct messaging focused on that specific section's purpose.
+  
   IMPORTANT GUIDELINES:
   1. For each page section, provide FULL-LENGTH, POLISHED COPY that is ready for direct implementation
-  2. All content should be professional, engaging, and tailored to the client's industry
-  3. Ensure all headings, body text, CTAs, and metadata are professionally written
-  4. Include SEO-optimized meta descriptions and page content
-  5. Write content that speaks directly to the client's target audience
-  6. For each section, write complete paragraphs (not placeholder text)
+  2. Each section must have its own DISTINCT and UNIQUE content - DO NOT reuse content across sections
+  3. All content should be professional, engaging, and tailored to the client's industry
+  4. Ensure all headings, body text, CTAs, and metadata are professionally written
+  5. Include SEO-optimized meta descriptions and page content
+  6. Write content that speaks directly to the client's target audience
+  7. For each section, write complete paragraphs (not placeholder text)
+  8. CRITICAL: NEVER put the same content in multiple sections - each section needs completely different content
   
   IMPORTANT: Return your response as a JSON structure with the following format. Make sure it's valid JSON:
   
@@ -1928,16 +1932,16 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
           {
             "id": "hero",
             "title": "Hero Section",
-            "content": "COMPLETE, POLISHED CONTENT READY FOR IMPLEMENTATION. Write multiple paragraphs as needed. Include all headlines, subheadlines, body copy, and call-to-action text exactly as they should appear on the live website. This content should require no additional editing and be professional enough to use immediately.",
+            "content": "WRITE UNIQUE HERO CONTENT HERE. Include a powerful headline, engaging subheading, and compelling paragraph that captures attention. This must be different from all other sections and specifically focused on the hero area's purpose of making an immediate impact. Include a clear call-to-action statement.",
             "wordCount": 150,
-            "elements": ["hero image", "call to action button", "etc"]
+            "elements": ["hero image", "call to action button"]
           },
           {
             "id": "features",
             "title": "Features Section",
-            "content": "COMPLETE, POLISHED CONTENT READY FOR IMPLEMENTATION. Write multiple paragraphs as needed. Include all headlines, subheadlines, body copy, and feature descriptions exactly as they should appear on the live website. For each feature, include a complete, compelling description that sells its benefits.",
+            "content": "WRITE COMPLETELY DIFFERENT CONTENT HERE that focuses specifically on features. This section must not repeat any content from the hero section. Write unique headings, subheadings, and compelling descriptions for each key feature. Each feature description should highlight benefits and value to customers.",
             "wordCount": 250,
-            "elements": ["feature images", "icon set", "etc"]
+            "elements": ["feature images", "icon set"]
           }
         ],
         "technicalFeatures": ["Slider", "Animation", "etc"]
@@ -1954,7 +1958,9 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
     }
   }
 
-  Create a comprehensive site map with ALL NECESSARY PAGES and DETAILED CONTENT SECTIONS for ${clientInfo.name}'s website. Include COMPLETE, PRODUCTION-READY CONTENT for each section that requires no further editing. The site map should provide all website copy needed for development, including headlines, body text, calls-to-action, and meta descriptions.`;
+  Create a comprehensive site map with ALL NECESSARY PAGES and DETAILED CONTENT SECTIONS for ${clientInfo.name}'s website. Include COMPLETE, PRODUCTION-READY CONTENT for each section that requires no further editing. The site map should provide all website copy needed for development, including headlines, body text, calls-to-action, and meta descriptions.
+  
+  FINAL REMINDER: EVERY SECTION OF EVERY PAGE MUST HAVE COMPLETELY UNIQUE CONTENT. Do not repeat content across sections. Each section must address its specific purpose with content tailored to that purpose only.`;
 
   try {
     const response = await openai.chat.completions.create({
