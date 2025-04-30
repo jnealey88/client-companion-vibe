@@ -1153,17 +1153,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       {!task?.content
                                         ? 'Generate'
                                         : type === 'schedule_discovery' 
-                                          ? 'Review'
+                                          ? 'Review Email'
                                         : type === 'proposal' && task?.content
-                                          ? 'Edit'
+                                          ? 'Edit Proposal'
                                         : type === 'company_analysis' && task?.content
-                                          ? 'Review'
+                                          ? 'Review Analysis'
                                         : type === 'define_scope' && task?.content
-                                          ? 'Edit'
+                                          ? 'Edit Scope'
                                         : type === 'contract' && task?.content
-                                          ? 'Edit'
+                                          ? 'Edit Contract'
                                         : type === 'site_map' && task?.content
-                                          ? 'Review'
+                                          ? 'Review Site Map'
                                         : 'View'}
                                       <ArrowRight className="h-4 w-4 ml-1" />
                                     </Button>

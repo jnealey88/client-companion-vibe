@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
-import { Client } from "@shared/schema";
+import { Client, statusOptions } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 
 import {
@@ -26,6 +26,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Define form schema
 const formSchema = z.object({
@@ -35,6 +42,7 @@ const formSchema = z.object({
   phone: z.string().optional(),
   websiteUrl: z.string().optional(),
   projectValue: z.coerce.number().min(0, "Value must be a positive number"),
+  status: z.string(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -61,6 +69,7 @@ export default function EditClientDialog({ client, open, onOpenChange }: EditCli
       websiteUrl: client.websiteUrl || "",
       // We'll exclude notes for now as it's not in the schema
       projectValue: client.projectValue,
+      status: client.status,
     }
   });
 
@@ -174,29 +183,59 @@ export default function EditClientDialog({ client, open, onOpenChange }: EditCli
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="websiteUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Website URL</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="url" placeholder="https://..." />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="websiteUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Website URL</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="url" placeholder="https://..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
+              <FormField
+                control={form.control}
+                name="projectValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project Value ($)</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="number" min="0" step="0.01" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            
             <FormField
               control={form.control}
-              name="projectValue"
+              name="status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Project Value ($)</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="number" min="0" step="0.01" />
-                  </FormControl>
+                  <FormLabel>Project Phase</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select project phase" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {statusOptions.slice(1).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
