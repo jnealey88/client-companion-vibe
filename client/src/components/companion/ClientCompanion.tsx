@@ -1096,10 +1096,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     <Button 
                                       className={`w-full shadow-sm transition-all duration-300 ${
                                         task?.content 
-                                          ? "bg-gray-200 hover:bg-gray-300 text-gray-800 hover:shadow" 
+                                          ? "bg-[#111111] hover:bg-[#333333] text-white hover:shadow" 
                                           : "hover:border-gray-400 hover:shadow"
                                       }`}
-                                      variant={task?.content ? "secondary" : "outline"}
+                                      variant={task?.content ? "default" : "outline"}
                                       onClick={() => {
                                         if (type === 'schedule_discovery') {
                                           setIsDiscoveryDialogOpen(true);
@@ -1142,7 +1142,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       disabled={Object.keys(generatingTasks).length > 0}
                                     >
                                       {task?.content && (
-                                        <CheckCircle className="h-4 w-4 mr-2 text-gray-700" />
+                                        <CheckCircle className="h-4 w-4 mr-2 text-white" />
                                       )}
                                       {/* Follow the Generate → Review → Edit → View pattern */}
                                       {!task?.content
@@ -1241,9 +1241,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   </Button>
                                   
                                   <Button 
-                                    variant="secondary"
+                                    variant="default"
                                     size="sm"
-                                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 shadow-sm transition-all duration-300 hover:shadow"
+                                    className="bg-[#111111] hover:bg-[#333333] text-white shadow-sm transition-all duration-300 hover:shadow"
                                     onClick={() => {
                                       if (type === 'schedule_discovery') {
                                         setIsDiscoveryDialogOpen(true);
