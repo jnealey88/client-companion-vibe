@@ -136,41 +136,6 @@ function extractSectionContentForEditor(content: string | undefined): string {
     return content;
   }
   
-  // If we're dealing with what looks like a full sitemap JSON, process accordingly
-  if (typeof content === 'string' && 
-      content.startsWith('{') && 
-      (content.includes('"siteOverview"') || content.includes('"pages"'))) {
-    
-    console.log("EXTRACT SECTION - Detected full sitemap JSON, extracting section content");
-    
-    try {
-      // Create an Editor.js compatible object with a simple paragraph
-      const editorJsContent = {
-        time: Date.now(),
-        blocks: [
-          {
-            type: "paragraph",
-            data: {
-              text: content.includes('"content": "') ? 
-                // Try to extract just the content from the JSON
-                content.split('"content": "')[1]?.split('",')[0]?.replace(/\\"/g, '"') || content : 
-                content
-            }
-          }
-        ],
-        version: "2.22.2"
-      };
-      
-      console.log("EXTRACT SECTION - Created Editor.js compatible content:", 
-        JSON.stringify(editorJsContent).substring(0, 100) + "...");
-      
-      return JSON.stringify(editorJsContent);
-    } catch (e) {
-      console.error("EXTRACT SECTION - Error processing content:", e);
-      return content;
-    }
-  }
-  
   // Fallback to returning the original content
   return content;
 }
