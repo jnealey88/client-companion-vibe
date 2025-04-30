@@ -220,6 +220,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [companyAnalysisTask, setCompanyAnalysisTask] = useState<CompanionTask | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<CompanionTask | null>(null);
+  const [generationLocks, setGenerationLocks] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -387,6 +388,15 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   
   // Handle content generation with discovery notes if applicable
   const handleGenerate = (taskType: string, options: any = {}) => {
+    // Check if a generation is already in progress for this task type
+    if (generationLocks[taskType]) {
+      console.log(`Generation for ${taskType} already in progress, skipping duplicate request`);
+      return;
+    }
+    
+    // Lock this task type to prevent duplicate generations
+    setGenerationLocks(prev => ({...prev, [taskType]: true}));
+    
     // For proposal generation, we might want to include discovery notes
     const mutationParams = { 
       clientId: client.id, 
@@ -427,6 +437,24 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       });
     }, 300);
     
+    // Function to clean up and release the lock
+    const finishGeneration = () => {
+      // Release the lock for this task type
+      setGenerationLocks(prev => {
+        const newState = {...prev};
+        delete newState[taskType];
+        return newState;
+      });
+      
+      // Clear the loading indicators
+      clearInterval(intervalId);
+      setGeneratingTasks(prev => {
+        const newState = {...prev};
+        delete newState[taskType];
+        return newState;
+      });
+    };
+    
     // Delay the actual API call slightly to allow the loading UI to appear
     setTimeout(() => {
       generateMutation.mutate(mutationParams, {
@@ -437,11 +465,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           
           // Keep "Complete!" shown briefly before removing the loading state
           setTimeout(() => {
-            setGeneratingTasks(prev => {
-              const newState = {...prev};
-              delete newState[taskType];
-              return newState;
-            });
+            finishGeneration();
             
             // If the task was successfully generated, show the appropriate dialog
             if (data && typeof data === 'object') {
@@ -460,13 +484,15 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
             }
           }, 1000);
         },
-        onError: () => {
+        onError: (error) => {
+          console.error(`Error generating ${taskType}:`, error);
           // Clear this task from tracking on error
-          clearInterval(intervalId);
-          setGeneratingTasks(prev => {
-            const newState = {...prev};
-            delete newState[taskType];
-            return newState;
+          finishGeneration();
+          
+          toast({
+            title: `${taskType.charAt(0).toUpperCase() + taskType.slice(1)} generation failed`,
+            description: "There was an error generating the content. Please try again.",
+            variant: "destructive"
           });
         }
       });
