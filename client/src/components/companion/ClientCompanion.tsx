@@ -1219,18 +1219,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       {/* Follow the Generate → Review → Edit → View pattern */}
                                       {!task?.content
                                         ? 'Generate'
-                                        : type === 'schedule_discovery' 
-                                          ? 'Review Email'
-                                        : type === 'proposal' && task?.content
-                                          ? 'Edit Proposal'
-                                        : type === 'company_analysis' && task?.content
-                                          ? 'Review Analysis'
-                                        : type === 'define_scope' && task?.content
-                                          ? 'Edit Scope'
-                                        : type === 'contract' && task?.content
-                                          ? 'Edit Contract'
-                                        : type === 'site_map' && task?.content
-                                          ? 'Review Site Map'
+                                        : ['company_analysis', 'site_map', 'ai_site_designer', 'ai_qa_tool', 'status_update', 'site_maintenance', 'site_optimizer'].includes(type)
+                                          ? 'Review'
+                                        : ['proposal', 'define_scope', 'contract', 'third_party'].includes(type)
+                                          ? 'Edit'
                                         : 'View'}
                                       <ArrowRight className="h-4 w-4 ml-1" />
                                     </Button>
