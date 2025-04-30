@@ -991,23 +991,41 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                   const isCurrentPhase = client.status === phase;
                   
                   return (
-                    <div key={phase} className="mb-8">
-                      <div className="flex items-center mb-4">
-                        <h3 className="text-xl font-medium flex items-center gap-2">
-                          {phase}
-                          {isCurrentPhase && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              Current Phase
-                            </Badge>
-                          )}
-                        </h3>
+                    <div key={phase} className={`mb-8 p-5 rounded-lg ${
+                        phase === 'Discovery' ? 'bg-blue-50 border border-blue-100' :
+                        phase === 'Planning' ? 'bg-green-50 border border-green-100' :
+                        phase === 'Design and Development' ? 'bg-purple-50 border border-purple-100' :
+                        'bg-amber-50 border border-amber-100'
+                      } shadow-sm`}>
+                      <div className={`flex items-center mb-5 pb-3 border-b ${
+                        phase === 'Discovery' ? 'border-blue-200' :
+                        phase === 'Planning' ? 'border-green-200' :
+                        phase === 'Design and Development' ? 'border-purple-200' :
+                        'border-amber-200'
+                      }`}>
+                        <div className="flex flex-col">
+                          <h3 className="text-xl font-semibold flex items-center gap-2">
+                            {phase}
+                            {isCurrentPhase && (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                Current Phase
+                              </Badge>
+                            )}
+                          </h3>
+                          <p className="text-sm mt-1 text-gray-600">
+                            {phase === 'Discovery' ? 'Research and business analysis' :
+                             phase === 'Planning' ? 'Project scope and contract details' :
+                             phase === 'Design and Development' ? 'Website design and implementation' :
+                             'Ongoing website management'}
+                          </p>
+                        </div>
                         <div className="ml-auto h-2 w-24 bg-gray-100 rounded-full">
                           <div 
                             className="h-2 bg-blue-500 rounded-full" 
                             style={{ width: `${Math.min(100, Math.max(0, phaseTasks.filter(({task}) => task?.content).length / phaseTasks.length * 100))}%` }} 
                           />
                         </div>
-                        <span className="text-xs text-gray-500 ml-2">
+                        <span className="text-xs text-gray-600 ml-2 font-medium">
                           {phaseTasks.filter(({task}) => task?.content).length}/{phaseTasks.length} Complete
                         </span>
                       </div>
@@ -1020,8 +1038,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                               key={type} 
                               className={`overflow-hidden shadow-sm transition-all duration-300 ease-in-out
                                 ${task?.content 
-                                  ? "border-gray-200 hover:shadow-sm" 
-                                  : "border-gray-200 hover:border-gray-300 hover:shadow-md hover:transform hover:-translate-y-1"}`}
+                                  ? "border-gray-200 bg-white hover:shadow-sm" 
+                                  : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md hover:transform hover:-translate-y-1"}`}
                             >
                               <CardHeader className={`p-4 ${task?.content ? "pb-2 bg-gray-50" : "pb-2"}`}>
                                 <div className="flex items-start">
