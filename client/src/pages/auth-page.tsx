@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/use-auth';
 import { useLocation } from 'wouter';
 import { z } from 'zod';
@@ -72,11 +72,12 @@ export default function AuthPage() {
     },
   });
   
-  // Redirect if already logged in (after all hooks are called)
-  if (user) {
-    navigate('/');
-    return null;
-  }
+  // Use useEffect for navigation to prevent issues with React rendering
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     loginMutation.mutate(values);

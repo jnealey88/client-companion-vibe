@@ -76,6 +76,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all clients with filters
   app.get("/api/clients", isAuthenticated, async (req: Request, res: Response) => {
     try {
+      // Get the authenticated user's ID
+      const userId = (req.user as any).id;
+      
+      // Get clients associated with this user
+      const userClients = await storage.getUserClients(userId);
+      
+      // Apply filters if any (alternatively we could modify the getUserClients method to accept filters)
       const filters: ClientFilters = {
         search: req.query.search as string | undefined,
         status: req.query.status as string | undefined,
@@ -84,8 +91,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sort: req.query.sort as string | undefined
       };
       
-      const clients = await storage.getClients(filters);
-      return res.json(clients);
+      let filteredClients = userClients;
+      
+      // Apply search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        filteredClients = filteredClients.filter(client => 
+          client.name.toLowerCase().includes(searchLower) || 
+          (client.contactName && client.contactName.toLowerCase().includes(searchLower)) ||
+          (client.email && client.email.toLowerCase().includes(searchLower))
+        );
+      }
+      
+      // Apply status filter
+      if (filters.status && filters.status !== "All Status") {
+        filteredClients = filteredClients.filter(client => 
+          client.status === filters.status
+        );
+      }
+      
+      // Apply industry filter
+      if (filters.industry && filters.industry !== "All Industries") {
+        filteredClients = filteredClients.filter(client => 
+          client.industry === filters.industry
+        );
+      }
+      
+      // Apply project status filter
+      if (filters.projectStatus && filters.projectStatus !== "All Projects") {
+        const statusMap: Record<string, string> = {
+          "Active Projects": "active",
+          "Completed Projects": "completed",
+          "Pending Projects": "pending"
+        };
+        
+        const projectStatusValue = statusMap[filters.projectStatus];
+        if (projectStatusValue) {
+          filteredClients = filteredClients.filter(client => 
+            client.projectStatus === projectStatusValue
+          );
+        }
+      }
+      
+      // Apply sorting
+      if (filters.sort) {
+        switch (filters.sort) {
+          case "Name (A-Z)":
+            filteredClients.sort((a, b) => a.name.localeCompare(b.name));
+            break;
+          case "Name (Z-A)":
+            filteredClients.sort((a, b) => b.name.localeCompare(a.name));
+            break;
+          case "Value (High-Low)":
+            filteredClients.sort((a, b) => (b.projectValue || 0) - (a.projectValue || 0));
+            break;
+          case "Value (Low-High)":
+            filteredClients.sort((a, b) => (a.projectValue || 0) - (b.projectValue || 0));
+            break;
+          // Default is "Sort by: Recent" which is already the default order
+        }
+      }
+      
+      return res.json(filteredClients);
     } catch (error) {
       console.error("Error fetching clients:", error);
       return res.status(500).json({ message: "Failed to fetch clients" });
@@ -93,7 +160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get client by ID
-  app.get("/api/clients/:id", async (req: Request, res: Response) => {
+  app.get("/api/clients/:id", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -105,6 +172,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Client not found" });
       }
       
+      // Verify that this client belongs to the authenticated user
+      const userId = (req.user as any).id;
+      const userClients = await storage.getUserClients(userId);
+      const clientBelongsToUser = userClients.some(c => c.id === client.id);
+      
+      if (!clientBelongsToUser) {
+        return res.status(403).json({ message: "You don't have access to this client" });
+      }
+      
       return res.json(client);
     } catch (error) {
       console.error("Error fetching client:", error);
@@ -113,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new client
-  app.post("/api/clients", async (req: Request, res: Response) => {
+  app.post("/api/clients", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const validationResult = insertClientSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -122,6 +198,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const newClient = await storage.createClient(validationResult.data);
+      
+      // Associate the client with the authenticated user
+      try {
+        const userId = (req.user as any).id;
+        await storage.addClientToUser(userId, newClient.id);
+        console.log(`Client ${newClient.id} associated with user ${userId}`);
+      } catch (associationError) {
+        console.error("Error associating client with user:", associationError);
+        // Don't fail the request if association fails
+      }
       
       // Automatically create and generate company analysis task for the new client
       try {
