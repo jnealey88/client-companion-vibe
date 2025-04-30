@@ -1122,6 +1122,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                           // Open contract dialog for existing tasks
                                           setContractTask(task);
                                           setIsContractDialogOpen(true);
+                                        } else if (type === 'site_map' && task?.content) {
+                                          // Open site map dialog for existing tasks
+                                          setSiteMapTask(task);
+                                          setIsSiteMapDialogOpen(true);
                                         } else if (task?.content) {
                                           // View any other type of content
                                           handleTaskSelect(task);

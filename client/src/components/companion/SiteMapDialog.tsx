@@ -455,9 +455,10 @@ Your Web Professional`);
         } else if (typeof response === 'object') {
           // Try to find any property that might contain the expanded content
           const contentKeys = ['content', 'text', 'result', 'data', 'expandedContent', 'expanded'];
+          const responseObj = response as any; // Use any type for this specific case
           for (const key of contentKeys) {
-            if (key in response && typeof (response as Record<string, unknown>)[key] === 'string') {
-              expandedContent = (response as Record<string, unknown>)[key] as string;
+            if (key in responseObj && typeof responseObj[key] === 'string') {
+              expandedContent = responseObj[key];
               break;
             }
           }
