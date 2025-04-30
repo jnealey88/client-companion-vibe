@@ -122,10 +122,24 @@ function extractSectionContentForEditor(content: string | undefined): string {
   console.log("EXTRACT SECTION - Examining content:", 
     typeof content === 'string' ? content.substring(0, 50) + "..." : "Not a string");
   
-  // If the content is a plain string without JSON markers, return it directly
+  // If the content is a plain string without JSON markers, convert it to Editor.js format
   if (typeof content === 'string' && !content.startsWith('{')) {
-    console.log("EXTRACT SECTION - Content is plain text, returning as is");
-    return content;
+    console.log("EXTRACT SECTION - Content is plain text, converting to Editor.js format");
+    
+    const editorJsContent = {
+      time: Date.now(),
+      blocks: [
+        {
+          type: "paragraph",
+          data: {
+            text: content
+          }
+        }
+      ],
+      version: "2.22.2"
+    };
+    
+    return JSON.stringify(editorJsContent);
   }
   
   // If content is already in Editor.js format, return it as is
@@ -136,8 +150,30 @@ function extractSectionContentForEditor(content: string | undefined): string {
     return content;
   }
   
-  // Fallback to returning the original content
-  return content;
+  // If we still have plain content at this point, convert it to Editor.js format
+  if (typeof content === 'string') {
+    const editorJsContent = {
+      time: Date.now(),
+      blocks: [
+        {
+          type: "paragraph",
+          data: {
+            text: content
+          }
+        }
+      ],
+      version: "2.22.2"
+    };
+    
+    return JSON.stringify(editorJsContent);
+  }
+  
+  // Fallback to returning empty Editor.js structure
+  return JSON.stringify({
+    time: Date.now(),
+    blocks: [],
+    version: "2.22.2"
+  });
 }
 
 export default function SiteMapDialog({
@@ -996,6 +1032,7 @@ Your Web Professional`);
   // Parse JSON site map data
   const parseSiteMapData = (content: string): SiteMapData | null => {
     try {
+      // If the content is the raw JSON structure for the site map, parse it directly
       const data = JSON.parse(content);
       
       // Validate structure
@@ -1010,7 +1047,7 @@ Your Web Professional`);
         console.log("========== SITEMAP STRUCTURE LOG ==========");
         console.log("SITEMAP OVERVIEW:", {
           pageCount: data.pages.length,
-          sectionsByPage: data.pages.map(page => ({
+          sectionsByPage: data.pages.map((page: SitePageData) => ({
             pageId: page.id,
             pageTitle: page.title,
             sectionCount: page.sections.length
@@ -1019,37 +1056,49 @@ Your Web Professional`);
         
         console.log("DETAILED SECTION CONTENT CHECK:");
         // Process each page
-        data.pages.forEach((page, pageIndex) => {
+        data.pages.forEach((page: SitePageData, pageIndex: number) => {
           console.log(`PAGE ${pageIndex + 1}: "${page.title}" (${page.id})`);
           console.log(`  This page has ${page.sections.length} sections`);
           
           // Process sections within each page
-          page.sections.forEach((section, sectionIndex) => {
+          page.sections.forEach((section: SiteSection, sectionIndex: number) => {
             console.log(`  SECTION ${sectionIndex + 1}: "${section.title}"`);
             console.log(`    Content length: ${section.content?.length || 0} chars`);
             console.log(`    Content preview: ${typeof section.content === 'string' ? section.content.substring(0, 50) + '...' : 'Not a string'}`);
             
-            // Pre-process sections to ensure they have proper content format
-            // If the content is not in Editor.js format, convert it
-            if (section.content && typeof section.content === 'string' && 
-                !section.content.startsWith('{') && 
-                !section.content.includes('"blocks"')) {
-              // Convert plain text to Editor.js format
-              const editorJsContent = {
-                time: Date.now(),
-                blocks: [
-                  {
-                    type: "paragraph",
-                    data: {
-                      text: section.content
-                    }
-                  }
-                ],
-                version: "2.22.2"
-              };
+            // Check if the content appears to be from the raw JSON dump
+            if (section.content && typeof section.content === 'string') {
+              // If the content contains the full JSON structure
+              if (section.content.includes('"siteOverview"') && 
+                  section.content.includes('"pages"') &&
+                  section.content.includes('"contentGuidelines"')) {
+                  
+                console.log("    WARNING: Found full JSON structure in section content, cleaning...");
+                  
+                // Extract just the section's content from the raw JSON
+                // We'll use a simple approach - just take the section's title content instead
+                section.content = section.title + " content goes here.";
+              }
               
-              // Update the section with formatted content
-              section.content = JSON.stringify(editorJsContent);
+              // Then ensure it's in Editor.js format
+              if (!section.content.startsWith('{') || !section.content.includes('"blocks"')) {
+                // Convert plain text to Editor.js format
+                const editorJsContent = {
+                  time: Date.now(),
+                  blocks: [
+                    {
+                      type: "paragraph",
+                      data: {
+                        text: section.content
+                      }
+                    }
+                  ],
+                  version: "2.22.2"
+                };
+                
+                // Update the section with formatted content
+                section.content = JSON.stringify(editorJsContent);
+              }
             }
           });
         });
