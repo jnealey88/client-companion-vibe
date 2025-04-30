@@ -215,7 +215,7 @@ interface ClientCompanionProps {
 
 export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [selectedTask, setSelectedTask] = useState<CompanionTask | null>(null);
-  const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
+  const [selectedPhase, setSelectedPhase] = useState<string | null>(client.status);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
@@ -991,18 +991,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                   const isCurrentPhase = client.status === phase;
                   
                   return (
-                    <div key={phase} className={`mb-8 p-5 rounded-lg ${
-                        phase === 'Discovery' ? 'bg-blue-50 border border-blue-100' :
-                        phase === 'Planning' ? 'bg-green-50 border border-green-100' :
-                        phase === 'Design and Development' ? 'bg-purple-50 border border-purple-100' :
-                        'bg-amber-50 border border-amber-100'
-                      } shadow-sm`}>
-                      <div className={`flex items-center mb-5 pb-3 border-b ${
-                        phase === 'Discovery' ? 'border-blue-200' :
-                        phase === 'Planning' ? 'border-green-200' :
-                        phase === 'Design and Development' ? 'border-purple-200' :
-                        'border-amber-200'
-                      }`}>
+                    <div key={phase} className="mb-8 p-5 rounded-lg bg-white border border-gray-200 shadow-sm">
+                      <div className="flex items-center mb-5 pb-3 border-b border-gray-200">
                         <div className="flex flex-col">
                           <h3 className="text-xl font-semibold flex items-center gap-2">
                             {phase}
