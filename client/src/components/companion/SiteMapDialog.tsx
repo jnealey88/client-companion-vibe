@@ -690,21 +690,24 @@ Your Web Professional`);
         });
         
         clearTimeout(requestTimeout);
-        console.log("Received expansion response:", response);
+        
+        // Parse the JSON response
+        const responseData = await response.json();
+        console.log("Received expansion response:", responseData);
         
         // Handle response parsing with better error reporting
-        if (!response) {
+        if (!responseData) {
           throw new Error("Empty response from server");
         }
         
         // Check for expanded content in the response
-        if (typeof response === 'object') {
-          console.log("Response object keys:", Object.keys(response));
+        if (typeof responseData === 'object') {
+          console.log("Response object keys:", Object.keys(responseData));
           
           // First check for expandedContent structure
-          if ('expandedContent' in response && typeof response.expandedContent === 'string') {
+          if ('expandedContent' in responseData && typeof responseData.expandedContent === 'string') {
             // Use the expanded content directly as plain text
-            let expandedContent = response.expandedContent;
+            let expandedContent = responseData.expandedContent;
             
             handleSectionUpdate(pageId, sectionId, expandedContent);
             
@@ -717,8 +720,8 @@ Your Web Professional`);
           }
           
           // Check if response has originalContent and expandedContent properties (common API format)
-          if ('originalContent' in response && 'expandedContent' in response) {
-            let expandedContent = String(response.expandedContent);
+          if ('originalContent' in responseData && 'expandedContent' in responseData) {
+            let expandedContent = String(responseData.expandedContent);
             handleSectionUpdate(pageId, sectionId, expandedContent);
             
             toast({
@@ -731,8 +734,8 @@ Your Web Professional`);
         }
         
         // Secondary check for direct string content (some APIs might just return the content directly)
-        if (typeof response === 'string' && response) {
-          const responseText = String(response);
+        if (typeof responseData === 'string' && responseData) {
+          const responseText = String(responseData);
           // Only use if longer than the original content and not empty
           if (responseText && responseText.length > section.content.length) {
             handleSectionUpdate(pageId, sectionId, responseText);
@@ -746,7 +749,7 @@ Your Web Professional`);
         }
         
         // Fall back to searching for expanded content in any property of the response
-        if (typeof response === 'object') {
+        if (typeof responseData === 'object') {
           // List of common property names that might contain the content
           const possibleContentProperties = [
             'expandedContent', 'expanded_content', 'content', 
@@ -755,7 +758,7 @@ Your Web Professional`);
           ];
           
           for (const prop of possibleContentProperties) {
-            const responseObj = response as Record<string, any>;
+            const responseObj = responseData as Record<string, any>;
             if (prop in responseObj && 
                 typeof responseObj[prop] === 'string' && 
                 responseObj[prop].length > 10) {
@@ -772,7 +775,7 @@ Your Web Professional`);
         }
         
         // If we made it here, we couldn't extract content from the response
-        console.error("Failed to extract expanded content from response:", response);
+        console.error("Failed to extract expanded content from response:", responseData);
         toast({
           title: "Content Format Error",
           description: "The AI service returned content in an unexpected format.",
