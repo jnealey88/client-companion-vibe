@@ -122,104 +122,59 @@ function extractSectionContentForEditor(content: string | undefined): string {
   console.log("EXTRACT SECTION - Examining content:", 
     typeof content === 'string' ? content.substring(0, 50) + "..." : "Not a string");
 
-  // First, try to parse the content as JSON to see if it's an EditorJs object
+  // If it's a string, check if it contains JSON
   if (typeof content === 'string') {
     try {
-      // Check if it's already in EditorJs format with blocks
+      // Try to parse as JSON to extract content if it's in JSON format
       const parsed = JSON.parse(content);
+      
+      // Extract text from EditorJS format
       if (parsed && parsed.blocks && Array.isArray(parsed.blocks)) {
-        console.log("EXTRACT SECTION - Content is already in Editor.js format with", parsed.blocks.length, "blocks");
-        return content; // Already in correct format
+        // Extract text content from EditorJS blocks
+        return parsed.blocks
+          .map((block: any) => {
+            if (block.type === 'paragraph' && block.data && block.data.text) {
+              return block.data.text;
+            }
+            return '';
+          })
+          .filter(Boolean)
+          .join('\n\n');
       }
       
-      // If it's JSON but not Editor.js format, it might be the raw sitemap content
-      // Extract just what's needed for display
+      // Handle raw JSON content by looking for specific content fields
       if (parsed) {
-        let textContent = "";
+        // Try to find content within common property names
+        const possibleContentProperties = ['content', 'text', 'description', 'data', 'value'];
+        for (const prop of possibleContentProperties) {
+          if (parsed[prop] && typeof parsed[prop] === 'string') {
+            return parsed[prop];
+          }
+        }
         
-        // Try to extract text content from common JSON structures
+        // If couldn't find a specific content property, convert object to readable text
         if (typeof parsed === 'object') {
-          // Look for content in common properties
-          const possibleProperties = ['content', 'text', 'description', 'data', 'value'];
-          for (const prop of possibleProperties) {
-            if (parsed[prop] && typeof parsed[prop] === 'string') {
-              textContent = parsed[prop];
-              break;
-            }
+          // For sitemap specific content extraction
+          if (parsed.siteOverview && parsed.pages) {
+            // This appears to be the full sitemap JSON
+            // Find specific section content instead of showing entire JSON
+            return "Please edit this section with appropriate content.";
           }
           
-          // If no content found in properties, stringify the object but limit size
-          if (!textContent) {
-            textContent = JSON.stringify(parsed).substring(0, 500);
-            if (textContent.length > 500) textContent += "...";
-          }
+          // Simple JSON to string (limit length to avoid overwhelming UI)
+          const jsonText = JSON.stringify(parsed, null, 2);
+          return jsonText.length > 1000 ? jsonText.substring(0, 1000) + '...' : jsonText;
         }
-        
-        console.log("EXTRACT SECTION - Content is JSON but not Editor.js format, converting");
-        
-        // Convert to proper EditorJs format with paragraphs
-        const paragraphs = textContent.split("\n\n")
-          .filter(p => p.trim().length > 0)
-          .map(p => ({
-            type: "paragraph",
-            data: { text: p.trim() }
-          }));
-        
-        // If no paragraphs, create at least one
-        if (paragraphs.length === 0) {
-          paragraphs.push({
-            type: "paragraph",
-            data: { text: textContent || "No content available" }
-          });
-        }
-        
-        const editorJsContent = {
-          time: Date.now(),
-          blocks: paragraphs,
-          version: "2.22.2"
-        };
-        
-        return JSON.stringify(editorJsContent);
       }
     } catch (e) {
-      // Not JSON, it's plain text - continue to text conversion
-    }
-
-    // If it's plain text (or JSON parsing failed), convert to EditorJs format
-    // This handles newlines properly by splitting into paragraphs
-    console.log("EXTRACT SECTION - Converting plain text to Editor.js format");
-    
-    // Split by double newlines to create paragraphs
-    const paragraphs = content.split("\n\n")
-      .filter(p => p.trim().length > 0)
-      .map(p => ({
-        type: "paragraph",
-        data: { text: p.trim() }
-      }));
-    
-    // Ensure we have at least one paragraph
-    if (paragraphs.length === 0) {
-      paragraphs.push({
-        type: "paragraph",
-        data: { text: content }
-      });
+      // It's not valid JSON, treat as plain text
     }
     
-    const editorJsContent = {
-      time: Date.now(),
-      blocks: paragraphs,
-      version: "2.22.2"
-    };
-    
-    return JSON.stringify(editorJsContent);
+    // If parsing failed or it's plain text, return it directly
+    return content;
   }
   
-  // Fallback to returning empty Editor.js structure
-  return JSON.stringify({
-    time: Date.now(),
-    blocks: [],
-    version: "2.22.2"
-  });
+  return '';
 }
 
 export default function SiteMapDialog({
@@ -1586,13 +1541,12 @@ Your Web Professional`);
                                             )}
                                           </div>
                                           <div className="prose prose-sm max-w-none">
-                                            <div className="section-editor-container border rounded p-1 bg-white">
-                                              {/* Using Editor.js for rich content editing */}
-                                              <EditorJs
-                                                content={extractSectionContentForEditor(section.content)}
-                                                onChange={(content) => handleSectionUpdate(page.id, section.id, content)}
-                                                readOnly={false}
-                                                className="prose max-w-none min-h-[200px] rich-editor-container"
+                                            <div className="section-editor-container border rounded p-3 bg-white">
+                                              {/* Using plain text instead of Editor.js */}
+                                              <Textarea
+                                                value={extractSectionContentForEditor(section.content)}
+                                                onChange={(e) => handleSectionUpdate(page.id, section.id, e.target.value)}
+                                                className="prose max-w-none min-h-[200px] w-full"
                                                 placeholder="Enter section content here or use the 'Expand with AI' button to create production-ready content..."
                                               />
                                             </div>
@@ -1791,12 +1745,11 @@ Your Web Professional`);
                 </div>
               </div>
             ) : (
-              <div className="editor-js-container">
-                <EditorJs
-                  content={siteMapContent}
-                  onChange={handleEditorUpdate}
-                  readOnly={false}
-                  className="prose max-w-none"
+              <div className="editor-container">
+                <Textarea
+                  value={siteMapContent}
+                  onChange={(e) => handleEditorUpdate(e.target.value)}
+                  className="prose max-w-none w-full min-h-[400px]"
                 />
               </div>
             )}
