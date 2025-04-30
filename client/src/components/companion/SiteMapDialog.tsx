@@ -429,7 +429,7 @@ Your Web Professional`);
     
     try {
       // Use the OpenAI API via our existing endpoint
-      const response = await apiRequest<ApiResponse>("POST", `/api/content/expand`, {
+      const response = await apiRequest("POST", `/api/content/expand`, {
         content: section.content,
         context: {
           pageTitle: page.title,
@@ -439,9 +439,11 @@ Your Web Professional`);
         }
       });
       
-      if (response && response.expandedContent) {
+      // Type assertion to handle the response structure
+      const contentResponse = response as unknown as ContentExpansionResponse;
+      if (contentResponse && contentResponse.expandedContent) {
         // Update the section content with the expanded text
-        handleSectionUpdate(pageId, sectionId, response.expandedContent as string);
+        handleSectionUpdate(pageId, sectionId, contentResponse.expandedContent);
         
         toast({
           title: "Content Expanded",
