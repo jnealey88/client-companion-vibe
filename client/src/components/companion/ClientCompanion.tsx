@@ -38,6 +38,8 @@ import CompanionTaskCard from "./CompanionTaskCard";
 import ScheduleDiscoveryDialog from "./ScheduleDiscoveryDialog";
 import ProposalDialog from "./ProposalDialog";
 import CompanyAnalysisDialog from "./CompanyAnalysisDialog";
+import ProjectScopeDialog from "./ProjectScopeDialog";
+import ContractDialog from "./ContractDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -217,8 +219,12 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
   const [isCompanyAnalysisDialogOpen, setIsCompanyAnalysisDialogOpen] = useState(false);
+  const [isProjectScopeDialogOpen, setIsProjectScopeDialogOpen] = useState(false);
+  const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
   const [proposalTask, setProposalTask] = useState<CompanionTask | undefined>(undefined);
   const [companyAnalysisTask, setCompanyAnalysisTask] = useState<CompanionTask | undefined>(undefined);
+  const [projectScopeTask, setProjectScopeTask] = useState<CompanionTask | undefined>(undefined);
+  const [contractTask, setContractTask] = useState<CompanionTask | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<CompanionTask | null>(null);
   const [generationLocks, setGenerationLocks] = useState<Record<string, boolean>>({});
@@ -518,6 +524,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       setIsCompanyAnalysisDialogOpen(false);
     } else if (task.type === 'schedule_discovery') {
       setIsDiscoveryDialogOpen(false);
+    } else if (task.type === 'define_scope' && projectScopeTask?.id === task.id) {
+      setIsProjectScopeDialogOpen(false);
+    } else if (task.type === 'contract' && contractTask?.id === task.id) {
+      setIsContractDialogOpen(false);
     }
     
     // Open the delete confirmation dialog
