@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Loader2, RotateCw, Trash2 } from "lucide-react";
+import { ArrowRight, Loader2, RotateCw, Trash2, CheckCircle2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,20 +74,33 @@ export default function CompanionTaskCard({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50">
+      <div className={`flex items-center justify-between p-2 rounded-md hover:bg-gray-50 ${task?.status === "completed" ? "border border-green-200 bg-green-50" : ""}`}>
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-md ${iconColor}`}>
-            {icon}
+          <div className={`p-2 rounded-md ${iconColor} ${task?.status === "completed" ? "bg-green-100" : ""}`}>
+            {task?.status === "completed" ? (
+              <div className="relative">
+                {icon}
+                <CheckCircle2 className="h-4 w-4 text-green-600 absolute -top-1 -right-2" />
+              </div>
+            ) : (
+              icon
+            )}
           </div>
           <div>
-            <h4 className="font-medium">{title}</h4>
+            <h4 className="font-medium flex items-center gap-1">
+              {title}
+              {task?.status === "completed" && (
+                <span className="text-xs text-green-600 font-normal">(Completed)</span>
+              )}
+            </h4>
             <p className="text-sm text-gray-500">{description}</p>
           </div>
         </div>
         
         {task ? (
           <div className="flex items-center gap-1">
-            <Badge variant={getStatusVariant(task.status)}>
+            <Badge variant={getStatusVariant(task.status)}
+                  className={task.status === "completed" ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}>
               {task.status}
             </Badge>
             
@@ -120,13 +133,20 @@ export default function CompanionTaskCard({
             )}
             
             <Button 
-              variant="ghost" 
+              variant={task.status === "completed" ? "default" : "ghost"}
               size="sm"
               onClick={() => onSelect(task)}
               disabled={task.status !== "completed"}
               className="ml-1"
             >
-              <ArrowRight className="h-4 w-4" />
+              {task.status === "completed" ? (
+                <>
+                  <span className="mr-1">View</span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              ) : (
+                <ArrowRight className="h-4 w-4" />
+              )}
             </Button>
           </div>
         ) : isGenerating ? (
