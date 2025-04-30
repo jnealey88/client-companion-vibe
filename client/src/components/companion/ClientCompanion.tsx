@@ -691,7 +691,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         }}
       />
       
-      <CardHeader className="bg-white border-b">
+      <CardHeader className="bg-white border-b pb-6">
         <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
           <div>
             <CardTitle className="flex items-center text-xl">
@@ -706,8 +706,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           <div className="flex gap-4 items-center">
             {/* Display total time saved */}
             {tasks && tasks.some(task => task.content) && (
-              <div className="flex items-center bg-white border border-green-300 rounded-lg shadow-sm px-4 py-3">
-                <div className="bg-green-100 text-green-700 p-2 rounded-md mr-3">
+              <div className="flex items-center bg-white border border-green-300 rounded-lg shadow-sm px-5 py-4">
+                <div className="bg-green-100 text-green-700 p-2.5 rounded-md mr-3 flex items-center justify-center">
                   <Timer className="h-5 w-5" />
                 </div>
                 <div>
@@ -721,8 +721,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
               </div>
             )}
             
-            <div className="bg-white border rounded-lg px-4 py-3 shadow-sm">
-              <div className="text-sm text-gray-500 mb-1">Current phase</div>
+            <div className="flex flex-col items-start bg-white border rounded-lg px-5 py-4 shadow-sm">
+              <div className="text-sm text-gray-500 mb-1.5">Current phase</div>
               <Badge className={`${getPhaseStatusClass(client.status)} px-3 py-1 text-sm font-medium`}>
                 {client.status}
               </Badge>
@@ -794,11 +794,11 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           </div>
         ) : (
           <Tabs defaultValue="tasks" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
-              <TabsTrigger value="tasks" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg mb-6">
+              <TabsTrigger value="tasks" className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-medium text-gray-700">
                 Tasks by Phase
               </TabsTrigger>
-              <TabsTrigger value="content" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <TabsTrigger value="content" className="data-[state=active]:bg-white data-[state=active]:shadow-sm font-medium text-gray-700">
                 Generated Content
               </TabsTrigger>
             </TabsList>
@@ -806,13 +806,14 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
             <TabsContent value="tasks" className="mt-4">
               <div className="space-y-6">
                 {/* Phase filter pills */}
-                <div className="flex flex-wrap gap-2 pb-2 border-b mb-6">
+                <div className="flex flex-wrap gap-2.5 pb-4 border-b mb-6">
                   <Button 
                     variant={selectedPhase === null ? "default" : "outline"}
                     size="sm"
-                    className="rounded-full"
+                    className="rounded-full hover:bg-gray-100 hover:text-gray-900 transition-colors"
                     onClick={() => setSelectedPhase(null)}
                   >
+                    <Hash className="h-4 w-4 mr-1" />
                     All Tools
                   </Button>
                   
@@ -825,11 +826,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                         key={phase}
                         variant={isSelected ? "default" : "outline"}
                         size="sm"
-                        className={`rounded-full ${isCurrentPhase ? "border-green-200" : ""}`}
+                        className={`rounded-full transition-all ${
+                          isSelected 
+                            ? "" 
+                            : "hover:bg-gray-100 hover:text-gray-900"
+                        } ${isCurrentPhase ? "border-green-200" : ""}`}
                         onClick={() => setSelectedPhase(phase)}
                       >
+                        {isCurrentPhase && (
+                          <div className="mr-1.5 w-2 h-2 rounded-full bg-green-500" />
+                        )}
                         {phase}
-                        {isCurrentPhase && <div className="ml-1 w-2 h-2 rounded-full bg-green-500" />}
                       </Button>
                     );
                   })}
@@ -874,13 +881,13 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                               className={`overflow-hidden shadow-sm transition-all hover:shadow-md 
                                 ${task?.content ? "border-green-200 ring-1 ring-green-100" : "border-gray-200 hover:border-gray-300"}`}
                             >
-                              <CardHeader className={`p-4 pb-2 ${task?.content ? "bg-green-50" : ""}`}>
+                              <CardHeader className={`p-5 pb-3 ${task?.content ? "bg-green-50" : ""}`}>
                                 <div className="flex items-start">
-                                  <div className={`p-2.5 rounded-md ${task?.content ? "bg-green-100 text-green-700" : taskInfo.iconColor} mr-3 relative`}>
+                                  <div className={`p-3 rounded-md ${task?.content ? "bg-green-100 text-green-700" : taskInfo.iconColor} mr-4 relative`}>
                                     {taskInfo.icon}
                                     {task?.content && (
-                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
-                                        <Check className="h-3 w-3 text-white" />
+                                      <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
+                                        <Check className="h-3.5 w-3.5 text-white" />
                                       </div>
                                     )}
                                   </div>
@@ -889,105 +896,122 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       <CardTitle className="text-base flex items-center gap-2">
                                         {taskInfo.label}
                                         {task?.content && (
-                                          <span className="text-xs text-green-600 font-medium bg-green-50 px-1.5 py-0.5 rounded-sm">Completed</span>
+                                          <span className="text-xs text-green-600 font-medium bg-green-50 px-2 py-0.5 rounded-sm">Completed</span>
                                         )}
                                       </CardTitle>
                                       {task?.content && (
-                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium flex items-center gap-1">
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium flex items-center gap-1 ml-2">
                                           <Clock className="h-3 w-3" />
                                           {formatTimeSaved(taskInfo.timeSaved)} saved
                                         </Badge>
                                       )}
                                     </div>
-                                    <CardDescription className="text-xs line-clamp-2 mt-1 text-gray-600">
+                                    <CardDescription className="text-xs line-clamp-2 mt-1.5 text-gray-600">
                                       {taskInfo.description}
                                     </CardDescription>
                                   </div>
                                 </div>
                               </CardHeader>
-                              <CardContent className="p-4 pt-0">
-                                <div className="flex flex-col gap-2 mt-3">
+                              <CardContent className="p-5 pt-0">
+                                <div className="flex flex-col gap-2 mt-4">
                                   {/* Loading state with progress */}
-                                  {generatingTasks[type] && (
-                                    <div className="space-y-2 p-3 border rounded-md bg-white">
-                                      <div className="text-sm font-medium text-center text-primary">
-                                        {generationStage[type] || "Generating..."}
+                                  {/* Special design for Schedule Discovery Call card */}
+                                  {type === 'schedule_discovery' && !generatingTasks[type] ? (
+                                    <div className="space-y-2">
+                                      <div className="flex items-center">
+                                        <Calendar className="h-5 w-5 text-blue-600 mr-2" />
+                                        <div className="text-sm text-gray-700">Email with booking link and company analysis</div>
                                       </div>
-                                      
-                                      <div className="w-full bg-gray-100 rounded-full h-2">
-                                        <div 
-                                          className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out" 
-                                          style={{ 
-                                            width: `${generationProgress[type] || 0}%` 
-                                          }}
-                                        />
-                                      </div>
-                                      
-                                      <div className="flex justify-between text-xs text-gray-500">
-                                        <span>Research</span>
-                                        <span>Analysis</span>
-                                        <span>Completion</span>
-                                      </div>
-                                      
-                                      <p className="text-xs text-center text-gray-600 mt-1">
-                                        {/* Type-specific loading messages */}
-                                        {type === 'company_analysis' 
-                                          ? "Analyzing business data and website performance..."
-                                          : type === 'proposal'
-                                            ? "Creating proposal with pricing recommendations..."
-                                            : "Generating content, please wait..."}
-                                      </p>
+                                      <Button 
+                                        className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
+                                        onClick={() => setIsDiscoveryDialogOpen(true)}
+                                        disabled={Object.keys(generatingTasks).length > 0}
+                                      >
+                                        Schedule Call
+                                        <ArrowRight className="h-4 w-4 ml-1.5" />
+                                      </Button>
                                     </div>
-                                  )}
-                                  
-                                  {/* Button - only show if not currently generating */}
-                                  {!generatingTasks[type] && (
-                                    <Button 
-                                      className={`w-full ${task?.content ? "bg-green-600 hover:bg-green-700" : ""}`}
-                                      variant={task?.content ? "default" : "outline"}
-                                      onClick={() => {
-                                        if (type === 'schedule_discovery') {
-                                          setIsDiscoveryDialogOpen(true);
-                                        } else if (type === 'proposal') {
-                                          if (task?.content) {
-                                            // Open existing proposal in the dialog
-                                            setProposalTask(task);
-                                            setIsProposalDialogOpen(true);
-                                          } else {
-                                            // For new proposals, always show the dialog to collect notes first
-                                            setIsProposalDialogOpen(true);
-                                          }
-                                        } else if (type === 'company_analysis' && task?.content) {
-                                          // Open company analysis dialog only for existing tasks
-                                          setCompanyAnalysisTask(task);
-                                          setIsCompanyAnalysisDialogOpen(true);
-                                        } else if (task?.content) {
-                                          // View any other type of content
-                                          handleTaskSelect(task);
-                                        } else if (type === 'company_analysis') {
-                                          // Generate company analysis with in-card loading
-                                          handleGenerate(type);
-                                        } else {
-                                          // Generate other content types with in-card loading
-                                          handleGenerate(type);
-                                        }
-                                      }}
-                                      disabled={Object.keys(generatingTasks).length > 0}
-                                    >
-                                      {task?.content && (
-                                        <CheckCircle className="h-4 w-4 mr-2 text-white" />
+                                  ) : (
+                                    <>
+                                      {/* Standard loading state for other cards */}
+                                      {generatingTasks[type] && (
+                                        <div className="space-y-2 p-3 border rounded-md bg-white">
+                                          <div className="text-sm font-medium text-center text-primary">
+                                            {generationStage[type] || "Generating..."}
+                                          </div>
+                                          
+                                          <div className="w-full bg-gray-100 rounded-full h-2">
+                                            <div 
+                                              className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out" 
+                                              style={{ 
+                                                width: `${generationProgress[type] || 0}%` 
+                                              }}
+                                            />
+                                          </div>
+                                          
+                                          <div className="flex justify-between text-xs text-gray-500">
+                                            <span>Research</span>
+                                            <span>Analysis</span>
+                                            <span>Completion</span>
+                                          </div>
+                                          
+                                          <p className="text-xs text-center text-gray-600 mt-1">
+                                            {/* Type-specific loading messages */}
+                                            {type === 'company_analysis' 
+                                              ? "Analyzing business data and website performance..."
+                                              : type === 'proposal'
+                                                ? "Creating proposal with pricing recommendations..."
+                                                : "Generating content, please wait..."}
+                                          </p>
+                                        </div>
                                       )}
-                                      {type === 'schedule_discovery' 
-                                        ? 'Schedule Call'
-                                        : type === 'proposal' && task?.content
-                                          ? 'Edit Proposal'
-                                        : type === 'company_analysis' && task?.content
-                                          ? 'View Analysis'
-                                        : task?.content 
-                                          ? 'View Content' 
-                                          : 'Generate'}
-                                      <ArrowRight className="h-4 w-4 ml-1" />
-                                    </Button>
+                                      
+                                      {/* Standard buttons for other cards */}
+                                      {!generatingTasks[type] && type !== 'schedule_discovery' && (
+                                        <Button 
+                                          className={`w-full ${task?.content ? "bg-green-600 hover:bg-green-700" : ""}`}
+                                          variant={task?.content ? "default" : "outline"}
+                                          onClick={() => {
+                                            if (type === 'proposal') {
+                                              if (task?.content) {
+                                                // Open existing proposal in the dialog
+                                                setProposalTask(task);
+                                                setIsProposalDialogOpen(true);
+                                              } else {
+                                                // For new proposals, always show the dialog to collect notes first
+                                                setIsProposalDialogOpen(true);
+                                              }
+                                            } else if (type === 'company_analysis' && task?.content) {
+                                              // Open company analysis dialog only for existing tasks
+                                              setCompanyAnalysisTask(task);
+                                              setIsCompanyAnalysisDialogOpen(true);
+                                            } else if (task?.content) {
+                                              // View any other type of content
+                                              handleTaskSelect(task);
+                                            } else if (type === 'company_analysis') {
+                                              // Generate company analysis with in-card loading
+                                              handleGenerate(type);
+                                            } else {
+                                              // Generate other content types with in-card loading
+                                              handleGenerate(type);
+                                            }
+                                          }}
+                                          disabled={Object.keys(generatingTasks).length > 0}
+                                        >
+                                          {task?.content && (
+                                            <CheckCircle className="h-4 w-4 mr-2 text-white" />
+                                          )}
+                                          {type === 'proposal' && task?.content
+                                            ? 'Edit Proposal'
+                                          : type === 'company_analysis' && task?.content
+                                            ? 'View Analysis'
+                                          : task?.content 
+                                            ? 'View Content' 
+                                            : 'Generate'}
+                                          <ArrowRight className="h-4 w-4 ml-1" />
+                                        </Button>
+                                      )}
+                                    </>
                                   )}
                                 </div>
                               </CardContent>
