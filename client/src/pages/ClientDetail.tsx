@@ -256,7 +256,7 @@ export default function ClientDetail() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Client Companion takes 2/3 of the width */}
               <div className="lg:col-span-2">
-                <ClientCompanion client={client} tasks={tasks} />
+                <ClientCompanion client={client} />
               </div>
               
               {/* GoDaddy Products Management takes 1/3 of the width */}
