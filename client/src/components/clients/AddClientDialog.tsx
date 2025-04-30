@@ -299,17 +299,17 @@ export default function AddClientDialog({
                 name="projectDescription"
                 render={({ field }) => (
                   <FormItem className="col-span-2">
-                    <FormLabel>Business Description</FormLabel>
+                    <FormLabel className="text-base">Business Description</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Describe the business operations, goals, and target audience" 
-                        className="min-h-[120px]"
+                        placeholder="Describe the business operations, goals, target audience, and any specific project requirements or challenges" 
+                        className="min-h-[150px] p-4 text-base"
                         {...field} 
                         value={field.value || ''}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Provide information about the client's business to help with project planning
+                    <FormDescription className="text-xs text-gray-500 mt-2">
+                      This information helps us understand the client's business and will be used for AI-powered analysis and recommendations
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -317,15 +317,21 @@ export default function AddClientDialog({
               />
             </div>
             
-            <DialogFooter>
+            <DialogFooter className="mt-6 px-1">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
+                className="px-5"
               >
                 Cancel
               </Button>
-              <Button type="submit">Add Client</Button>
+              <Button 
+                type="submit" 
+                className="px-8 py-6 text-base font-medium"
+              >
+                Add Client
+              </Button>
             </DialogFooter>
           </form>
         </Form>
