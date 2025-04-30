@@ -614,8 +614,8 @@ Your Web Professional`);
           handleSectionUpdate(pageId, sectionId, response.expandedContent);
           
           toast({
-            title: "Content Expanded",
-            description: "Content has been successfully expanded with AI assistance.",
+            title: "Production-Ready Content Created",
+            description: "Professional-grade content has been generated and is ready for immediate use.",
             variant: "default"
           });
           return;
@@ -629,8 +629,8 @@ Your Web Professional`);
             handleSectionUpdate(pageId, sectionId, responseText);
             
             toast({
-              title: "Content Expanded",
-              description: "Content has been successfully expanded with AI assistance."
+              title: "Production-Ready Content Created",
+              description: "Professional-grade content has been generated and is ready for immediate use."
             });
             return;
           }
@@ -654,8 +654,8 @@ Your Web Professional`);
               handleSectionUpdate(pageId, sectionId, responseObj[prop]);
               
               toast({
-                title: "Content Expanded",
-                description: "Content has been successfully expanded with AI assistance."
+                title: "Production-Ready Content Created",
+                description: "Professional-grade content has been generated and is ready for immediate use."
               });
               return;
             }
@@ -1200,7 +1200,7 @@ Your Web Professional`);
                                                   </div>
                                                 ) : (
                                                   <div className="flex items-center">
-                                                    <span className="mr-1">✨</span> Expand with AI
+                                                    <span className="mr-1">✨</span> Create Production-Ready Content
                                                   </div>
                                                 )}
                                               </Button>
@@ -1375,14 +1375,18 @@ Your Web Professional`);
               </div>
               <h3 className="text-lg font-medium">No Site Map Generated Yet</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Generate a comprehensive website sitemap and content plan that outlines page structure, 
-                navigation, and content recommendations based on the client's requirements.
+                Generate a comprehensive website sitemap with <span className="font-semibold text-blue-600">production-ready content</span> for all pages 
+                and sections. The generated content will be polished and can be used immediately without further editing.
               </p>
+              <div className="mt-2 text-xs text-muted-foreground">
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 mb-1">NEW</Badge>
+                <span> Enhanced site map now includes complete, professional content for each page section</span>
+              </div>
             </div>
             
-            <Button onClick={handleGenerate} className="gap-2">
+            <Button onClick={handleGenerate} className="gap-2 bg-blue-600 hover:bg-blue-700">
               <LayoutGrid className="h-4 w-4" />
-              Generate Site Map
+              Generate Production-Ready Site Map
             </Button>
           </div>
         )}
