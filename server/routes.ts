@@ -622,9 +622,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Content is required" });
       }
       
+      console.log("Expanding content with context:", context);
+      
       // Expand the content using OpenAI
       const expandedContent = await expandSectionContent(content, context || {});
       
+      // Log the result for debugging
+      console.log("OpenAI expansion result length:", expandedContent.length);
+      
+      // Return a standardized response
       return res.json({ 
         originalContent: content,
         expandedContent: expandedContent,
@@ -632,7 +638,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error expanding content:", error);
-      return res.status(500).json({ message: "Failed to expand content" });
+      // Include more details about the error in the response
+      return res.status(500).json({ 
+        message: "Failed to expand content", 
+        error: error instanceof Error ? error.message : "Unknown error",
+        success: false
+      });
     }
   });
 

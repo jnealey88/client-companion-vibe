@@ -429,60 +429,75 @@ Your Web Professional`);
     setExpandingSections(prev => ({ ...prev, [sectionKey]: true }));
     
     try {
-      // Use the OpenAI API via our existing endpoint
-      const response = await apiRequest("POST", `/api/content/expand`, {
-        content: section.content,
-        context: {
-          pageTitle: page.title,
-          sectionTitle: section.title,
-          siteName: client.name,
-          industry: client.industry
-        }
+      // Show a toast notification that content is being expanded
+      toast({
+        title: "AI Assistant",
+        description: "Expanding content... This may take a few seconds.",
       });
       
-      console.log("Received response:", response);
+      // Extract current content and context
+      const contextData = {
+        pageTitle: page.title,
+        sectionTitle: section.title,
+        siteName: client.name,
+        industry: client.industry,
+        // Add additional context that might help
+        siteType: "business website",
+        audienceType: "potential customers"
+      };
       
-      // Handle the response more flexibly
+      console.log("Sending content expansion request with context:", contextData);
+      
+      // Use the OpenAI API via our existing endpoint
+      const response = await apiRequest<ContentExpansionResponse>("POST", `/api/content/expand`, {
+        content: section.content,
+        context: contextData
+      });
+      
+      console.log("Received expansion response:", response);
+      
+      // Type-safe approach for handling the API response
       if (response && typeof response === 'object') {
-        let expandedContent = null;
-        
-        // First specifically check for the standard response format
-        if (response.success === true && typeof response.expandedContent === 'string') {
-          expandedContent = response.expandedContent;
-          console.log("Found expanded content in standard format:", expandedContent);
-        } 
-        // Other fallback formats 
-        else if (typeof response === 'string') {
-          // Sometimes the API might directly return a string
-          expandedContent = response;
-        } else if (typeof response === 'object') {
-          // Try to find any property that might contain the expanded content
-          const contentKeys = ['content', 'text', 'result', 'data', 'expandedContent', 'expanded'];
-          const responseObj = response as any; // Use any type for this specific case
-          for (const key of contentKeys) {
-            if (key in responseObj && typeof responseObj[key] === 'string') {
-              expandedContent = responseObj[key];
-              console.log(`Found expanded content in key "${key}":`, expandedContent);
-              break;
-            }
+        // First check if we got a properly typed response
+        if ('success' in response && response.success === true && 'expandedContent' in response) {
+          const expandedContent = response.expandedContent;
+          
+          if (expandedContent && typeof expandedContent === 'string') {
+            // Update the content
+            handleSectionUpdate(pageId, sectionId, expandedContent);
+            
+            toast({
+              title: "Content Expanded",
+              description: "Content has been successfully expanded with AI assistance.",
+              variant: "default"
+            });
+            return;
+          }
+        } else {
+          // For backward compatibility - try to find expandedContent property
+          const responseObj = response as any;
+          
+          if (responseObj.expandedContent && typeof responseObj.expandedContent === 'string') {
+            handleSectionUpdate(pageId, sectionId, responseObj.expandedContent);
+            
+            toast({
+              title: "Content Expanded",
+              description: "Content has been successfully expanded with AI assistance.",
+            });
+            return;
           }
         }
         
-        // If we found expanded content, update the section
-        if (expandedContent) {
-          handleSectionUpdate(pageId, sectionId, expandedContent);
-          
-          toast({
-            title: "Content Expanded",
-            description: "Section content has been expanded with AI assistance.",
-          });
-          return;
-        }
-        
-        console.error("Unable to extract expanded content from response:", response);
+        // If we reach here, we couldn't find the expanded content
+        console.error("Failed to extract expanded content from response:", response);
+        toast({
+          title: "Expansion Error",
+          description: "The AI service returned an unexpected response format.",
+          variant: "destructive"
+        });
+      } else {
+        throw new Error("Invalid response from AI service");
       }
-      
-      throw new Error("Invalid response from AI service");
     } catch (error) {
       console.error("Error expanding content:", error);
       toast({
@@ -491,7 +506,7 @@ Your Web Professional`);
         variant: "destructive"
       });
     } finally {
-      // Reset expanding state
+      // Reset expanding state regardless of outcome
       const sectionKey = `${pageId}_${sectionId}`;
       setExpandingSections(prev => ({ ...prev, [sectionKey]: false }));
     }
