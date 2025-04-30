@@ -440,12 +440,32 @@ Your Web Professional`);
         }
       });
       
-      // Extra validation to handle different response formats
+      console.log("Received response:", response);
+      
+      // Handle the response more flexibly
       if (response && typeof response === 'object') {
-        // First try to parse as our expected ContentExpansionResponse
+        let expandedContent = null;
+        
+        // Try to get the expanded content from different possible response formats
         if ('expandedContent' in response && typeof response.expandedContent === 'string') {
-          // Update the section content with the expanded text
-          handleSectionUpdate(pageId, sectionId, response.expandedContent);
+          expandedContent = response.expandedContent;
+        } else if (typeof response === 'string') {
+          // Sometimes the API might directly return a string
+          expandedContent = response;
+        } else if (typeof response === 'object') {
+          // Try to find any property that might contain the expanded content
+          const contentKeys = ['content', 'text', 'result', 'data', 'expandedContent', 'expanded'];
+          for (const key of contentKeys) {
+            if (key in response && typeof response[key] === 'string') {
+              expandedContent = response[key];
+              break;
+            }
+          }
+        }
+        
+        // If we found expanded content, update the section
+        if (expandedContent) {
+          handleSectionUpdate(pageId, sectionId, expandedContent);
           
           toast({
             title: "Content Expanded",
@@ -454,21 +474,7 @@ Your Web Professional`);
           return;
         }
         
-        // Try other potential response formats
-        if ('originalContent' in response && 'success' in response) {
-          const contentData = response as unknown as ContentExpansionResponse;
-          if (contentData.expandedContent) {
-            handleSectionUpdate(pageId, sectionId, contentData.expandedContent);
-            
-            toast({
-              title: "Content Expanded",
-              description: "Section content has been expanded with AI assistance.",
-            });
-            return;
-          }
-        }
-        
-        console.error("Unexpected response format:", response);
+        console.error("Unable to extract expanded content from response:", response);
       }
       
       throw new Error("Invalid response from AI service");
