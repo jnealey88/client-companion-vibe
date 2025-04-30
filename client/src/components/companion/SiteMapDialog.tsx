@@ -2,7 +2,19 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Copy, CheckCircle2, Send, AlertCircle, Trash2, LayoutGrid, Share2 } from "lucide-react";
+import { 
+  Copy, 
+  CheckCircle2, 
+  Send, 
+  AlertCircle, 
+  Trash2, 
+  LayoutGrid, 
+  Share2, 
+  Home,
+  FileText,
+  Menu,
+  ChevronRight
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +36,54 @@ import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { EditorJs } from "@/components/ui/editor-js";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+// Define interfaces for the structured site map data
+interface SiteSection {
+  id: string;
+  title: string;
+  content: string;
+  wordCount: number;
+  elements: string[];
+}
+
+interface SitePageData {
+  id: string;
+  title: string;
+  url: string;
+  metaDescription: string;
+  isParent: boolean;
+  children: string[];
+  sections: SiteSection[];
+  technicalFeatures: string[];
+}
+
+interface SiteOverview {
+  title: string;
+  description: string;
+  primaryNavigation: string[];
+  secondaryNavigation: string[];
+}
+
+interface ContentGuidelines {
+  tone: string;
+  callToAction: string;
+  keyMessages: string[];
+}
+
+interface TechnicalRequirements {
+  interactiveElements: string[];
+  integrations: string[];
+}
+
+interface SiteMapData {
+  siteOverview: SiteOverview;
+  pages: SitePageData[];
+  contentGuidelines: ContentGuidelines;
+  technicalRequirements: TechnicalRequirements;
+}
 
 interface SiteMapDialogProps {
   open: boolean;
@@ -44,6 +104,11 @@ export default function SiteMapDialog({
   const [siteMapContent, setSiteMapContent] = useState<string>("");
   const [editedContent, setEditedContent] = useState<string>("");
   const [isEdited, setIsEdited] = useState<boolean>(false);
+  
+  // Site map data state
+  const [siteMapData, setSiteMapData] = useState<SiteMapData | null>(null);
+  const [activePage, setActivePage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("pages");
   
   // UI state
   const [loading, setLoading] = useState<boolean>(false);
@@ -119,6 +184,15 @@ Your Web Professional`);
             // Set the content state
             setSiteMapContent(data.content);
             setEditedContent(data.content);
+            
+            // Try to parse the JSON data for structured display
+            const parsedData = parseSiteMapData(data.content);
+            setSiteMapData(parsedData);
+            
+            // Set initial active page if we have data
+            if (parsedData && parsedData.pages.length > 0) {
+              setActivePage(parsedData.pages[0].id);
+            }
           } else {
             setError("The generated site map had an invalid format.");
           }
@@ -243,6 +317,29 @@ Your Web Professional`);
     }
   };
   
+  // Handle section content update
+  const handleSectionUpdate = (pageId: string, sectionId: string, newContent: string) => {
+    if (!siteMapData) return;
+    
+    // Create a deep copy of the site map data
+    const updatedSiteMapData = JSON.parse(JSON.stringify(siteMapData)) as SiteMapData;
+    
+    // Find the page and section
+    const pageIndex = updatedSiteMapData.pages.findIndex(p => p.id === pageId);
+    if (pageIndex === -1) return;
+    
+    const sectionIndex = updatedSiteMapData.pages[pageIndex].sections.findIndex(s => s.id === sectionId);
+    if (sectionIndex === -1) return;
+    
+    // Update the content
+    updatedSiteMapData.pages[pageIndex].sections[sectionIndex].content = newContent;
+    
+    // Update state
+    setSiteMapData(updatedSiteMapData);
+    setEditedContent(JSON.stringify(updatedSiteMapData, null, 2));
+    setIsEdited(true);
+  };
+  
   // Save content changes
   const handleSave = () => {
     if (generatedTask?.id && editedContent !== siteMapContent) {
@@ -259,8 +356,76 @@ Your Web Professional`);
   const handleEditorUpdate = (content: string) => {
     setEditedContent(content);
     setIsEdited(content !== siteMapContent);
+    
+    // Try to parse the updated content as JSON
+    try {
+      const updatedData = JSON.parse(content);
+      if (updatedData && 
+          updatedData.siteOverview && 
+          updatedData.pages && 
+          Array.isArray(updatedData.pages)) {
+        setSiteMapData(updatedData);
+      }
+    } catch (e) {
+      // Not valid JSON, which is fine for the raw editor
+      console.log("Content is not valid JSON, continuing with raw editor mode");
+    }
   };
   
+  // Generate a formatted site map summary for email
+  const generateSiteMapSummary = (): string => {
+    if (!siteMapData) return editedContent;
+    
+    let htmlContent = `
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Site Overview</h3>
+        <p style="color: #555; margin-bottom: 15px;">${siteMapData.siteOverview.description}</p>
+        
+        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+          <h4 style="color: #333; font-size: 16px; margin: 0 0 10px 0;">Primary Navigation</h4>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+            ${siteMapData.siteOverview.primaryNavigation.map(item => 
+              `<span style="background-color: #e6f7ff; color: #0070f3; padding: 5px 10px; border-radius: 3px; font-size: 14px;">${item}</span>`
+            ).join('')}
+          </div>
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 30px;">
+        <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Pages Structure</h3>
+        <ul style="list-style-type: none; padding: 0;">
+          ${siteMapData.pages.map(page => `
+            <li style="margin-bottom: 15px; ${page.isParent ? '' : 'margin-left: 20px;'}">
+              <div style="padding: 12px; border: 1px solid #e0e0e0; border-radius: 5px; ${page.isParent ? 'background-color: #f9f9f9;' : 'background-color: #fff;'}">
+                <h4 style="color: #333; font-size: 16px; margin: 0 0 5px 0;">${page.title}</h4>
+                <p style="color: #666; font-size: 14px; margin: 0 0 8px 0;">${page.url}</p>
+                <p style="color: #555; font-size: 13px; margin: 0;">${page.metaDescription.substring(0, 100)}${page.metaDescription.length > 100 ? '...' : ''}</p>
+                ${page.sections.length > 0 ? `
+                  <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e0e0e0;">
+                    <p style="color: #555; font-size: 13px; margin: 0;">${page.sections.length} sections, including: ${page.sections.slice(0, 3).map(s => s.title).join(', ')}${page.sections.length > 3 ? '...' : ''}</p>
+                  </div>
+                ` : ''}
+              </div>
+            </li>
+          `).join('')}
+        </ul>
+      </div>
+      
+      <div style="margin-bottom: 20px;">
+        <h3 style="color: #333; font-size: 18px; margin-bottom: 15px;">Content Guidelines & Technical Requirements</h3>
+        <p style="color: #555; margin-bottom: 10px;"><strong>Tone:</strong> ${siteMapData.contentGuidelines.tone.substring(0, 150)}...</p>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+          ${siteMapData.technicalRequirements.interactiveElements.slice(0, 5).map(item => 
+            `<span style="background-color: #f0f0f0; color: #555; padding: 5px 10px; border-radius: 3px; font-size: 13px;">${item}</span>`
+          ).join('')}
+          ${siteMapData.technicalRequirements.interactiveElements.length > 5 ? `<span style="color: #666; font-size: 13px;">+${siteMapData.technicalRequirements.interactiveElements.length - 5} more</span>` : ''}
+        </div>
+      </div>
+    `;
+    
+    return htmlContent;
+  };
+
   // Share site map with client via email
   const handleShareWithClient = () => {
     if (!recipientEmail) {
@@ -271,6 +436,9 @@ Your Web Professional`);
       });
       return;
     }
+
+    // Generate site map content based on whether we have structured data
+    const siteMapContent = siteMapData ? generateSiteMapSummary() : editedContent;
 
     // Prepare a nice HTML email with the site map content
     const emailHtml = `
@@ -285,7 +453,7 @@ Your Web Professional`);
             </div>
             
             <div style="margin-top: 20px;">
-              ${editedContent}
+              ${siteMapContent}
             </div>
           </div>
           
@@ -305,6 +473,32 @@ Your Web Professional`);
     });
   };
   
+  // Parse JSON site map data
+  const parseSiteMapData = (content: string): SiteMapData | null => {
+    try {
+      const data = JSON.parse(content);
+      
+      // Validate structure
+      if (data && 
+          data.siteOverview && 
+          data.pages && 
+          Array.isArray(data.pages) && 
+          data.contentGuidelines && 
+          data.technicalRequirements) {
+        return data as SiteMapData;
+      }
+      return null;
+    } catch (e) {
+      console.error("Failed to parse site map data:", e);
+      return null;
+    }
+  };
+  
+  // Handle changing the active page
+  const handlePageChange = (pageId: string) => {
+    setActivePage(pageId);
+  };
+  
   // Load existing content when task changes
   useEffect(() => {
     if (existingTask?.content) {
@@ -312,11 +506,22 @@ Your Web Professional`);
       setEditedContent(existingTask.content);
       setGeneratedTask(existingTask);
       setShowRegenerate(true);
+      
+      // Try to parse as JSON data
+      const parsedData = parseSiteMapData(existingTask.content);
+      setSiteMapData(parsedData);
+      
+      // Set initial active page if we have data
+      if (parsedData && parsedData.pages.length > 0) {
+        setActivePage(parsedData.pages[0].id);
+      }
     } else {
       setSiteMapContent("");
       setEditedContent("");
       setGeneratedTask(null);
       setShowRegenerate(false);
+      setSiteMapData(null);
+      setActivePage(null);
     }
     
     setIsEdited(false);
@@ -501,14 +706,249 @@ Your Web Professional`);
             
             <Separator />
             
-            <div className="editor-js-container">
-              <EditorJs
-                content={siteMapContent}
-                onChange={handleEditorUpdate}
-                readOnly={false}
-                className="prose max-w-none"
-              />
-            </div>
+            {siteMapData ? (
+              <div className="flex flex-col mt-4">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="w-full grid grid-cols-3">
+                    <TabsTrigger value="pages">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Pages
+                    </TabsTrigger>
+                    <TabsTrigger value="content">
+                      <Menu className="h-4 w-4 mr-2" />
+                      Content Guidelines
+                    </TabsTrigger>
+                    <TabsTrigger value="technical">
+                      <ChevronRight className="h-4 w-4 mr-2" />
+                      Technical Requirements
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="pages" className="mt-4">
+                    <div className="site-map-container flex">
+                      {/* Pages sidebar */}
+                      <div className="site-map-sidebar w-1/4 bg-gray-50 p-4 border-r rounded-l-md max-h-[500px] overflow-y-auto">
+                        <div className="mb-4">
+                          <h3 className="text-sm font-medium mb-2">Site Structure</h3>
+                          <p className="text-xs text-muted-foreground mb-4">
+                            {siteMapData.siteOverview.description}
+                          </p>
+                          <div className="space-y-1">
+                            {siteMapData.pages.map((page) => (
+                              <Button
+                                key={page.id}
+                                variant={activePage === page.id ? "default" : "ghost"}
+                                className={cn(
+                                  "w-full justify-start text-left text-sm",
+                                  activePage === page.id ? "" : "text-muted-foreground",
+                                  page.isParent ? "font-medium" : "ml-4"
+                                )}
+                                onClick={() => handlePageChange(page.id)}
+                              >
+                                {page.isParent ? (
+                                  <Home className="h-4 w-4 mr-2" />
+                                ) : (
+                                  <FileText className="h-4 w-4 mr-2" />
+                                )}
+                                {page.title}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Page content area */}
+                      <div className="site-map-content flex-1 p-6 border-l rounded-r-md">
+                        {activePage && siteMapData.pages.find(p => p.id === activePage) && (
+                          <ScrollArea className="h-[500px] pr-4">
+                            {(() => {
+                              const page = siteMapData.pages.find(p => p.id === activePage)!;
+                              return (
+                                <>
+                                  <div className="mb-6">
+                                    <h2 className="text-xl font-bold mb-1">{page.title}</h2>
+                                    <div className="flex items-center text-sm text-muted-foreground mb-4">
+                                      <span className="bg-slate-100 px-2 py-1 rounded mr-2">{page.url}</span>
+                                      {page.isParent && (
+                                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Parent Page</span>
+                                      )}
+                                    </div>
+                                    <p className="text-sm mb-4">
+                                      <span className="font-medium">Meta Description:</span> {page.metaDescription}
+                                    </p>
+                                  </div>
+                                  
+                                  <div className="mb-6">
+                                    <h3 className="text-md font-semibold border-b pb-2 mb-4">Page Sections</h3>
+                                    <div className="space-y-6">
+                                      {page.sections.map((section) => (
+                                        <div key={section.id} className="p-4 border rounded-md bg-white shadow-sm">
+                                          <h4 className="text-sm font-medium mb-2">{section.title}</h4>
+                                          <div className="text-xs mb-3 flex items-center gap-2">
+                                            <span className="bg-slate-100 px-2 py-1 rounded">~{section.wordCount} words</span>
+                                            {section.elements.length > 0 && (
+                                              <span className="text-xs text-muted-foreground">
+                                                {section.elements.length} elements
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div className="prose prose-sm max-w-none">
+                                            <Textarea 
+                                              value={section.content}
+                                              onChange={(e) => handleSectionUpdate(page.id, section.id, e.target.value)}
+                                              className="min-h-[100px] resize-y"
+                                              placeholder="Enter section content here..."
+                                            />
+                                          </div>
+                                          
+                                          {section.elements.length > 0 && (
+                                            <div className="mt-3 pt-3 border-t">
+                                              <h5 className="text-xs font-medium mb-2">Visual Elements</h5>
+                                              <div className="flex flex-wrap gap-2">
+                                                {section.elements.map((element, i) => (
+                                                  <div key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                                                    {element}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  
+                                  {page.technicalFeatures.length > 0 && (
+                                    <div className="mb-6">
+                                      <h3 className="text-md font-semibold border-b pb-2 mb-4">Technical Features</h3>
+                                      <div className="flex flex-wrap gap-2">
+                                        {page.technicalFeatures.map((feature, i) => (
+                                          <div key={i} className="bg-purple-50 text-purple-700 text-xs px-3 py-1 rounded-full">
+                                            {feature}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {page.children.length > 0 && (
+                                    <div className="mb-6">
+                                      <h3 className="text-md font-semibold border-b pb-2 mb-4">Child Pages</h3>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        {page.children.map((childId) => {
+                                          const childPage = siteMapData.pages.find(p => p.id === childId);
+                                          return childPage ? (
+                                            <Button
+                                              key={childId}
+                                              variant="outline"
+                                              className="justify-start text-left h-auto py-3"
+                                              onClick={() => handlePageChange(childId)}
+                                            >
+                                              <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
+                                              <div className="flex flex-col items-start">
+                                                <span className="font-medium">{childPage.title}</span>
+                                                <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                                  {childPage.url}
+                                                </span>
+                                              </div>
+                                            </Button>
+                                          ) : null;
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </ScrollArea>
+                        )}
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="content" className="mt-4">
+                    <div className="p-6 border rounded-md bg-white">
+                      <div className="mb-6">
+                        <h2 className="text-lg font-bold mb-4">Content Guidelines</h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="p-4 border rounded-md bg-gray-50">
+                            <h3 className="text-md font-semibold mb-3">Tone and Voice</h3>
+                            <p className="text-sm">{siteMapData.contentGuidelines.tone}</p>
+                          </div>
+                          
+                          <div className="p-4 border rounded-md bg-gray-50">
+                            <h3 className="text-md font-semibold mb-3">Call to Action Style</h3>
+                            <p className="text-sm">{siteMapData.contentGuidelines.callToAction}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-6">
+                          <h3 className="text-md font-semibold mb-3">Key Messages</h3>
+                          <ul className="space-y-2">
+                            {siteMapData.contentGuidelines.keyMessages.map((message, i) => (
+                              <li key={i} className="text-sm bg-white p-3 border rounded-md">
+                                {message}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="technical" className="mt-4">
+                    <div className="p-6 border rounded-md bg-white">
+                      <div className="mb-6">
+                        <h2 className="text-lg font-bold mb-4">Technical Requirements</h2>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <h3 className="text-md font-semibold mb-3">Interactive Elements</h3>
+                            <div className="space-y-2">
+                              {siteMapData.technicalRequirements.interactiveElements.map((element, i) => (
+                                <div key={i} className="text-sm bg-gray-50 p-3 border rounded-md">
+                                  {element}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h3 className="text-md font-semibold mb-3">Integrations</h3>
+                            <div className="space-y-2">
+                              {siteMapData.technicalRequirements.integrations.map((integration, i) => (
+                                <div key={i} className="text-sm bg-gray-50 p-3 border rounded-md">
+                                  {integration}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+                
+                <div className="hidden">
+                  <EditorJs
+                    content={siteMapContent}
+                    onChange={handleEditorUpdate}
+                    readOnly={false}
+                    className="prose max-w-none"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="editor-js-container">
+                <EditorJs
+                  content={siteMapContent}
+                  onChange={handleEditorUpdate}
+                  readOnly={false}
+                  className="prose max-w-none"
+                />
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-8 space-y-6">
