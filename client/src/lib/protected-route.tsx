@@ -19,9 +19,8 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
   }
 
   if (!user) {
-    // Using direct redirection to login route
-    window.location.href = "/api/login";
-    return null;
+    // Redirect to login page
+    return <Redirect to="/login" />;
   }
 
   return <Component />;
