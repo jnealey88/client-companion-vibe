@@ -121,47 +121,93 @@ function extractSectionContentForEditor(content: string | undefined): string {
   
   console.log("EXTRACT SECTION - Examining content:", 
     typeof content === 'string' ? content.substring(0, 50) + "..." : "Not a string");
-  
-  // If the content is a plain string without JSON markers, convert it to Editor.js format
-  if (typeof content === 'string' && !content.startsWith('{')) {
-    console.log("EXTRACT SECTION - Content is plain text, converting to Editor.js format");
-    
-    const editorJsContent = {
-      time: Date.now(),
-      blocks: [
-        {
-          type: "paragraph",
-          data: {
-            text: content
-          }
-        }
-      ],
-      version: "2.22.2"
-    };
-    
-    return JSON.stringify(editorJsContent);
-  }
-  
-  // If content is already in Editor.js format, return it as is
-  if (typeof content === 'string' && 
-      content.startsWith('{') && 
-      (content.includes('"blocks"') || content.includes('"time"'))) {
-    console.log("EXTRACT SECTION - Content is already in Editor.js format");
-    return content;
-  }
-  
-  // If we still have plain content at this point, convert it to Editor.js format
+
+  // First, try to parse the content as JSON to see if it's an EditorJs object
   if (typeof content === 'string') {
-    const editorJsContent = {
-      time: Date.now(),
-      blocks: [
-        {
-          type: "paragraph",
-          data: {
-            text: content
+    try {
+      // Check if it's already in EditorJs format with blocks
+      const parsed = JSON.parse(content);
+      if (parsed && parsed.blocks && Array.isArray(parsed.blocks)) {
+        console.log("EXTRACT SECTION - Content is already in Editor.js format with", parsed.blocks.length, "blocks");
+        return content; // Already in correct format
+      }
+      
+      // If it's JSON but not Editor.js format, it might be the raw sitemap content
+      // Extract just what's needed for display
+      if (parsed) {
+        let textContent = "";
+        
+        // Try to extract text content from common JSON structures
+        if (typeof parsed === 'object') {
+          // Look for content in common properties
+          const possibleProperties = ['content', 'text', 'description', 'data', 'value'];
+          for (const prop of possibleProperties) {
+            if (parsed[prop] && typeof parsed[prop] === 'string') {
+              textContent = parsed[prop];
+              break;
+            }
+          }
+          
+          // If no content found in properties, stringify the object but limit size
+          if (!textContent) {
+            textContent = JSON.stringify(parsed).substring(0, 500);
+            if (textContent.length > 500) textContent += "...";
           }
         }
-      ],
+        
+        console.log("EXTRACT SECTION - Content is JSON but not Editor.js format, converting");
+        
+        // Convert to proper EditorJs format with paragraphs
+        const paragraphs = textContent.split("\n\n")
+          .filter(p => p.trim().length > 0)
+          .map(p => ({
+            type: "paragraph",
+            data: { text: p.trim() }
+          }));
+        
+        // If no paragraphs, create at least one
+        if (paragraphs.length === 0) {
+          paragraphs.push({
+            type: "paragraph",
+            data: { text: textContent || "No content available" }
+          });
+        }
+        
+        const editorJsContent = {
+          time: Date.now(),
+          blocks: paragraphs,
+          version: "2.22.2"
+        };
+        
+        return JSON.stringify(editorJsContent);
+      }
+    } catch (e) {
+      // Not JSON, it's plain text - continue to text conversion
+    }
+
+    // If it's plain text (or JSON parsing failed), convert to EditorJs format
+    // This handles newlines properly by splitting into paragraphs
+    console.log("EXTRACT SECTION - Converting plain text to Editor.js format");
+    
+    // Split by double newlines to create paragraphs
+    const paragraphs = content.split("\n\n")
+      .filter(p => p.trim().length > 0)
+      .map(p => ({
+        type: "paragraph",
+        data: { text: p.trim() }
+      }));
+    
+    // Ensure we have at least one paragraph
+    if (paragraphs.length === 0) {
+      paragraphs.push({
+        type: "paragraph",
+        data: { text: content }
+      });
+    }
+    
+    const editorJsContent = {
+      time: Date.now(),
+      blocks: paragraphs,
       version: "2.22.2"
     };
     
@@ -858,42 +904,77 @@ Your Web Professional`);
     console.log(`Current content length: ${currentContent?.length || 0} chars`);
     console.log(`Current content preview: ${typeof currentContent === 'string' ? currentContent.substring(0, 50) + '...' : 'Not a string'}`);
     
-    // Update the content - handle both string and EditorJs content
-    updatedSiteMapData.pages[pageIndex].sections[sectionIndex].content = newContent;
+    // Process incoming content to ensure it's properly formatted
+    let processedContent = newContent;
+    let editorJsObject = null;
+    let wordCount = 50; // Default fallback
     
-    // Update word count based on new content
+    // Check if the content is EditorJs format
     try {
-      // If it's a JSON string from EditorJs, try to estimate word count from blocks
-      let wordCount = 50; // Default fallback
-      const contentObj = typeof newContent === 'string' ? JSON.parse(newContent) : newContent;
-      
-      if (contentObj && contentObj.blocks) {
-        // Sum up word count from text in all blocks
-        wordCount = contentObj.blocks.reduce((count: number, block: any) => {
-          if (block.data && block.data.text) {
-            return count + block.data.text.split(/\s+/).filter(Boolean).length;
-          }
-          return count;
-        }, 0);
-      } else if (typeof newContent === 'string') {
-        // Plain text fallback
-        wordCount = newContent.split(/\s+/).filter(Boolean).length;
-      }
-      
-      updatedSiteMapData.pages[pageIndex].sections[sectionIndex].wordCount = 
-        wordCount > 0 ? wordCount : 50;
-    } catch (e) {
-      // If parsing fails, just count words in the raw string
       if (typeof newContent === 'string') {
-        updatedSiteMapData.pages[pageIndex].sections[sectionIndex].wordCount = 
-          newContent.split(/\s+/).filter(Boolean).length || 50;
+        // Parse the JSON to extract the actual content
+        editorJsObject = JSON.parse(newContent);
+        
+        if (editorJsObject && editorJsObject.blocks) {
+          // Count words in all blocks
+          wordCount = editorJsObject.blocks.reduce((count: number, block: any) => {
+            if (block.data && block.data.text) {
+              return count + block.data.text.split(/\s+/).filter(Boolean).length;
+            }
+            return count;
+          }, 0);
+          
+          // The content is already in EditorJs format, store it directly
+          processedContent = newContent;
+          console.log("Content is valid EditorJs format with", editorJsObject.blocks.length, "blocks");
+        }
+      }
+    } catch (e) {
+      console.log("Content is not in EditorJs format, will convert plain text");
+      
+      // If it's plain text, convert to EditorJs format
+      if (typeof newContent === 'string') {
+        // Count words in plain text
+        wordCount = newContent.split(/\s+/).filter(Boolean).length || 50;
+        
+        // Convert to EditorJs format
+        const paragraphs = newContent.split("\n\n")
+          .filter(p => p.trim().length > 0)
+          .map(p => ({
+            type: "paragraph",
+            data: { text: p.trim() }
+          }));
+        
+        // Ensure we have at least one paragraph
+        if (paragraphs.length === 0) {
+          paragraphs.push({
+            type: "paragraph",
+            data: { text: newContent }
+          });
+        }
+        
+        editorJsObject = {
+          time: Date.now(),
+          blocks: paragraphs,
+          version: "2.22.2"
+        };
+        
+        processedContent = JSON.stringify(editorJsObject);
+        console.log("Converted plain text to EditorJs format with", paragraphs.length, "paragraphs");
       }
     }
+    
+    // Update the content with the processed version
+    updatedSiteMapData.pages[pageIndex].sections[sectionIndex].content = processedContent;
+    
+    // Update word count with the calculated value
+    updatedSiteMapData.pages[pageIndex].sections[sectionIndex].wordCount = wordCount > 0 ? wordCount : 50;
     
     // Update state
     setSiteMapData(updatedSiteMapData);
     setEditedContent(JSON.stringify(updatedSiteMapData, null, 2));
     setIsEdited(true);
+    console.log("Section content updated successfully");
   };
   
   // Save content changes
@@ -1066,40 +1147,109 @@ Your Web Professional`);
             console.log(`    Content length: ${section.content?.length || 0} chars`);
             console.log(`    Content preview: ${typeof section.content === 'string' ? section.content.substring(0, 50) + '...' : 'Not a string'}`);
             
-            // Check if the content appears to be from the raw JSON dump
-            if (section.content && typeof section.content === 'string') {
-              // If the content contains the full JSON structure
-              if (section.content.includes('"siteOverview"') && 
-                  section.content.includes('"pages"') &&
-                  section.content.includes('"contentGuidelines"')) {
-                  
-                console.log("    WARNING: Found full JSON structure in section content, cleaning...");
-                  
-                // Extract just the section's content from the raw JSON
-                // We'll use a simple approach - just take the section's title content instead
-                section.content = section.title + " content goes here.";
+            // Clean up and process section content
+            if (!section.content || typeof section.content !== 'string') {
+              // Handle empty or non-string content
+              const defaultContent = {
+                time: Date.now(),
+                blocks: [
+                  {
+                    type: "paragraph",
+                    data: {
+                      text: `Content for "${section.title}" section will be added here.`
+                    }
+                  }
+                ],
+                version: "2.22.2"
+              };
+              section.content = JSON.stringify(defaultContent);
+              return;
+            }
+            
+            // Check if content contains the full sitemap structure (raw JSON dump)
+            if (section.content.includes('"siteOverview"') && 
+                section.content.includes('"pages"') && 
+                section.content.includes('"contentGuidelines"')) {
+              
+              console.log("    WARNING: Found full JSON structure in section content, cleaning...");
+              
+              // Generate unique content based on section title/position
+              let defaultText = "This section needs content. Use the AI expansion tool.";
+              
+              if (section.title.toLowerCase().includes("hero")) {
+                defaultText = `Welcome to ${client.name}. We provide exceptional ${client.industry} services.`;
+              } else if (section.title.toLowerCase().includes("intro") || section.title.toLowerCase().includes("about")) {
+                defaultText = `${client.name} is a leading provider in the ${client.industry} industry.`;
+              } else if (section.title.toLowerCase().includes("feature")) {
+                defaultText = `Our premium services are designed to meet specific needs in the ${client.industry} sector.`;
+              } else if (section.title.toLowerCase().includes("contact")) {
+                defaultText = `Get in touch with our team to learn how we can help you.`;
+              } else if (sectionIndex === 0) {
+                defaultText = `${client.name} provides industry-leading solutions.`;
+              } else if (sectionIndex === 1) {
+                defaultText = `Our expertise makes us the preferred choice in ${client.industry}.`;
+              } else {
+                defaultText = `The "${section.title}" section will showcase important information.`;
               }
               
-              // Then ensure it's in Editor.js format
-              if (!section.content.startsWith('{') || !section.content.includes('"blocks"')) {
-                // Convert plain text to Editor.js format
-                const editorJsContent = {
-                  time: Date.now(),
-                  blocks: [
-                    {
-                      type: "paragraph",
-                      data: {
-                        text: section.content
-                      }
+              // Create EditorJs content with the default text
+              const editorJsContent = {
+                time: Date.now(),
+                blocks: [
+                  {
+                    type: "paragraph",
+                    data: {
+                      text: defaultText
                     }
-                  ],
-                  version: "2.22.2"
-                };
-                
-                // Update the section with formatted content
-                section.content = JSON.stringify(editorJsContent);
+                  }
+                ],
+                version: "2.22.2"
+              };
+              
+              section.content = JSON.stringify(editorJsContent);
+              return;
+            }
+            
+            // Check if content is already in EditorJs format
+            if (section.content.startsWith('{') && section.content.includes('"blocks"')) {
+              try {
+                // Validate EditorJs format
+                JSON.parse(section.content);
+                console.log("    Content is already in valid EditorJs format");
+                return;
+              } catch (e) {
+                console.log("    Content looks like EditorJs but is invalid JSON, will convert");
+                // Continue to conversion below
               }
             }
+            
+            // Convert plain text to EditorJs format
+            console.log("    Converting to EditorJs format");
+            
+            // Handle text with multiple paragraphs
+            const paragraphs = section.content.split("\n\n")
+              .filter(p => p.trim().length > 0)
+              .map(p => ({
+                type: "paragraph",
+                data: { text: p.trim() }
+              }));
+            
+            // Ensure we have at least one paragraph
+            if (paragraphs.length === 0) {
+              paragraphs.push({
+                type: "paragraph",
+                data: { text: section.content.trim() || `Content for ${section.title}` }
+              });
+            }
+            
+            const editorJsContent = {
+              time: Date.now(),
+              blocks: paragraphs,
+              version: "2.22.2"
+            };
+            
+            // Update with the EditorJs formatted content
+            section.content = JSON.stringify(editorJsContent);
           });
         });
         console.log("=========================================");
