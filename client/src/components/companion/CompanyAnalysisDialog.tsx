@@ -592,7 +592,7 @@ export default function CompanyAnalysisDialog({
               )}
               
               {/* Analysis Content */}
-              <div className="min-h-[300px]">
+              <div className="editor-js-container">
                 <EditorJs
                   content={editedContent}
                   onChange={handleEditorChange}

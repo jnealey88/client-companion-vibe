@@ -94,8 +94,30 @@
   /* Editor.js overrides */
   .editor-js-container {
     min-height: 500px;
-    height: auto !important;
+    max-height: 700px;
+    overflow-y: auto;
     padding-bottom: 30px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  
+  /* Force the editor to be scrollable */
+  .codex-editor {
+    position: static !important;
+    height: auto !important; 
+  }
+  
+  .codex-editor__redactor {
+    overflow: visible !important;
+    padding-bottom: 100px !important;
+  }
+
+  /* Editor.js needs this for scrolling to work */
+  .ce-block__content {
+    max-width: none !important;
+    width: 100% !important;
   }
   
   /* Proposal Preview Styles */
