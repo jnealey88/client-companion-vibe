@@ -672,8 +672,13 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         client={client}
         existingTask={companyAnalysisTask}
         onTaskGenerated={(task) => {
+          // Check if this is a request to schedule a discovery call
+          if (task.type === 'schedule_discovery') {
+            // Open the discovery dialog
+            setIsDiscoveryDialogOpen(true);
+          }
           // Check if this is a new task request (dummy task with no content)
-          if (!task.content && task.type === 'company_analysis') {
+          else if (!task.content && task.type === 'company_analysis') {
             // Generate a new analysis using the in-card loading state
             handleGenerate('company_analysis');
           } else {
@@ -774,7 +779,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                     }}
                   >
                     <Calendar className="h-4 w-4" />
-                    Send to Client
+                    Schedule Discovery Call
                   </Button>
                 ) : null}
               </div>
