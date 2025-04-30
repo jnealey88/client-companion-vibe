@@ -116,28 +116,44 @@ export default function ClientDetail() {
               </div>
             </div>
           
-            <div className="flex items-center gap-6 p-5 bg-white border rounded-lg shadow-sm">
-              <Avatar className="h-20 w-20 rounded-lg shadow-sm">
-                <AvatarFallback className="bg-blue-100 text-blue-800 text-xl font-semibold">{client.name.substring(0, 2)}</AvatarFallback>
-              </Avatar>
+            <div className="flex items-center gap-6 p-6 bg-white rounded-xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
+              <div className="relative">
+                <Avatar className="h-20 w-20 rounded-full border-4 border-white shadow-md bg-gradient-to-br from-blue-50 to-blue-100">
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xl font-bold">
+                    {client.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute -bottom-1 -right-1 bg-green-500 h-5 w-5 rounded-full border-2 border-white"></div>
+              </div>
+              
               <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <h1 className="text-2xl font-bold text-gray-900">{client.name}</h1>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex items-center gap-1 border-gray-200">
-                      <Mail className="h-4 w-4" />
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-2xl font-bold text-gray-900">{client.name}</h1>
+                    <div className="flex items-center text-gray-600 mt-1">
+                      <User className="h-4 w-4 mr-1.5 text-gray-500" />
+                      <span className="text-sm font-medium">{client.contactName}</span>
+                      <span className="text-sm text-gray-500 ml-1">· {client.contactTitle}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="rounded-full flex items-center gap-1 border-gray-200 bg-white hover:bg-gray-50 px-4 transition-colors"
+                    >
+                      <Mail className="h-4 w-4 text-blue-600" />
                       <span>Email</span>
                     </Button>
-                    <Button variant="outline" size="sm" className="flex items-center gap-1 border-gray-200">
-                      <Phone className="h-4 w-4" />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="rounded-full flex items-center gap-1 border-gray-200 bg-white hover:bg-gray-50 px-4 transition-colors"
+                    >
+                      <Phone className="h-4 w-4 text-green-600" />
                       <span>Call</span>
                     </Button>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-4 mt-2">
-                  <div className="flex items-center text-gray-600">
-                    <User className="h-4 w-4 mr-1 text-gray-500" />
-                    <span className="text-sm">{client.contactName}, {client.contactTitle}</span>
                   </div>
                 </div>
               </div>
