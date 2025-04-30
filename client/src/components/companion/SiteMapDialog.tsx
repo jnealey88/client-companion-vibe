@@ -13,7 +13,16 @@ import {
   Home,
   FileText,
   Menu,
-  ChevronRight
+  ChevronRight,
+  Loader2,
+  Save,
+  RefreshCw,
+  FileJson,
+  Mail,
+  Layers,
+  Plus,
+  Sparkles,
+  X
 } from "lucide-react";
 import {
   Dialog,
@@ -39,6 +48,8 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Define response interface for content expansion API
 interface ContentExpansionResponse {
@@ -523,74 +534,123 @@ Your Web Professional`);
         description: "Expanding content... This may take a few seconds.",
       });
       
-      // Extract current content and context
+      // Prevent expanding content that's too short
+      if (section.content.trim().length < 10) {
+        toast({
+          title: "Content Too Short",
+          description: "Please enter more initial content before expanding with AI.",
+          variant: "destructive"
+        });
+        setExpandingSections(prev => ({ ...prev, [sectionKey]: false }));
+        return;
+      }
+      
+      // Extract current content and context with enhanced information
       const contextData = {
         pageTitle: page.title,
         sectionTitle: section.title,
         siteName: client.name,
         industry: client.industry,
-        // Add additional context that might help
         siteType: "business website",
-        audienceType: "potential customers"
+        audienceType: "potential customers",
+        // Add tags from section elements as context
+        elementTypes: section.elements?.join(", ") || ""
       };
       
       console.log("Sending content expansion request with context:", contextData);
       
-      // Use the OpenAI API via our existing endpoint
-      const response = await apiRequest("POST", `/api/content/expand`, {
-        content: section.content,
-        context: contextData
-      });
+      // Use the OpenAI API via our existing endpoint with timeout handling
+      const requestTimeout = setTimeout(() => {
+        if (expandingSections[sectionKey]) {
+          toast({
+            title: "Taking longer than expected",
+            description: "AI expansion is still processing. Please wait...",
+          });
+        }
+      }, 15000);
       
-      console.log("Received expansion response:", response);
-      
-      // Type-safe approach for handling the API response
-      if (response && typeof response === 'object') {
-        // First check if we got a properly typed response
-        if ('success' in response && response.success === true && 'expandedContent' in response) {
-          const expandedContent = response.expandedContent;
+      try {
+        const response = await apiRequest("POST", `/api/content/expand`, {
+          content: section.content,
+          context: contextData
+        });
+        
+        clearTimeout(requestTimeout);
+        console.log("Received expansion response:", response);
+        
+        // Handle response parsing with better error reporting
+        if (!response) {
+          throw new Error("Empty response from server");
+        }
+        
+        // First check for standard response format
+        if (typeof response === 'object' && 'expandedContent' in response && typeof response.expandedContent === 'string') {
+          handleSectionUpdate(pageId, sectionId, response.expandedContent);
           
-          if (expandedContent && typeof expandedContent === 'string') {
-            // Update the content
-            handleSectionUpdate(pageId, sectionId, expandedContent);
+          toast({
+            title: "Content Expanded",
+            description: "Content has been successfully expanded with AI assistance.",
+            variant: "default"
+          });
+          return;
+        }
+        
+        // Secondary check for direct string content (some APIs might just return the content directly)
+        if (typeof response === 'string') {
+          // Only use if longer than the original content
+          if (response.length > section.content.length) {
+            handleSectionUpdate(pageId, sectionId, response);
             
             toast({
               title: "Content Expanded",
-              description: "Content has been successfully expanded with AI assistance.",
-              variant: "default"
-            });
-            return;
-          }
-        } else {
-          // For backward compatibility - try to find expandedContent property
-          const responseObj = response as any;
-          
-          if (responseObj.expandedContent && typeof responseObj.expandedContent === 'string') {
-            handleSectionUpdate(pageId, sectionId, responseObj.expandedContent);
-            
-            toast({
-              title: "Content Expanded",
-              description: "Content has been successfully expanded with AI assistance.",
+              description: "Content has been successfully expanded with AI assistance."
             });
             return;
           }
         }
         
-        // If we reach here, we couldn't find the expanded content
+        // Fall back to searching for expanded content in any property of the response
+        if (typeof response === 'object') {
+          // List of common property names that might contain the content
+          const possibleContentProperties = [
+            'expandedContent', 'expanded_content', 'content', 
+            'text', 'result', 'output', 'generated', 'data',
+            'response', 'message', 'completion'
+          ];
+          
+          for (const prop of possibleContentProperties) {
+            const responseObj = response as Record<string, any>;
+            if (prop in responseObj && 
+                typeof responseObj[prop] === 'string' && 
+                responseObj[prop].length > 10) {
+              console.log(`Found expanded content in property "${prop}":`, responseObj[prop]);
+              handleSectionUpdate(pageId, sectionId, responseObj[prop]);
+              
+              toast({
+                title: "Content Expanded",
+                description: "Content has been successfully expanded with AI assistance."
+              });
+              return;
+            }
+          }
+        }
+        
+        // If we made it here, we couldn't extract content from the response
         console.error("Failed to extract expanded content from response:", response);
         toast({
-          title: "Expansion Error",
-          description: "The AI service returned an unexpected response format.",
+          title: "Content Format Error",
+          description: "The AI service returned content in an unexpected format.",
           variant: "destructive"
         });
-      } else {
-        throw new Error("Invalid response from AI service");
+      } catch (innerError) {
+        clearTimeout(requestTimeout);
+        throw innerError; // Pass to outer catch block
       }
     } catch (error) {
       console.error("Error expanding content:", error);
       toast({
         title: "Expansion Failed",
-        description: "Failed to expand content. Please try again.",
+        description: error.message || "Failed to expand content. Please try again.",
         variant: "destructive"
       });
     } finally {
