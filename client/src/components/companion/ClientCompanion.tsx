@@ -287,6 +287,16 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       "Adding payment options...",
       "Finalizing proposal with recommendations..."
     ],
+    define_scope: [
+      "Analyzing project information...",
+      "Extracting requirements from proposal...",
+      "Defining functional specifications...",
+      "Creating deliverables list...",
+      "Establishing project phases...",
+      "Defining roles and responsibilities...",
+      "Creating scope change process...",
+      "Finalizing project scope document..."
+    ],
     site_map: [
       "Analyzing website structure needs...",
       "Evaluating user journey patterns...",
@@ -485,6 +495,12 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
               } else if (taskType === 'company_analysis') {
                 setCompanyAnalysisTask(taskData);
                 setIsCompanyAnalysisDialogOpen(true); 
+              } else if (taskType === 'define_scope') {
+                setProjectScopeTask(taskData);
+                setIsProjectScopeDialogOpen(true);
+              } else if (taskType === 'contract') {
+                setContractTask(taskData);
+                setIsContractDialogOpen(true);
               } else if (taskData.content) {
                 setSelectedTask(taskData);
               }
@@ -550,6 +566,12 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       setIsCompanyAnalysisDialogOpen(false);
     } else if (taskToDelete.type === 'schedule_discovery') {
       setIsDiscoveryDialogOpen(false);
+    } else if (taskToDelete.type === 'define_scope' && projectScopeTask?.id === taskToDelete.id) {
+      setProjectScopeTask(undefined);
+      setIsProjectScopeDialogOpen(false);
+    } else if (taskToDelete.type === 'contract' && contractTask?.id === taskToDelete.id) {
+      setContractTask(undefined);
+      setIsContractDialogOpen(false);
     }
     
     // Close dialog and reset taskToDelete
@@ -697,6 +719,48 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
             setTimeout(() => {
               setCompanyAnalysisTask(task);
               setIsCompanyAnalysisDialogOpen(true);
+            }, 1000);
+          }
+        }}
+      />
+      
+      {/* Project scope dialog */}
+      <ProjectScopeDialog
+        open={isProjectScopeDialogOpen}
+        onOpenChange={setIsProjectScopeDialogOpen}
+        client={client}
+        existingTask={projectScopeTask}
+        onTaskGenerated={(task) => {
+          // Check if this is a new task request (dummy task with no content)
+          if (!task.content && task.type === 'define_scope') {
+            // Generate a new scope document using the in-card loading state
+            handleGenerate('define_scope');
+          } else {
+            // This is a real task, show it in the dialog
+            setTimeout(() => {
+              setProjectScopeTask(task);
+              setIsProjectScopeDialogOpen(true);
+            }, 1000);
+          }
+        }}
+      />
+      
+      {/* Contract dialog */}
+      <ContractDialog
+        open={isContractDialogOpen}
+        onOpenChange={setIsContractDialogOpen}
+        client={client}
+        existingTask={contractTask}
+        onTaskGenerated={(task) => {
+          // Check if this is a new task request (dummy task with no content)
+          if (!task.content && task.type === 'contract') {
+            // Generate a new contract using the in-card loading state
+            handleGenerate('contract');
+          } else {
+            // This is a real task, show it in the dialog
+            setTimeout(() => {
+              setContractTask(task);
+              setIsContractDialogOpen(true);
             }, 1000);
           }
         }}

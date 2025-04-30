@@ -311,7 +311,6 @@ export default function ContractDialog({
                 content={contractContent}
                 onChange={handleEditorUpdate}
                 readOnly={false}
-                autofocus={true}
               />
             </div>
           </div>

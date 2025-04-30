@@ -313,7 +313,6 @@ export default function ProjectScopeDialog({
                 content={scopeContent}
                 onChange={handleEditorUpdate}
                 readOnly={false}
-                autofocus={true}
               />
             </div>
           </div>
