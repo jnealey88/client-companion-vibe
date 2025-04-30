@@ -280,7 +280,7 @@ export default function ProjectScopeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ListFilter className="h-5 w-5" />
@@ -330,7 +330,7 @@ export default function ProjectScopeDialog({
             </div>
           </div>
         ) : generatedTask?.content ? (
-          <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between px-1 py-2">
               <div className="flex items-center space-x-2">
                 <Button
@@ -364,7 +364,7 @@ export default function ProjectScopeDialog({
             
             <Separator />
             
-            <div className="min-h-[400px] flex flex-col flex-1 overflow-hidden">
+            <div className="flex-1 overflow-auto">
               <EditorJs
                 content={scopeContent}
                 onChange={handleEditorUpdate}
