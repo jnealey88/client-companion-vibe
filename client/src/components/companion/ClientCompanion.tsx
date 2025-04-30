@@ -1041,12 +1041,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                           <span className="text-xs text-gray-600 font-medium bg-gray-50 px-1.5 py-0.5 rounded-sm">Completed</span>
                                         )}
                                       </CardTitle>
-                                      {task?.content && (
-                                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 font-medium flex items-center gap-1">
-                                          <Clock className="h-3 w-3" />
-                                          {formatTimeSaved(taskInfo.timeSaved)} saved
-                                        </Badge>
-                                      )}
+                                      {/* Time-saved badge removed from individual tasks */}
                                     </div>
                                     {!task?.content && (
                                       <CardDescription className="text-xs line-clamp-2 mt-1 text-gray-600">

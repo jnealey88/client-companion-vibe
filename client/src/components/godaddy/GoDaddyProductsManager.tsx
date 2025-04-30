@@ -62,12 +62,12 @@ const mockProducts: Product[] = [
   },
   {
     id: "2",
-    name: "Economy Linux Hosting with cPanel",
+    name: "Ultimate Managed WordPress",
     type: "hosting",
     status: "active",
     expiryDate: new Date(2025, 5, 15),
-    details: "10GB storage, Unlimited bandwidth",
-    renewalPrice: 8.99,
+    details: "30GB storage, Unlimited bandwidth",
+    renewalPrice: 218.99,
     autoRenew: true
   },
   {
@@ -77,7 +77,7 @@ const mockProducts: Product[] = [
     status: "expiring",
     expiryDate: new Date(2025, 2, 10),
     details: "5 mailboxes with 10GB storage each",
-    renewalPrice: 5.99,
+    renewalPrice: 45.99,
     autoRenew: false
   },
   {
@@ -87,7 +87,7 @@ const mockProducts: Product[] = [
     status: "active",
     expiryDate: new Date(2025, 6, 22),
     details: "Basic encryption and validation",
-    renewalPrice: 7.99,
+    renewalPrice: 69.99,
     autoRenew: true
   },
   {
@@ -97,7 +97,7 @@ const mockProducts: Product[] = [
     status: "inactive",
     expiryDate: null,
     details: "GoDaddy Website Builder - unused",
-    renewalPrice: 9.99,
+    renewalPrice: 249.99,
     autoRenew: false
   }
 ];
@@ -173,7 +173,7 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
               <User className="h-4 w-4 text-blue-600" />
             </div>
             <div>
-              <CardTitle className="text-base">GoDaddy Products & Services</CardTitle>
+              <CardTitle className="text-base">Client Products</CardTitle>
               <CardDescription className="text-xs">
                 Manage client's GoDaddy products and services
               </CardDescription>
