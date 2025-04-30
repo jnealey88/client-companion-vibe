@@ -37,79 +37,102 @@ export function EditorJs({
 
   const handleChange = React.useCallback(async () => {
     if (editorCore.current) {
-      const savedData = await (editorCore.current as any).save();
-      setEditorData(savedData);
-      
-      // Convert the saved data back to HTML for compatibility with existing components
-      let htmlContent = '';
-      savedData.blocks.forEach((block: any) => {
-        switch (block.type) {
-          case 'header':
-            htmlContent += `<h${block.data.level}>${block.data.text}</h${block.data.level}>`;
-            break;
-          case 'paragraph':
-            htmlContent += `<p>${block.data.text}</p>`;
-            break;
-          case 'list':
-            const listTag = block.data.style === 'ordered' ? 'ol' : 'ul';
-            htmlContent += `<${listTag}>`;
-            block.data.items.forEach((item: any) => {
-              htmlContent += `<li>${item}</li>`;
-            });
-            htmlContent += `</${listTag}>`;
-            break;
-          case 'quote':
-            htmlContent += `<blockquote>${block.data.text}</blockquote>`;
-            break;
-          case 'checklist':
-            htmlContent += '<ul class="checklist">';
-            block.data.items.forEach((item: any) => {
-              htmlContent += `<li class="${item.checked ? 'checked' : ''}">${item.text}</li>`;
-            });
-            htmlContent += '</ul>';
-            break;
-          case 'table':
-            htmlContent += '<table><tbody>';
-            block.data.content.forEach((row: any) => {
-              htmlContent += '<tr>';
-              row.forEach((cell: any) => {
-                htmlContent += `<td>${cell}</td>`;
+      try {
+        console.log("EDITOR DEBUG - handleChange called - saving editor data");
+        const savedData = await (editorCore.current as any).save();
+        console.log("EDITOR DEBUG - Editor data saved:", savedData);
+        
+        setEditorData(savedData);
+        
+        // We're modifying our approach to be more compatible with structured content editors
+        // Instead of converting to HTML, we'll pass the full EditorJS JSON structure
+        // This preserves rich content better and makes it easier to work with structured data
+        
+        const editorJsOutput = JSON.stringify(savedData);
+        console.log(`EDITOR DEBUG - Returning Editor.js JSON with ${savedData.blocks.length} blocks`);
+
+        // Save the full Editor.js output directly
+        onChange(editorJsOutput);
+        
+        return;
+        
+        // The HTML conversion code below is kept but not used
+        // Convert the saved data back to HTML for compatibility with existing components
+        let htmlContent = '';
+        savedData.blocks.forEach((block: any) => {
+          switch (block.type) {
+            case 'header':
+              htmlContent += `<h${block.data.level}>${block.data.text}</h${block.data.level}>`;
+              break;
+            case 'paragraph':
+              htmlContent += `<p>${block.data.text}</p>`;
+              break;
+            case 'list':
+              const listTag = block.data.style === 'ordered' ? 'ol' : 'ul';
+              htmlContent += `<${listTag}>`;
+              block.data.items.forEach((item: any) => {
+                htmlContent += `<li>${item}</li>`;
               });
-              htmlContent += '</tr>';
-            });
-            htmlContent += '</tbody></table>';
-            break;
-          case 'code':
-            htmlContent += `<pre><code class="language-${block.data.language}">${block.data.code}</code></pre>`;
-            break;
-          case 'embed':
-            htmlContent += `<div class="embed">${block.data.embed}</div>`;
-            break;
-          case 'delimiter':
-            htmlContent += '<hr class="ce-delimiter" />';
-            break;
-          case 'warning':
-            htmlContent += `<div class="cdx-warning">
-              <div class="cdx-warning__title">${block.data.title}</div>
-              <div class="cdx-warning__message">${block.data.message}</div>
-            </div>`;
-            break;
-          case 'image':
-            const caption = block.data.caption ? `<figcaption>${block.data.caption}</figcaption>` : '';
-            htmlContent += `<figure class="image-tool">
-              <img src="${block.data.file.url}" alt="${block.data.caption || 'Image'}" />
-              ${caption}
-            </figure>`;
-            break;
-          default:
-            // Try to handle text-based blocks generically
-            if (block.data && block.data.text) {
-              htmlContent += block.data.text;
-            }
-        }
-      });
-      
-      onChange(htmlContent);
+              htmlContent += `</${listTag}>`;
+              break;
+            case 'quote':
+              htmlContent += `<blockquote>${block.data.text}</blockquote>`;
+              break;
+            case 'checklist':
+              htmlContent += '<ul class="checklist">';
+              block.data.items.forEach((item: any) => {
+                htmlContent += `<li class="${item.checked ? 'checked' : ''}">${item.text}</li>`;
+              });
+              htmlContent += '</ul>';
+              break;
+            case 'table':
+              htmlContent += '<table><tbody>';
+              block.data.content.forEach((row: any) => {
+                htmlContent += '<tr>';
+                row.forEach((cell: any) => {
+                  htmlContent += `<td>${cell}</td>`;
+                });
+                htmlContent += '</tr>';
+              });
+              htmlContent += '</tbody></table>';
+              break;
+            case 'code':
+              htmlContent += `<pre><code class="language-${block.data.language}">${block.data.code}</code></pre>`;
+              break;
+            case 'embed':
+              htmlContent += `<div class="embed">${block.data.embed}</div>`;
+              break;
+            case 'delimiter':
+              htmlContent += '<hr class="ce-delimiter" />';
+              break;
+            case 'warning':
+              htmlContent += `<div class="cdx-warning">
+                <div class="cdx-warning__title">${block.data.title}</div>
+                <div class="cdx-warning__message">${block.data.message}</div>
+              </div>`;
+              break;
+            case 'image':
+              const caption = block.data.caption ? `<figcaption>${block.data.caption}</figcaption>` : '';
+              htmlContent += `<figure class="image-tool">
+                <img src="${block.data.file.url}" alt="${block.data.caption || 'Image'}" />
+                ${caption}
+              </figure>`;
+              break;
+            default:
+              // Try to handle text-based blocks generically
+              if (block.data && block.data.text) {
+                htmlContent += block.data.text;
+              }
+          }
+        });
+        
+        console.log("EDITOR DEBUG - Converted to HTML:", htmlContent.substring(0, 100) + "...");
+        onChange(htmlContent);
+      } catch (error) {
+        console.error("EDITOR DEBUG - Error in handleChange:", error);
+      }
+    } else {
+      console.error("EDITOR DEBUG - editorCore.current is null in handleChange");
     }
   }, [onChange]);
 
@@ -258,22 +281,59 @@ export function EditorJs({
   useEffect(() => {
     // Only load content initially or when content changes from outside
     if (isLoaded && (!isReady || (content && !editorData))) {
+      console.log("EDITOR DEBUG - Content received:", content?.substring(0, 50) + "...");
+      console.log("EDITOR DEBUG - Content type:", typeof content);
+      console.log("EDITOR DEBUG - Content length:", content?.length);
+      
       try {
-        if (content.startsWith('{') && content.endsWith('}')) {
-          // Content is already in JSON format
-          setEditorData(JSON.parse(content));
+        // Check if content is in JSON format (either Editor.js format or any valid JSON)
+        if (content && content.startsWith('{') && content.endsWith('}')) {
+          console.log("EDITOR DEBUG - Detected JSON format content");
+          
+          // Parse the content as JSON
+          const parsedContent = JSON.parse(content);
+          
+          // Check if it's Editor.js format (has blocks array)
+          if (parsedContent.blocks) {
+            console.log("EDITOR DEBUG - Content is in Editor.js format with", parsedContent.blocks.length, "blocks");
+            setEditorData(parsedContent);
+          } else {
+            console.log("EDITOR DEBUG - Content is JSON but not Editor.js format, converting");
+            // It's JSON but not Editor.js format, convert it to text and then to blocks
+            const jsonString = JSON.stringify(parsedContent, null, 2);
+            const blocks = [{
+              type: 'code',
+              data: {
+                code: jsonString,
+                language: 'json'
+              }
+            }];
+            
+            setEditorData({
+              time: new Date().getTime(),
+              blocks: blocks,
+              version: "2.22.2"
+            });
+          }
         } else if (content) {
+          console.log("EDITOR DEBUG - Content is HTML or plain text, converting to blocks");
           // Content is in HTML format, convert to blocks
           const blocks = convertHtmlToBlocks(content);
+          console.log("EDITOR DEBUG - Created", blocks.length, "blocks from HTML content");
+          
           setEditorData({
             time: new Date().getTime(),
-            blocks: blocks
+            blocks: blocks,
+            version: "2.22.2"
           });
+        } else {
+          console.log("EDITOR DEBUG - No content provided, creating empty editor");
         }
       } catch (error) {
-        console.error('Error parsing editor content:', error);
+        console.error('EDITOR DEBUG - Error parsing editor content:', error);
         
         // Fallback to simple paragraph 
+        console.log("EDITOR DEBUG - Using fallback paragraph with content:", (content || '').substring(0, 50) + "...");
         setEditorData({
           time: new Date().getTime(),
           blocks: [
@@ -283,7 +343,8 @@ export function EditorJs({
                 text: content || ''
               }
             }
-          ]
+          ],
+          version: "2.22.2"
         });
       }
     }

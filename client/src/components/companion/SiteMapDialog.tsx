@@ -1322,7 +1322,27 @@ Your Web Professional`);
                                                 placeholder="Enter section content here or use the 'Expand with AI' button to create production-ready content..."
                                               />
                                             </div>
-                                            <div className="mt-2 flex justify-end">
+                                            <div className="mt-2 flex justify-between items-center">
+                                              <div className="text-xs text-gray-500">
+                                                {/* Add content info to help debug section content issues */}
+                                                {typeof section.content === 'string' && section.content.startsWith('{') ? 
+                                                  <span className="text-green-600">
+                                                    <div className="inline-block w-3 h-3 mr-1">✓</div>
+                                                    Rich content format
+                                                  </span> : 
+                                                  <span className="text-yellow-600">
+                                                    <div className="inline-block w-3 h-3 mr-1">⚠️</div>
+                                                    Plain text format
+                                                  </span>
+                                                }
+                                                <span className="mx-2">•</span>
+                                                <span>
+                                                  {typeof section.content === 'string' ? 
+                                                    `${section.content.length} chars` : 
+                                                    'Non-string content'
+                                                  }
+                                                </span>
+                                              </div>
                                               <Button
                                                 variant={expandingSections[`${page.id}_${section.id}`] ? "outline" : "default"}
                                                 size="sm"
