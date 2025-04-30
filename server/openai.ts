@@ -1887,7 +1887,7 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
   `;
   }
 
-  const prompt = `Create a detailed website sitemap and content plan for ${clientInfo.name} in the ${clientInfo.industry} industry.
+  const prompt = `Create a comprehensive website sitemap and full content plan for ${clientInfo.name} in the ${clientInfo.industry} industry.
   The project is "${clientInfo.projectName}".
   
   Client Information:
@@ -1897,12 +1897,22 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
   - Project Name: ${clientInfo.projectName}
   ${proposalContext}
   
+  OBJECTIVE: Generate a complete site map with PRODUCTION-READY CONTENT for all pages and sections that can be directly implemented without further editing. The content should be comprehensive, SEO-optimized, and conversion-focused.
+  
+  IMPORTANT GUIDELINES:
+  1. For each page section, provide FULL-LENGTH, POLISHED COPY that is ready for direct implementation
+  2. All content should be professional, engaging, and tailored to the client's industry
+  3. Ensure all headings, body text, CTAs, and metadata are professionally written
+  4. Include SEO-optimized meta descriptions and page content
+  5. Write content that speaks directly to the client's target audience
+  6. For each section, write complete paragraphs (not placeholder text)
+  
   IMPORTANT: Return your response as a JSON structure with the following format. Make sure it's valid JSON:
   
   {
     "siteOverview": {
       "title": "Site Map for [Client Name]",
-      "description": "Brief overview of the site structure and purpose",
+      "description": "Detailed overview of the site structure and purpose",
       "primaryNavigation": ["Home", "About", "Services", "etc"],
       "secondaryNavigation": ["Login", "Contact", "etc"]
     },
@@ -1911,21 +1921,21 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
         "id": "home",
         "title": "Home Page",
         "url": "/",
-        "metaDescription": "SEO meta description",
+        "metaDescription": "Complete SEO meta description ready for implementation",
         "isParent": true,
         "children": ["service1", "service2"],
         "sections": [
           {
             "id": "hero",
             "title": "Hero Section",
-            "content": "Detailed content and copy for this section",
+            "content": "COMPLETE, POLISHED CONTENT READY FOR IMPLEMENTATION. Write multiple paragraphs as needed. Include all headlines, subheadlines, body copy, and call-to-action text exactly as they should appear on the live website. This content should require no additional editing and be professional enough to use immediately.",
             "wordCount": 150,
             "elements": ["hero image", "call to action button", "etc"]
           },
           {
             "id": "features",
             "title": "Features Section",
-            "content": "Detailed content and copy for this section",
+            "content": "COMPLETE, POLISHED CONTENT READY FOR IMPLEMENTATION. Write multiple paragraphs as needed. Include all headlines, subheadlines, body copy, and feature descriptions exactly as they should appear on the live website. For each feature, include a complete, compelling description that sells its benefits.",
             "wordCount": 250,
             "elements": ["feature images", "icon set", "etc"]
           }
@@ -1934,24 +1944,24 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
       }
     ],
     "contentGuidelines": {
-      "tone": "Description of tone and voice",
-      "callToAction": "Primary call to action style",
-      "keyMessages": ["Message 1", "Message 2"]
+      "tone": "Detailed description of tone and voice with examples",
+      "callToAction": "Specific call to action copy and style guidelines",
+      "keyMessages": ["Complete message 1", "Complete message 2", "etc."]
     },
     "technicalRequirements": {
-      "interactiveElements": ["Element 1", "Element 2"],
-      "integrations": ["Integration 1", "Integration 2"]
+      "interactiveElements": ["Element 1 with detailed description", "Element 2 with detailed description"],
+      "integrations": ["Integration 1 with implementation notes", "Integration 2 with implementation notes"]
     }
   }
 
-  Create a comprehensive site map with all necessary pages and content sections for ${clientInfo.name}'s website. Include detailed content samples, SEO information, and technical requirements specific to their industry and project needs.`;
+  Create a comprehensive site map with ALL NECESSARY PAGES and DETAILED CONTENT SECTIONS for ${clientInfo.name}'s website. Include COMPLETE, PRODUCTION-READY CONTENT for each section that requires no further editing. The site map should provide all website copy needed for development, including headlines, body text, calls-to-action, and meta descriptions.`;
 
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
-      max_tokens: 10000,
+      max_tokens: 15000, // Increased token limit for more detailed content
     });
 
     const jsonResponse = response.choices[0].message.content;
@@ -2030,7 +2040,7 @@ export async function expandSectionContent(content: string, context: any): Promi
     // Build a more detailed prompt with additional context if provided
     const prompt = `
 You are a professional content writer helping to expand website content for a business website.
-Please enhance and expand the following section content while maintaining the same tone, style, and intent.
+Please transform the following section content into PRODUCTION-READY, POLISHED WEBSITE COPY that requires no further editing.
 
 SECTION CONTEXT:
 - Page Title: ${context.pageTitle || "Unknown Page"}
@@ -2044,14 +2054,16 @@ CURRENT CONTENT:
 ${content}
 
 INSTRUCTIONS:
-1. Expand this content to be more comprehensive, engaging, and professional. 
-2. Add relevant details, improve the flow, and ensure it speaks directly to the target audience.
-3. Keep industry-specific terminology appropriate.
-4. The expanded text should be 2-3 times longer than the original but remain focused on the same topic.
-5. Do not introduce new topics or themes that are not related to the original content.
-6. Maintain the same general marketing message and call-to-action if present.
-7. Make the content more persuasive and compelling to the target audience.
-8. Ensure the expanded content smoothly connects with the section title and purpose.
+1. Create COMPREHENSIVE, PROFESSIONAL-QUALITY content that is ready for immediate website implementation.
+2. Write complete paragraphs with proper headlines, subheadlines, and body copy exactly as they should appear on the live website.
+3. Use industry-specific terminology that resonates with the target audience.
+4. Include persuasive marketing messages and compelling calls-to-action.
+5. Format the content with proper paragraphs, bullet points, or other appropriate structure.
+6. Write with SEO in mind, naturally incorporating relevant keywords.
+7. Ensure the content directly addresses customer pain points and offers clear solutions.
+8. The expanded content should be 3-4 times more comprehensive than the original but remain focused and strategic.
+9. Produce professional-grade content that could be published immediately without any further editing.
+10. Maintain the same overall message and purpose while making it more effective and conversion-focused.
 `;
 
     console.log("Sending prompt to OpenAI for content expansion...");
@@ -2059,7 +2071,7 @@ INSTRUCTIONS:
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [{ role: "user", content: prompt }],
-      max_tokens: 2000,
+      max_tokens: 4000, // Increased token limit for more comprehensive content
       temperature: 0.7, // Slightly creative but still focused
     });
 
