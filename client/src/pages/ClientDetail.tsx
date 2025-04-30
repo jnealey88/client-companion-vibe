@@ -20,7 +20,6 @@ import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import ClientCompanion from "@/components/companion/ClientCompanion";
 import GoDaddyProductsManager from "@/components/godaddy/GoDaddyProductsManager";
-import FocusCard from "@/components/clients/FocusCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -253,23 +252,10 @@ export default function ClientDetail() {
               </CollapsibleContent>
             </Collapsible>
             
-            {/* Focus Card for recommended next steps */}
-            <FocusCard 
-              clientStatus={client.status} 
-              tasks={tasks}
-              onAction={() => {
-                // Scroll to the client companion section
-                document.getElementById('client-companion-section')?.scrollIntoView({ 
-                  behavior: 'smooth',
-                  block: 'start'
-                });
-              }} 
-            />
-            
             {/* Two-column layout for Client Companion (2/3) and GoDaddy Products (1/3) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Client Companion takes 2/3 of the width */}
-              <div className="lg:col-span-2" id="client-companion-section">
+              <div className="lg:col-span-2">
                 <ClientCompanion client={client} />
               </div>
               
