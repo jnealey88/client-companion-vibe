@@ -11,9 +11,9 @@ import {
   UpdateUser,
   InsertUserClient
 } from "@shared/schema";
-import { Pool } from 'pg';
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import pg from 'pg';
 
 // Configure session stores
 const PostgresSessionStore = connectPg(session);
@@ -50,10 +50,23 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  // Initialize with express's built-in memory store
+  // Use PostgreSQL for session storage
   sessionStore: session.Store;
   
   constructor() {
+    // Use dynamic import for pool from db.ts
+    import('./db').then(({ pool }) => {
+      this.sessionStore = new PostgresSessionStore({
+        pool: pool,
+        createTableIfMissing: true
+      });
+    }).catch(err => {
+      console.error('Failed to initialize PostgreSQL session store:', err);
+      // Fallback to memory store if import fails
+      this.sessionStore = new session.MemoryStore();
+    });
+    
+    // Initialize with memory store temporarily until async import completes
     this.sessionStore = new session.MemoryStore();
   }
   async getClients(filters?: ClientFilters): Promise<Client[]> {
