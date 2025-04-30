@@ -6,8 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import ClientsPage from "@/pages/ClientsPage";
 import ClientDetail from "@/pages/ClientDetail";
-import AuthPage from "@/pages/auth-page";
-import { AuthProvider } from "@/hooks/use-auth";
+import LoginPage from "@/pages/LoginPage";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 function Router() {
@@ -19,8 +18,8 @@ function Router() {
       <Route path="/clients/:id">
         {() => <ProtectedRoute path="/clients/:id" component={ClientDetail} />}
       </Route>
-      <Route path="/auth">
-        {() => <AuthPage />}
+      <Route path="/login">
+        {() => <LoginPage />}
       </Route>
       <Route>
         {() => <NotFound />}
@@ -33,10 +32,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthProvider>
-          <Router />
-          <Toaster />
-        </AuthProvider>
+        <Router />
+        <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
   );

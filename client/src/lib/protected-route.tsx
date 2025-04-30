@@ -1,4 +1,4 @@
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { Redirect } from "wouter";
 
@@ -19,7 +19,9 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
   }
 
   if (!user) {
-    return <Redirect to="/auth" />;
+    // Using direct redirection to login route
+    window.location.href = "/api/login";
+    return null;
   }
 
   return <Component />;
