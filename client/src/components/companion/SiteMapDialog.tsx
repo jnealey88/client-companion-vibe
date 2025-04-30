@@ -317,6 +317,138 @@ Your Web Professional`);
     }
   };
   
+  // Generate a unique ID for new items
+  const generateUniqueId = (prefix: string): string => {
+    return `${prefix}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  };
+  
+  // Add a new page to the site map
+  const handleAddNewPage = () => {
+    if (!siteMapData) return;
+    
+    // Create a deep copy of the site map data
+    const updatedSiteMapData = JSON.parse(JSON.stringify(siteMapData)) as SiteMapData;
+    
+    // Create a new page with default values
+    const newPageId = generateUniqueId('page');
+    const newPage: SitePageData = {
+      id: newPageId,
+      title: "New Page",
+      url: "/new-page",
+      metaDescription: "This is a new page added to the site map. Update this description.",
+      isParent: false,
+      children: [],
+      sections: [
+        {
+          id: generateUniqueId('section'),
+          title: "Main Content",
+          content: "Enter the content for this section here.",
+          wordCount: 50,
+          elements: ["Content block"]
+        }
+      ],
+      technicalFeatures: []
+    };
+    
+    // Add the new page to the data
+    updatedSiteMapData.pages.push(newPage);
+    
+    // Update state
+    setSiteMapData(updatedSiteMapData);
+    setEditedContent(JSON.stringify(updatedSiteMapData, null, 2));
+    setActivePage(newPageId);
+    setIsEdited(true);
+    
+    toast({
+      title: "Page Added",
+      description: "New page added to site map. You can now edit its details.",
+    });
+  };
+  
+  // Add a new section to a page
+  const handleAddSectionToPage = (pageId: string) => {
+    if (!siteMapData) return;
+    
+    // Create a deep copy of the site map data
+    const updatedSiteMapData = JSON.parse(JSON.stringify(siteMapData)) as SiteMapData;
+    
+    // Find the page
+    const pageIndex = updatedSiteMapData.pages.findIndex(p => p.id === pageId);
+    if (pageIndex === -1) return;
+    
+    // Create a new section
+    const newSection: SiteSection = {
+      id: generateUniqueId('section'),
+      title: "New Section",
+      content: "Enter the content for this new section here.",
+      wordCount: 50,
+      elements: []
+    };
+    
+    // Add the section to the page
+    updatedSiteMapData.pages[pageIndex].sections.push(newSection);
+    
+    // Update state
+    setSiteMapData(updatedSiteMapData);
+    setEditedContent(JSON.stringify(updatedSiteMapData, null, 2));
+    setIsEdited(true);
+    
+    toast({
+      title: "Section Added",
+      description: "New section added to the page.",
+    });
+  };
+  
+  // Expand text with AI
+  const expandTextWithAI = async (pageId: string, sectionId: string) => {
+    if (!siteMapData) return;
+    
+    // Find the page and section
+    const page = siteMapData.pages.find(p => p.id === pageId);
+    if (!page) return;
+    
+    const section = page.sections.find(s => s.id === sectionId);
+    if (!section) return;
+    
+    // Show loading state
+    toast({
+      title: "Expanding Content",
+      description: "Using AI to expand the section content...",
+    });
+    
+    try {
+      // Use the OpenAI API via our existing endpoint
+      const response = await apiRequest("POST", `/api/content/expand`, {
+        content: section.content,
+        context: {
+          pageTitle: page.title,
+          sectionTitle: section.title,
+          siteName: client.name,
+          industry: client.industry
+        }
+      });
+      
+      if (response && response.expandedContent) {
+        // Update the section content with the expanded text
+        handleSectionUpdate(pageId, sectionId, response.expandedContent);
+        
+        toast({
+          title: "Content Expanded",
+          description: "Section content has been expanded with AI assistance.",
+        });
+      } else {
+        throw new Error("Invalid response from AI service");
+      }
+    } catch (error) {
+      console.error("Error expanding content:", error);
+      toast({
+        title: "Expansion Failed",
+        description: "Failed to expand content. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+  
   // Handle section content update
   const handleSectionUpdate = (pageId: string, sectionId: string, newContent: string) => {
     if (!siteMapData) return;

@@ -17,6 +17,7 @@ import {
   generateSiteMap,
   generateStatusUpdate,
   generateScheduleDiscovery,
+  expandSectionContent,
   TaskType
 } from "./openai";
 import { sendEmail, EmailParams } from "./sendgrid";

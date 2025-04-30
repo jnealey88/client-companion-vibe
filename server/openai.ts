@@ -1945,6 +1945,42 @@ export async function generateStatusUpdate(clientInfo: any, taskStatus: any): Pr
 
 // Generate an email for scheduling a discovery call with the client
 // Includes references to the company analysis that was already generated
+export async function expandSectionContent(content: string, context: any): Promise<string> {
+  try {
+    const prompt = `
+You are a professional content writer helping to expand website content for a business website.
+Please enhance and expand the following section content while maintaining the same tone, style, and intent.
+
+SECTION CONTEXT:
+- Page Title: ${context.pageTitle || "Unknown Page"}
+- Section Title: ${context.sectionTitle || "Content Section"}
+- Business Name: ${context.siteName || "The Business"}
+- Industry: ${context.industry || "General Business"}
+
+CURRENT CONTENT:
+${content}
+
+Please expand this content to be more comprehensive, engaging, and professional. 
+Add relevant details, improve the flow, and ensure it speaks directly to the target audience.
+Keep industry-specific terminology appropriate.
+The expanded text should be 2-3 times longer than the original but remain focused on the same topic.
+Do not introduce new topics or themes that are not related to the original content.
+Maintain the same general marketing message and call-to-action if present.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 2000,
+    });
+
+    return response.choices[0].message.content || "Failed to expand content.";
+  } catch (error) {
+    console.error("Error expanding content:", error);
+    throw new Error("Failed to expand content with AI");
+  }
+}
+
 export async function generateScheduleDiscovery(clientInfo: any, analysisId?: number): Promise<string> {
   const clientName = clientInfo.name;
   const contactName = clientInfo.contactName;
