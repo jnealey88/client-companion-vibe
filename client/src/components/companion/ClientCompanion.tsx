@@ -816,38 +816,50 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
             <TabsContent value="tasks" className="mt-4">
               <div className="space-y-6">
                 {/* Phase filter pills */}
-                <div className="flex flex-wrap gap-3 pb-4 border-b mb-6">
-                  <Button 
-                    variant={selectedPhase === null ? "default" : "outline"}
-                    size="sm"
-                    className="rounded-full shadow-sm flex items-center gap-1.5 px-4"
-                    onClick={() => setSelectedPhase(null)}
-                  >
-                    <Layers className="h-3.5 w-3.5" />
-                    All Tools
-                  </Button>
-                  
-                  {projectPhases.map(phase => {
-                    const isCurrentPhase = client.status === phase;
-                    const isSelected = selectedPhase === phase;
+                <div className="flex flex-wrap gap-3 pb-4 mb-6 border-b">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex h-8 items-center px-3 text-sm font-medium text-gray-500">Filter by:</div>
+                    <Button 
+                      variant={selectedPhase === null ? "default" : "outline"}
+                      size="sm"
+                      className="rounded-full shadow-sm flex items-center gap-1.5 px-4 h-8 text-sm"
+                      onClick={() => setSelectedPhase(null)}
+                    >
+                      <Layers className="h-3.5 w-3.5" />
+                      All Tools
+                    </Button>
                     
-                    return (
-                      <Button 
-                        key={phase}
-                        variant={isSelected ? "default" : "outline"}
-                        size="sm"
-                        className={`rounded-full shadow-sm flex items-center gap-1.5 px-4 ${isCurrentPhase ? "border-green-200" : ""}`}
-                        onClick={() => setSelectedPhase(phase)}
-                      >
-                        {phase}
-                        {isCurrentPhase && (
-                          <span className="flex h-4 w-4 items-center justify-center">
-                            <span className="absolute inline-flex h-2 w-2 rounded-full bg-green-500"></span>
-                          </span>
-                        )}
-                      </Button>
-                    );
-                  })}
+                    {projectPhases.map(phase => {
+                      const isCurrentPhase = client.status === phase;
+                      const isSelected = selectedPhase === phase;
+                      
+                      let phaseIcon;
+                      if (phase === "Discovery") phaseIcon = <FileSearch className="h-3.5 w-3.5" />;
+                      else if (phase === "Planning") phaseIcon = <ListFilter className="h-3.5 w-3.5" />;
+                      else if (phase === "Design and Development") phaseIcon = <FolderTree className="h-3.5 w-3.5" />;
+                      else if (phase === "Post Launch Management") phaseIcon = <Settings className="h-3.5 w-3.5" />;
+                      
+                      return (
+                        <Button 
+                          key={phase}
+                          variant={isSelected ? "default" : "outline"}
+                          size="sm"
+                          className={`rounded-full shadow-sm flex items-center gap-1.5 px-4 h-8 text-sm
+                            ${isCurrentPhase ? "border-green-200" : ""}`}
+                          onClick={() => setSelectedPhase(phase)}
+                        >
+                          {phaseIcon}
+                          {phase}
+                          {isCurrentPhase && (
+                            <span className="ml-1 relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                            </span>
+                          )}
+                        </Button>
+                      );
+                    })}
+                  </div>
                 </div>
                 
                 {/* Display tasks from selected phase or all phases */}
@@ -886,8 +898,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                           return (
                             <Card 
                               key={type} 
-                              className={`overflow-hidden shadow-sm transition-all hover:shadow-md 
-                                ${task?.content ? "border-green-200 ring-1 ring-green-100" : "border-gray-200 hover:border-gray-300"}`}
+                              className={`overflow-hidden shadow-sm transition-all duration-300 ease-in-out
+                                ${task?.content 
+                                  ? "border-green-200 ring-1 ring-green-100 hover:shadow-md hover:shadow-green-50/50" 
+                                  : "border-gray-200 hover:border-gray-300 hover:shadow-md hover:transform hover:-translate-y-1"}`}
                             >
                               <CardHeader className={`p-4 pb-2 ${task?.content ? "bg-green-50" : ""}`}>
                                 <div className="flex items-start">
@@ -958,7 +972,11 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   {/* Button - only show if not currently generating */}
                                   {!generatingTasks[type] && (
                                     <Button 
-                                      className={`w-full ${task?.content ? "bg-green-600 hover:bg-green-700" : ""}`}
+                                      className={`w-full shadow-sm transition-all duration-300 ${
+                                        task?.content 
+                                          ? "bg-green-600 hover:bg-green-700 hover:shadow" 
+                                          : "hover:border-gray-400 hover:shadow"
+                                      }`}
                                       variant={task?.content ? "default" : "outline"}
                                       onClick={() => {
                                         if (type === 'schedule_discovery') {
@@ -1045,17 +1063,28 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                         const taskInfo = taskTypes[type as keyof typeof taskTypes];
                         
                         return (
-                          <Card key={type} className="overflow-hidden">
-                            <CardHeader className="bg-gray-50 p-4">
+                          <Card 
+                            key={type} 
+                            className="overflow-hidden shadow-sm border border-gray-200 transition-all duration-300 ease-in-out hover:shadow-md hover:transform hover:-translate-y-1"
+                          >
+                            <CardHeader className="bg-white p-4 border-b border-gray-100">
                               <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-2">
-                                  <div className={`p-2 rounded-md ${taskInfo?.iconColor}`}>
+                                <div className="flex items-center gap-3">
+                                  <div className={`p-2.5 rounded-md ${taskInfo?.iconColor} relative`}>
                                     {taskInfo?.icon}
+                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
+                                      <Check className="h-3 w-3 text-white" />
+                                    </div>
                                   </div>
                                   <div>
-                                    <CardTitle className="text-base">{taskInfo?.label}</CardTitle>
-                                    <CardDescription className="text-xs">
-                                      Phase: {taskInfo?.phase} • Generated: {new Date(task!.createdAt).toLocaleDateString()}
+                                    <CardTitle className="text-base flex items-center gap-2">
+                                      {taskInfo?.label}
+                                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium text-xs">
+                                        Completed
+                                      </Badge>
+                                    </CardTitle>
+                                    <CardDescription className="text-xs mt-1">
+                                      Phase: <span className="font-medium">{taskInfo?.phase}</span> • Generated: {new Date(task!.createdAt).toLocaleDateString()}
                                     </CardDescription>
                                   </div>
                                 </div>
@@ -1063,17 +1092,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   <Button 
                                     variant="outline" 
                                     size="sm"
-                                    className="text-destructive hover:bg-destructive/10"
+                                    className="text-destructive hover:bg-destructive/10 border-gray-200 shadow-sm transition-all duration-300 hover:shadow"
                                     onClick={() => task && handleDelete(task)}
                                   >
                                     <Trash2 className="h-3.5 w-3.5 mr-1" />
                                     Delete
                                   </Button>
                                   
-
                                   <Button 
-                                    variant="ghost"
+                                    variant="default"
                                     size="sm"
+                                    className="bg-green-600 hover:bg-green-700 shadow-sm transition-all duration-300 hover:shadow"
                                     onClick={() => {
                                       if (type === 'schedule_discovery') {
                                         setIsDiscoveryDialogOpen(true);
@@ -1089,12 +1118,12 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     }}
                                   >
                                     {type === 'schedule_discovery' 
-                                      ? 'Schedule' 
+                                      ? <><Calendar className="h-3.5 w-3.5 mr-1" /> Schedule</> 
                                       : type === 'proposal' 
-                                        ? 'Edit Proposal' 
+                                        ? <><FileText className="h-3.5 w-3.5 mr-1" /> Edit Proposal</> 
                                         : type === 'company_analysis' 
-                                          ? 'View Analysis' 
-                                          : 'View'}
+                                          ? <><FileSearch className="h-3.5 w-3.5 mr-1" /> View Analysis</> 
+                                          : <><FileText className="h-3.5 w-3.5 mr-1" /> View</>}
                                   </Button>
                                 </div>
                               </div>
@@ -1107,12 +1136,25 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                   </div>
                 ) : (
                   <div className="py-12 text-center">
-                    <div className="bg-gray-50 rounded-md p-8 flex flex-col items-center">
-                      <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
-                      <h3 className="text-lg font-medium text-gray-700">No content generated yet</h3>
+                    <div className="bg-white rounded-lg p-8 flex flex-col items-center border border-gray-200 shadow-sm">
+                      <div className="bg-gray-50 p-6 rounded-full mb-6">
+                        <FileText className="h-12 w-12 text-gray-400" />
+                      </div>
+                      <h3 className="text-xl font-medium text-gray-700 mb-2">No content generated yet</h3>
                       <p className="text-gray-500 mt-2 max-w-md">
-                        Generate content using the tasks in the Tasks tab to build your content library.
+                        Generate content using the tools in the Tasks tab to build your content library.
                       </p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-6 shadow-sm hover:shadow"
+                        onClick={() => {
+                          const tasksTab = document.querySelector('[data-value="tasks"]') as HTMLElement;
+                          if (tasksTab) tasksTab.click();
+                        }}
+                      >
+                        <Layers className="h-4 w-4 mr-2" />
+                        Go to Tasks
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -1122,16 +1164,27 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         )}
       </CardContent>
       
-      <CardFooter className="border-t pt-4 flex justify-between">
-        <div className="text-sm text-gray-500">
-          Powered by AI to save time and help you focus on building great sites
+      <CardFooter className="border-t pt-4 pb-4 flex justify-between items-center bg-white">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-blue-50 rounded-full">
+            <Sparkles className="h-4 w-4 text-blue-500" />
+          </div>
+          <div className="text-sm text-gray-600 font-medium">
+            Powered by AI to save time and help you focus on building great sites
+          </div>
         </div>
         
         <div className="flex gap-2">
-          <Badge variant="outline" className="bg-transparent">
-            <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+          <Badge variant="outline" className="bg-green-50 border-green-100 text-green-700 flex items-center gap-1 shadow-sm">
+            <CheckCircle className="h-3 w-3 text-green-500" />
             Tasks saved automatically
           </Badge>
+          {tasks && calculateTotalTimeSaved(tasks) > 0 && (
+            <Badge variant="outline" className="bg-blue-50 border-blue-100 text-blue-700 flex items-center gap-1 shadow-sm">
+              <Timer className="h-3 w-3 text-blue-500" />
+              {formatTimeSaved(calculateTotalTimeSaved(tasks))} saved total
+            </Badge>
+          )}
         </div>
       </CardFooter>
     </Card>
