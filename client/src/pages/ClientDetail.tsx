@@ -116,14 +116,14 @@ export default function ClientDetail() {
               </div>
             </div>
           
-            <div className="flex items-center gap-5 p-4 bg-white border rounded-lg shadow-sm">
-              <Avatar className="h-18 w-18 rounded-lg shadow-sm">
+            <div className="flex items-center gap-6 p-5 bg-white border rounded-lg shadow-sm">
+              <Avatar className="h-20 w-20 rounded-lg shadow-sm">
                 <AvatarFallback className="bg-blue-100 text-blue-800 text-xl font-semibold">{client.name.substring(0, 2)}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
                 <div className="flex justify-between items-start">
                   <h1 className="text-2xl font-bold text-gray-900">{client.name}</h1>
-                  <div className="flex gap-3">
+                  <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="flex items-center gap-1 border-gray-200">
                       <Mail className="h-4 w-4" />
                       <span>Email</span>
@@ -138,14 +138,6 @@ export default function ClientDetail() {
                   <div className="flex items-center text-gray-600">
                     <User className="h-4 w-4 mr-1 text-gray-500" />
                     <span className="text-sm">{client.contactName}, {client.contactTitle}</span>
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <Mail className="h-4 w-4 mr-1 text-gray-500" />
-                    <span className="text-sm">{client.email}</span>
-                  </div>
-                  <div className="flex items-center text-gray-600">
-                    <Phone className="h-4 w-4 mr-1 text-gray-500" />
-                    <span className="text-sm">{client.phone}</span>
                   </div>
                 </div>
               </div>
