@@ -1053,7 +1053,7 @@ Your Web Professional`);
                                     </div>
                                   )}
                                   
-                                  {page.children.length > 0 && (
+                                  {page.children && page.children.length > 0 && (
                                     <div className="mb-6">
                                       <h3 className="text-md font-semibold border-b pb-2 mb-4">Child Pages</h3>
                                       <div className="grid grid-cols-2 gap-3">
