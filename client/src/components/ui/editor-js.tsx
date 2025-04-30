@@ -490,6 +490,20 @@ export function EditorJs({
   useEffect(() => {
     // Add CSS to properly style the editor blocks
     const css = `
+      .editor-js-wrapper {
+        position: relative;
+        max-height: 100%;
+      }
+      
+      .editor-js-wrapper .codex-editor {
+        position: static;
+        max-height: 100%;
+      }
+      
+      .editor-js-wrapper .codex-editor__redactor {
+        padding-bottom: 100px !important;
+      }
+      
       .editor-js-wrapper h1 {
         font-size: 2.5rem;
         font-weight: bold;
@@ -629,7 +643,7 @@ export function EditorJs({
   
   // Render editor with loading state
   return (
-    <div className={`editor-js-wrapper ${className}`}>
+    <div className={`editor-js-wrapper h-full overflow-auto ${className}`}>
       {!isLoaded && (
         <div className="p-4 bg-gray-50 rounded border">
           <div className="animate-pulse flex space-x-4">
@@ -646,14 +660,16 @@ export function EditorJs({
       
       {isLoaded && editorComponentRef.current && editorTools && editorData && (
         <Suspense fallback={<div>Loading editor...</div>}>
-          {React.createElement(editorComponentRef.current, {
-            onInitialize: handleInitialize,
-            onChange: handleChange,
-            tools: editorTools,
-            defaultValue: editorData,
-            readOnly: readOnly,
-            placeholder: placeholder
-          })}
+          <div className="h-full overflow-auto">
+            {React.createElement(editorComponentRef.current, {
+              onInitialize: handleInitialize,
+              onChange: handleChange,
+              tools: editorTools,
+              defaultValue: editorData,
+              readOnly: readOnly,
+              placeholder: placeholder
+            })}
+          </div>
         </Suspense>
       )}
     </div>
