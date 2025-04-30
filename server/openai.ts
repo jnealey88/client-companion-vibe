@@ -1819,41 +1819,79 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
   - Project Name: ${clientInfo.projectName}
   ${proposalContext}
   
-  Please structure your response as a comprehensive site map with:
+  IMPORTANT: Return your response as a JSON structure with the following format. Make sure it's valid JSON:
   
-  1. Structure and Navigation:
-    - Main navigation menu items
-    - Secondary navigation elements
-    - Site hierarchy with parent-child page relationships
-    
-  2. Page Details - For each page include:
-    - Page title
-    - URL structure recommendation
-    - SEO meta description draft
-    - Key sections of the page
-    - Content requirements (word count, key messages)
-    - Visual elements needed (images, videos, graphics)
-    
-  3. Content Plan:
-    - Recommended content for each page (provide actual sample intro text)
-    - Tone and voice guidelines
-    - Call-to-action recommendations
-    
-  4. Technical Features:
-    - Interactive elements
-    - Functional components needed
-    - Integration requirements
-    
-  Format this as a well-structured HTML document with clear headings, tables for page details, and well-organized sections.`;
+  {
+    "siteOverview": {
+      "title": "Site Map for [Client Name]",
+      "description": "Brief overview of the site structure and purpose",
+      "primaryNavigation": ["Home", "About", "Services", "etc"],
+      "secondaryNavigation": ["Login", "Contact", "etc"]
+    },
+    "pages": [
+      {
+        "id": "home",
+        "title": "Home Page",
+        "url": "/",
+        "metaDescription": "SEO meta description",
+        "isParent": true,
+        "children": ["service1", "service2"],
+        "sections": [
+          {
+            "id": "hero",
+            "title": "Hero Section",
+            "content": "Detailed content and copy for this section",
+            "wordCount": 150,
+            "elements": ["hero image", "call to action button", "etc"]
+          },
+          {
+            "id": "features",
+            "title": "Features Section",
+            "content": "Detailed content and copy for this section",
+            "wordCount": 250,
+            "elements": ["feature images", "icon set", "etc"]
+          }
+        ],
+        "technicalFeatures": ["Slider", "Animation", "etc"]
+      }
+    ],
+    "contentGuidelines": {
+      "tone": "Description of tone and voice",
+      "callToAction": "Primary call to action style",
+      "keyMessages": ["Message 1", "Message 2"]
+    },
+    "technicalRequirements": {
+      "interactiveElements": ["Element 1", "Element 2"],
+      "integrations": ["Integration 1", "Integration 2"]
+    }
+  }
+
+  Create a comprehensive site map with all necessary pages and content sections for ${clientInfo.name}'s website. Include detailed content samples, SEO information, and technical requirements specific to their industry and project needs.`;
 
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
       max_tokens: 10000,
     });
 
-    return response.choices[0].message.content || "Failed to generate site map.";
+    const jsonResponse = response.choices[0].message.content;
+    
+    if (!jsonResponse) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    // Parse the JSON response to ensure it's valid
+    try {
+      const parsedJson = JSON.parse(jsonResponse);
+      // Convert back to a formatted string for storage
+      return JSON.stringify(parsedJson, null, 2);
+    } catch (parseError) {
+      console.error("Error parsing JSON from OpenAI response:", parseError);
+      // If parsing fails, return the raw content but log the error
+      return jsonResponse;
+    }
   } catch (error) {
     console.error("Error generating site map:", error);
     throw new Error("Failed to generate site map and content plan");
