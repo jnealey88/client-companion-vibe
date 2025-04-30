@@ -622,56 +622,33 @@ Your Web Professional`);
         description: "Expanding content... This may take a few seconds.",
       });
       
-      // Extract plain text content if it's in Editor.js format
+      // Get the section content as plain text
       let contentToExpand = section.content;
-      let isEditorContent = false;
       
-      try {
-        // Check if the content is in Editor.js format
-        const contentObj = typeof section.content === 'string' ? 
-          JSON.parse(section.content) : section.content;
-          
-        if (contentObj && contentObj.blocks) {
-          isEditorContent = true;
-          
-          // Extract plain text from all blocks with better formatting preservation
-          contentToExpand = contentObj.blocks
-            .map((block: any) => {
-              // Handle different block types appropriately
-              if (block.type === 'header') {
-                const level = block.data.level || 2;
-                return `${'#'.repeat(level)} ${block.data.text}`;
-              } else if (block.type === 'list') {
-                if (block.data.style === 'ordered') {
-                  return (block.data.items || [])
-                    .map((item: string, i: number) => `${i+1}. ${item}`)
-                    .join('\n');
-                } else {
-                  return (block.data.items || [])
-                    .map((item: string) => `- ${item}`)
-                    .join('\n');
+      // Extract text content if it's in Editor.js format (for backward compatibility)
+      if (typeof section.content === 'string' && section.content.includes('"blocks"')) {
+        try {
+          const contentObj = JSON.parse(section.content);
+          if (contentObj && contentObj.blocks && Array.isArray(contentObj.blocks)) {
+            // Extract text from blocks
+            contentToExpand = contentObj.blocks
+              .map((block: any) => {
+                if (block.data && block.data.text) {
+                  return block.data.text;
                 }
-              } else if (block.type === 'quote') {
-                return `> ${block.data.text}`;
-              } else if (block.type === 'delimiter') {
-                return '---';
-              } else {
-                return block.data.text || '';
-              }
-            })
-            .filter(Boolean)
-            .join('\n\n');
+                return '';
+              })
+              .filter(Boolean)
+              .join('\n\n');
+          }
+        } catch (e) {
+          // If JSON parsing fails, use content as is
+          console.log("Failed to parse JSON content, using as plain text");
         }
-      } catch (e) {
-        // Not JSON format, use as is
-        contentToExpand = String(section.content);
-        isEditorContent = false;
       }
       
-      console.log("Content format detection - using Editor.js:", isEditorContent);
-      
       // Prevent expanding content that's too short
-      if (contentToExpand.trim().length < 10) {
+      if (!contentToExpand || contentToExpand.trim().length < 10) {
         toast({
           title: "Content Too Short",
           description: "Please enter more initial content before expanding with AI.",
@@ -709,7 +686,7 @@ Your Web Professional`);
         const response = await apiRequest("POST", `/api/content/expand`, {
           content: contentToExpand,
           context: contextData,
-          isEditorContent: isEditorContent
+          isEditorContent: false // Always false since we're using plain text now
         });
         
         clearTimeout(requestTimeout);
@@ -720,33 +697,10 @@ Your Web Professional`);
           throw new Error("Empty response from server");
         }
         
-        // First check for standard response format
+        // Check for expanded content in the response
         if (typeof response === 'object' && 'expandedContent' in response && typeof response.expandedContent === 'string') {
-          // Handle response based on whether it's Editor.js format or not
+          // Use the expanded content directly as plain text
           let expandedContent = response.expandedContent;
-          
-          // If using Editor.js and not already in Editor.js format, we need to convert it
-          if (isEditorContent && !expandedContent.includes('"blocks":')) {
-            try {
-              // Check if the server already formatted as Editor.js content (proper JSON)
-              JSON.parse(expandedContent);
-            } catch (e) {
-              // Not proper JSON, so it's probably plain text - create basic Editor.js format
-              console.log("Converting plain text to Editor.js format");
-              const paragraphs = expandedContent.split(/\n\n+/);
-              const editorJsContent = {
-                time: Date.now(),
-                blocks: paragraphs.map(p => ({
-                  type: "paragraph",
-                  data: {
-                    text: p.trim()
-                  }
-                })).filter(block => block.data.text.length > 0),
-                version: "2.22.2"
-              };
-              expandedContent = JSON.stringify(editorJsContent);
-            }
-          }
           
           handleSectionUpdate(pageId, sectionId, expandedContent);
           
@@ -859,67 +813,14 @@ Your Web Professional`);
     console.log(`Current content length: ${currentContent?.length || 0} chars`);
     console.log(`Current content preview: ${typeof currentContent === 'string' ? currentContent.substring(0, 50) + '...' : 'Not a string'}`);
     
-    // Process incoming content to ensure it's properly formatted
+    // Since we're working with plain text now instead of EditorJS format,
+    // we can use the content directly
     let processedContent = newContent;
-    let editorJsObject = null;
-    let wordCount = 50; // Default fallback
     
-    // Check if the content is EditorJs format
-    try {
-      if (typeof newContent === 'string') {
-        // Parse the JSON to extract the actual content
-        editorJsObject = JSON.parse(newContent);
-        
-        if (editorJsObject && editorJsObject.blocks) {
-          // Count words in all blocks
-          wordCount = editorJsObject.blocks.reduce((count: number, block: any) => {
-            if (block.data && block.data.text) {
-              return count + block.data.text.split(/\s+/).filter(Boolean).length;
-            }
-            return count;
-          }, 0);
-          
-          // The content is already in EditorJs format, store it directly
-          processedContent = newContent;
-          console.log("Content is valid EditorJs format with", editorJsObject.blocks.length, "blocks");
-        }
-      }
-    } catch (e) {
-      console.log("Content is not in EditorJs format, will convert plain text");
-      
-      // If it's plain text, convert to EditorJs format
-      if (typeof newContent === 'string') {
-        // Count words in plain text
-        wordCount = newContent.split(/\s+/).filter(Boolean).length || 50;
-        
-        // Convert to EditorJs format
-        const paragraphs = newContent.split("\n\n")
-          .filter(p => p.trim().length > 0)
-          .map(p => ({
-            type: "paragraph",
-            data: { text: p.trim() }
-          }));
-        
-        // Ensure we have at least one paragraph
-        if (paragraphs.length === 0) {
-          paragraphs.push({
-            type: "paragraph",
-            data: { text: newContent }
-          });
-        }
-        
-        editorJsObject = {
-          time: Date.now(),
-          blocks: paragraphs,
-          version: "2.22.2"
-        };
-        
-        processedContent = JSON.stringify(editorJsObject);
-        console.log("Converted plain text to EditorJs format with", paragraphs.length, "paragraphs");
-      }
-    }
+    // Calculate word count from the text content
+    const wordCount = newContent ? newContent.split(/\s+/).filter(Boolean).length : 50;
     
-    // Update the content with the processed version
+    // Update the content with plain text
     updatedSiteMapData.pages[pageIndex].sections[sectionIndex].content = processedContent;
     
     // Update word count with the calculated value
