@@ -120,14 +120,33 @@ export default function ClientDetail() {
               <Avatar className="h-18 w-18 rounded-lg shadow-sm">
                 <AvatarFallback className="bg-blue-100 text-blue-800 text-xl font-semibold">{client.name.substring(0, 2)}</AvatarFallback>
               </Avatar>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{client.name}</h1>
-                <div className="flex items-center text-gray-600 mt-1">
-                  <Building className="h-4 w-4 mr-1" />
-                  <span className="text-sm">{client.industry}</span>
-                  <span className="mx-2">•</span>
-                  <Briefcase className="h-4 w-4 mr-1" />
-                  <span className="text-sm">{client.projectName}</span>
+              <div className="flex-1">
+                <div className="flex justify-between items-start">
+                  <h1 className="text-2xl font-bold text-gray-900">{client.name}</h1>
+                  <div className="flex gap-3">
+                    <Button variant="outline" size="sm" className="flex items-center gap-1 border-gray-200">
+                      <Mail className="h-4 w-4" />
+                      <span>Email</span>
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex items-center gap-1 border-gray-200">
+                      <Phone className="h-4 w-4" />
+                      <span>Call</span>
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-4 mt-2">
+                  <div className="flex items-center text-gray-600">
+                    <User className="h-4 w-4 mr-1 text-gray-500" />
+                    <span className="text-sm">{client.contactName}, {client.contactTitle}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <Mail className="h-4 w-4 mr-1 text-gray-500" />
+                    <span className="text-sm">{client.email}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600">
+                    <Phone className="h-4 w-4 mr-1 text-gray-500" />
+                    <span className="text-sm">{client.phone}</span>
+                  </div>
                 </div>
               </div>
             </div>
