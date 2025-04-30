@@ -47,7 +47,7 @@ export default function CompanionTaskCard({
     switch (status) {
       case "pending": return "secondary";
       case "in_progress": return "warning";
-      case "completed": return "success";
+      case "completed": return "outline";  // Changed from success to outline for gray styling
       default: return "secondary";
     }
   };
@@ -74,13 +74,13 @@ export default function CompanionTaskCard({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className={`flex items-center justify-between p-2 rounded-md hover:bg-gray-50 ${task?.status === "completed" ? "border border-green-200 bg-green-50" : ""}`}>
+      <div className={`flex items-center justify-between p-2 rounded-md hover:bg-gray-50 ${task?.status === "completed" ? "border border-gray-200 bg-gray-50" : ""}`}>
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-md ${iconColor} ${task?.status === "completed" ? "bg-green-100" : ""}`}>
+          <div className={`p-2 rounded-md ${task?.status === "completed" ? "bg-gray-100" : iconColor}`}>
             {task?.status === "completed" ? (
               <div className="relative">
                 {icon}
-                <CheckCircle2 className="h-4 w-4 text-green-600 absolute -top-1 -right-2" />
+                <CheckCircle2 className="h-4 w-4 text-gray-600 absolute -top-1 -right-2" />
               </div>
             ) : (
               icon
@@ -90,7 +90,7 @@ export default function CompanionTaskCard({
             <h4 className="font-medium flex items-center gap-1">
               {title}
               {task?.status === "completed" && (
-                <span className="text-xs text-green-600 font-normal">(Completed)</span>
+                <span className="text-xs text-gray-500 font-normal">(Completed)</span>
               )}
             </h4>
             <p className="text-sm text-gray-500">{description}</p>
@@ -100,7 +100,7 @@ export default function CompanionTaskCard({
         {task ? (
           <div className="flex items-center gap-1">
             <Badge variant={getStatusVariant(task.status)}
-                  className={task.status === "completed" ? "bg-green-100 text-green-800 hover:bg-green-200" : ""}>
+                  className={task.status === "completed" ? "bg-gray-100 text-gray-600 hover:bg-gray-200" : ""}>
               {task.status}
             </Badge>
             
