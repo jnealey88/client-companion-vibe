@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import ClientPerformanceDashboard from "../dashboard/ClientPerformanceDashboard";
 import { 
   FileText, 
   Check, 
@@ -25,7 +26,12 @@ import {
   Trash2,
   Clock,
   Timer,
-  Info
+  Info,
+  Zap,
+  Lock,
+  Search,
+  Shield,
+  PieChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -133,29 +139,37 @@ const taskTypes = {
   },
   
   // Post Launch Management phase tasks
-  status_update: {
-    icon: <MessageCircle className="h-5 w-5" />,
-    label: "Status Update",
-    description: "Client status update email",
-    iconColor: "bg-pink-50 text-pink-600",
-    phase: "Post Launch Management",
-    timeSaved: 60 // Time saved in minutes (1 hour)
-  },
-  site_maintenance: {
-    icon: <Wrench className="h-5 w-5" />,
-    label: "Site Maintenance",
-    description: "Regular updates and maintenance tasks",
-    iconColor: "bg-green-50 text-green-600",
+  seo_performance: {
+    icon: <Search className="h-5 w-5" />,
+    label: "SEO Performance",
+    description: "Monitor search rankings and keyword performance",
+    iconColor: "bg-blue-50 text-blue-600",
     phase: "Post Launch Management",
     timeSaved: 120 // Time saved in minutes (2 hours)
   },
-  site_optimizer: {
-    icon: <LineChart className="h-5 w-5" />,
-    label: "Site Optimizer",
-    description: "Performance optimization and SEO enhancements",
-    iconColor: "bg-orange-50 text-orange-600",
+  site_speed: {
+    icon: <Zap className="h-5 w-5" />,
+    label: "Site Speed",
+    description: "Analyze page load times and performance metrics",
+    iconColor: "bg-green-50 text-green-600",
     phase: "Post Launch Management",
-    timeSaved: 240 // Time saved in minutes (4 hours)
+    timeSaved: 90 // Time saved in minutes (1.5 hours)
+  },
+  security_scan: {
+    icon: <Lock className="h-5 w-5" />,
+    label: "Security Scan",
+    description: "Check for vulnerabilities and security issues",
+    iconColor: "bg-red-50 text-red-600",
+    phase: "Post Launch Management",
+    timeSaved: 180 // Time saved in minutes (3 hours)
+  },
+  uptime_monitor: {
+    icon: <Clock className="h-5 w-5" />,
+    label: "Uptime Monitor",
+    description: "Track website availability and performance",
+    iconColor: "bg-purple-50 text-purple-600",
+    phase: "Post Launch Management",
+    timeSaved: 60 // Time saved in minutes (1 hour)
   }
 };
 
@@ -366,13 +380,38 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       "Adding terms and conditions...",
       "Finalizing contract document..."
     ],
-    status_update: [
-      "Gathering project milestones...",
-      "Checking completion status...",
-      "Evaluating timeline adherence...",
-      "Calculating completion percentage...",
-      "Creating visual progress indicators...",
-      "Finalizing status report..."
+    // New post-launch dashboard tasks loading stages
+    seo_performance: [
+      "Analyzing search engine data...",
+      "Checking keyword positions...",
+      "Evaluating organic traffic trends...",
+      "Calculating search visibility scores...",
+      "Identifying keyword opportunities...",
+      "Finalizing SEO performance report..."
+    ],
+    site_speed: [
+      "Running page speed tests...",
+      "Measuring core web vitals...",
+      "Analyzing loading performance...",
+      "Checking mobile responsiveness...",
+      "Identifying optimization opportunities...",
+      "Finalizing performance report..."
+    ],
+    security_scan: [
+      "Running security checks...",
+      "Scanning for vulnerabilities...",
+      "Testing SSL configuration...",
+      "Checking for malware presence...",
+      "Evaluating security headers...",
+      "Finalizing security report..."
+    ],
+    uptime_monitor: [
+      "Checking website availability...",
+      "Measuring response times...",
+      "Analyzing uptime history...",
+      "Testing server performance...",
+      "Identifying reliability issues...",
+      "Finalizing uptime report..."
     ],
     default: [
       "Starting process...",
@@ -682,6 +721,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </CardContent>
       </Card>
+    );
+  }
+  
+  // Check if the client is in Post Launch Management phase
+  const isPostLaunchPhase = client.status === "Post Launch Management";
+  
+  if (isPostLaunchPhase) {
+    return (
+      <>
+        <ClientPerformanceDashboard client={client} />
+      </>
     );
   }
   

@@ -547,14 +547,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
             content = await generateScheduleDiscovery(client, analysisTask?.id);
             break;
             
-          case TaskType.STATUS_UPDATE:
-            // Get task status info for the status update
-            const tasks = await storage.getCompanionTasks(clientId);
-            const taskStatus = {
-              completedTasks: tasks.filter(t => t.status === "completed").map(t => t.type),
-              inProgressTasks: tasks.filter(t => t.status === "in_progress" && t.id !== newTask.id).map(t => t.type)
-            };
-            content = await generateStatusUpdate(client, taskStatus);
+          case TaskType.SEO_PERFORMANCE:
+          case TaskType.SITE_SPEED:
+          case TaskType.SECURITY_SCAN:
+          case TaskType.UPTIME_MONITOR:
+            // For post-launch dashboard metrics, create placeholder content
+            content = JSON.stringify({
+              type: newTask.type,
+              generatedAt: new Date().toISOString(),
+              websiteUrl: client.websiteUrl,
+              clientName: client.name
+            });
             break;
         }
         
