@@ -1,15 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { OutputData } from '@editorjs/editorjs';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
+import type { OutputData } from '@editorjs/editorjs';
 
-// We'll dynamically import the tools to avoid 'require is not defined' errors in production
-// Dynamically import createReactEditorJS to prevent "require is not defined" error
-const ReactEditorJS = React.lazy(() => 
-  import('react-editor-js').then(module => {
-    const { createReactEditorJS } = module;
-    return { default: createReactEditorJS() };
-  })
-);
-
+// Define the props interface for our EditorJs component
 interface EditorJsProps {
   content: string;
   onChange: (content: string) => void;
@@ -18,6 +10,7 @@ interface EditorJsProps {
   placeholder?: string;
 }
 
+// The actual EditorJs component that will be exported
 export function EditorJs({
   content = '',
   onChange,
@@ -25,14 +18,162 @@ export function EditorJs({
   readOnly = false,
   placeholder = 'Start writing...'
 }: EditorJsProps) {
+  // State for tracking if the dynamic imports are loaded
+  const [isLoaded, setIsLoaded] = useState(false);
+  // State for editor components
+  const [EditorComponent, setEditorComponent] = useState<any>(null);
+  const [editorTools, setEditorTools] = useState<any>(null);
+  
+  // Reference to the editor instance
   const editorCore = useRef(null);
+  // State for editor data
   const [editorData, setEditorData] = useState<OutputData | null>(null);
   const [isReady, setIsReady] = useState(false);
+
+  // First load all the necessary libraries dynamically
+  useEffect(() => {
+    // Define an async function to load the editor and tools
+    const loadEditor = async () => {
+      try {
+        // Dynamically import the editor
+        const reactEditorJS = await import('react-editor-js');
+        const { createReactEditorJS } = reactEditorJS;
+        const ReactEditorJS = createReactEditorJS();
+        
+        // Dynamically import all tools
+        const [
+          Header, List, Paragraph, Quote, Checklist, LinkTool, 
+          Table, Delimiter, Warning, Image, Marker, Code, Embed
+        ] = await Promise.all([
+          import('@editorjs/header').then(m => m.default),
+          import('@editorjs/list').then(m => m.default),
+          import('@editorjs/paragraph').then(m => m.default),
+          import('@editorjs/quote').then(m => m.default),
+          import('@editorjs/checklist').then(m => m.default),
+          import('@editorjs/link').then(m => m.default),
+          import('@editorjs/table').then(m => m.default),
+          import('@editorjs/delimiter').then(m => m.default),
+          import('@editorjs/warning').then(m => m.default),
+          import('@editorjs/image').then(m => m.default),
+          import('@editorjs/marker').then(m => m.default),
+          import('@editorjs/code').then(m => m.default),
+          import('@editorjs/embed').then(m => m.default)
+        ]);
+
+        // Configure the tools
+        const tools = {
+          header: {
+            class: Header,
+            inlineToolbar: true,
+            config: {
+              placeholder: 'Enter a header',
+              levels: [1, 2, 3, 4, 5, 6],
+              defaultLevel: 2
+            }
+          },
+          list: {
+            class: List,
+            inlineToolbar: true,
+          },
+          paragraph: {
+            class: Paragraph,
+            inlineToolbar: true,
+          },
+          quote: {
+            class: Quote,
+            inlineToolbar: true,
+            config: {
+              quotePlaceholder: 'Enter a quote',
+              captionPlaceholder: 'Quote caption',
+            },
+          },
+          checklist: {
+            class: Checklist,
+            inlineToolbar: true,
+          },
+          linkTool: {
+            class: LinkTool,
+            config: {
+              endpoint: '#',
+            }
+          },
+          table: {
+            class: Table,
+            inlineToolbar: true,
+            config: {
+              rows: 2,
+              cols: 3,
+            },
+          },
+          delimiter: {
+            class: Delimiter,
+          },
+          warning: {
+            class: Warning,
+            inlineToolbar: true,
+            config: {
+              titlePlaceholder: 'Title',
+              messagePlaceholder: 'Message',
+            },
+          },
+          image: {
+            class: Image,
+            config: {
+              uploader: {
+                uploadByFile(file: File) {
+                  return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                      resolve({
+                        success: 1,
+                        file: {
+                          url: event.target?.result
+                        }
+                      });
+                    };
+                    reader.readAsDataURL(file);
+                  });
+                }
+              }
+            }
+          },
+          marker: {
+            class: Marker,
+            inlineToolbar: true,
+          },
+          code: {
+            class: Code,
+            config: {
+              placeholder: 'Enter code',
+            }
+          },
+          embed: {
+            class: Embed,
+            config: {
+              services: {
+                youtube: true,
+                vimeo: true,
+              }
+            }
+          }
+        };
+
+        // Set the editor component and tools
+        setEditorComponent(ReactEditorJS);
+        setEditorTools(tools);
+        setIsLoaded(true);
+      } catch (error) {
+        console.error('Error loading editor:', error);
+      }
+    };
+
+    loadEditor();
+  }, []);
 
   // Initialize editor data from HTML content
   useEffect(() => {
     // Only load content initially or when content changes from outside
-    if (!isReady || (content && !editorData)) {
+    if (isLoaded && (!isReady || (content && !editorData))) {
       try {
         if (content.startsWith('{') && content.endsWith('}')) {
           // Content is already in JSON format
@@ -62,7 +203,7 @@ export function EditorJs({
         });
       }
     }
-  }, [content, isReady]);
+  }, [content, isReady, isLoaded]);
 
   // Helper function to convert HTML to EditorJS blocks
   const convertHtmlToBlocks = (html: string) => {
@@ -347,105 +488,6 @@ export function EditorJs({
     }
   }, [onChange]);
 
-  // Define available tools
-  const EDITOR_JS_TOOLS = {
-    header: {
-      class: Header,
-      inlineToolbar: true,
-      config: {
-        placeholder: 'Enter a header',
-        levels: [1, 2, 3, 4, 5, 6], // Support all header levels
-        defaultLevel: 2
-      }
-    },
-    list: {
-      class: List,
-      inlineToolbar: true,
-    },
-    paragraph: {
-      class: Paragraph,
-      inlineToolbar: true,
-    },
-    quote: {
-      class: Quote,
-      inlineToolbar: true,
-      config: {
-        quotePlaceholder: 'Enter a quote',
-        captionPlaceholder: 'Quote caption',
-      },
-    },
-    checklist: {
-      class: Checklist,
-      inlineToolbar: true,
-    },
-    linkTool: {
-      class: LinkTool,
-      config: {
-        endpoint: '#', // We're not using the backend validation for links
-      }
-    },
-    table: {
-      class: Table,
-      inlineToolbar: true,
-      config: {
-        rows: 2,
-        cols: 3,
-      },
-    },
-    delimiter: {
-      class: Delimiter,
-    },
-    warning: {
-      class: Warning,
-      inlineToolbar: true,
-      config: {
-        titlePlaceholder: 'Title',
-        messagePlaceholder: 'Message',
-      },
-    },
-    image: {
-      class: Image,
-      config: {
-        uploader: {
-          // This uploader doesn't really upload, just converts image to base64
-          uploadByFile(file: File) {
-            return new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onload = function(event) {
-                resolve({
-                  success: 1,
-                  file: {
-                    url: event.target?.result
-                  }
-                });
-              };
-              reader.readAsDataURL(file);
-            });
-          }
-        }
-      }
-    },
-    marker: {
-      class: Marker,
-      inlineToolbar: true,
-    },
-    code: {
-      class: Code,
-      config: {
-        placeholder: 'Enter code',
-      }
-    },
-    embed: {
-      class: Embed,
-      config: {
-        services: {
-          youtube: true,
-          vimeo: true,
-        }
-      }
-    }
-  };
-
   // Add some styling for better visual representation of blocks
   useEffect(() => {
     // Add CSS to properly style the editor blocks
@@ -501,46 +543,11 @@ export function EditorJs({
         margin: 1rem 0;
         padding: 0.5rem 1rem;
         border-left: 4px solid #ddd;
-        background-color: #f9f9f9;
         font-style: italic;
       }
-      .editor-js-wrapper .ce-block__content {
-        max-width: 95%;
-        margin: 0 auto;
-        padding: 0 25px;
-      }
-      .editor-js-wrapper .ce-toolbar__content {
-        max-width: 95%;
-        padding: 0 25px;
-      }
-      .editor-js-wrapper .ce-header {
-        font-weight: bold;
-        position: relative;
-        padding-top: 10px;
-        padding-bottom: 10px;
-      }
-      .editor-js-wrapper .ce-header--h1 {
-        font-size: 2.5rem;
-      }
-      .editor-js-wrapper .ce-header--h2 {
-        font-size: 2rem;
-      }
-      .editor-js-wrapper .ce-header--h3 {
-        font-size: 1.75rem;
-      }
-      /* Fix toolbar alignment */
-      .editor-js-wrapper .ce-toolbar__actions {
-        top: 50%;
-        transform: translateY(-50%);
-      }
-      .editor-js-wrapper .ce-toolbar__plus {
-        left: -25px;
-      }
-      /* Add spacing between blocks */
-      .editor-js-wrapper .ce-block {
-        margin-bottom: 10px;
-      }
       .editor-js-wrapper .ce-delimiter {
+        text-align: center;
+        margin: 1.5rem 0;
         line-height: 1.6em;
         width: 100%;
         text-align: center;
@@ -581,6 +588,34 @@ export function EditorJs({
         color: #6c757d;
         margin-top: 8px;
       }
+      .editor-js-wrapper .ce-toolbar__plus {
+        left: -25px;
+      }
+      /* Add spacing between blocks */
+      .editor-js-wrapper .ce-block {
+        margin-bottom: 10px;
+        padding: 5px 0;
+      }
+      /* Fix inline toolbar position */
+      .editor-js-wrapper .ce-toolbar__actions {
+        right: -5px;
+      }
+      .editor-js-wrapper .ce-toolbar__settings-btn {
+        width: 30px;
+        height: 30px;
+      }
+      .editor-js-wrapper .ce-inline-toolbar {
+        padding: 6px;
+        border-radius: 6px;
+        box-shadow: 0 3px 15px -3px rgba(13, 20, 33, 0.13);
+      }
+      .editor-js-wrapper .ce-settings {
+        border-radius: 6px;
+        overflow: hidden;
+      }
+      .editor-js-wrapper .cdx-checklist__item-checkbox {
+        cursor: pointer;
+      }
     `;
     
     // Create a style element and append it to the head
@@ -594,17 +629,34 @@ export function EditorJs({
     };
   }, []);
   
+  // Editor component with loading state
   return (
     <div className={`editor-js-wrapper ${className}`}>
-      {editorData && (
-        <ReactEditorJS
-          onInitialize={handleInitialize}
-          onChange={handleChange}
-          tools={EDITOR_JS_TOOLS}
-          defaultValue={editorData}
-          readOnly={readOnly}
-          placeholder={placeholder}
-        />
+      {!isLoaded && (
+        <div className="p-4 bg-gray-50 rounded border">
+          <div className="animate-pulse flex space-x-4">
+            <div className="flex-1 space-y-4 py-1">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="space-y-2">
+                <div className="h-4 bg-gray-200 rounded"></div>
+                <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {isLoaded && EditorComponent && editorTools && editorData && (
+        <Suspense fallback={<div>Loading editor...</div>}>
+          <EditorComponent
+            onInitialize={handleInitialize}
+            onChange={handleChange}
+            tools={editorTools}
+            defaultValue={editorData}
+            readOnly={readOnly}
+            placeholder={placeholder}
+          />
+        </Suspense>
       )}
     </div>
   );
