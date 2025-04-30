@@ -216,14 +216,14 @@ export default function ClientCompanion({ client, tasks }: ClientCompanionProps)
   
   // State for task management and UI
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
-  const [selectedTask, setSelectedTask] = useState<CompanionTask | null>(null);
+  const [selectedTask, setSelectedTask] = useState<CompanionTask | undefined>(undefined);
   const [taskToDelete, setTaskToDelete] = useState<CompanionTask | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
-  const [proposalTask, setProposalTask] = useState<CompanionTask | null>(null);
+  const [proposalTask, setProposalTask] = useState<CompanionTask | undefined>(undefined);
   const [isCompanyAnalysisDialogOpen, setIsCompanyAnalysisDialogOpen] = useState(false);
-  const [companyAnalysisTask, setCompanyAnalysisTask] = useState<CompanionTask | null>(null);
+  const [companyAnalysisTask, setCompanyAnalysisTask] = useState<CompanionTask | undefined>(undefined);
   
   // Generation states
   const [generatingTasks, setGeneratingTasks] = useState<Record<string, boolean>>({});
@@ -891,7 +891,7 @@ export default function ClientCompanion({ client, tasks }: ClientCompanionProps)
         open={isCompanyAnalysisDialogOpen}
         onOpenChange={setIsCompanyAnalysisDialogOpen}
         client={client}
-        task={companyAnalysisTask}
+        existingTask={companyAnalysisTask}
       />
       
       {/* Task content viewer */}
@@ -899,7 +899,7 @@ export default function ClientCompanion({ client, tasks }: ClientCompanionProps)
         <CompanionTaskCard 
           task={selectedTask} 
           client={client}
-          onClose={() => setSelectedTask(null)}
+          onClose={() => setSelectedTask(undefined)}
         />
       )}
     </Card>
