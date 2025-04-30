@@ -257,6 +257,56 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     }
   }, [tasks]);
   
+  // Client update mutation for changing phase
+  const updateClientMutation = useMutation({
+    mutationFn: (clientData: any) => {
+      return apiRequest("PATCH", `/api/clients/${client.id}`, clientData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/clients'] });
+      toast({
+        title: "Client phase advanced",
+        description: "Client has been automatically moved to the next phase due to task completion.",
+      });
+    },
+    onError: (error) => {
+      console.error("Error advancing client phase:", error);
+    }
+  });
+  
+  // Check if all tasks in the current phase are completed
+  // If they are, automatically advance the client to the next phase
+  useEffect(() => {
+    if (!tasks || !client || tasks.length === 0) return;
+    
+    // Get all tasks for the current phase
+    const currentPhase = client.status;
+    const currentPhaseTasks = tasks.filter(task => taskTypes[task.type]?.phase === currentPhase);
+    
+    // If there are no tasks in this phase, don't do anything
+    if (!currentPhaseTasks.length) return;
+    
+    // Check if all tasks in current phase are completed
+    const allTasksCompleted = currentPhaseTasks.every(task => task.status === "completed");
+    
+    if (allTasksCompleted) {
+      // Find the index of the current phase in the statusOptions array
+      const currentPhaseIndex = statusOptions.findIndex(phase => phase === currentPhase);
+      
+      // If this is already the last phase or "All Status", don't advance
+      if (currentPhaseIndex <= 0 || currentPhaseIndex >= statusOptions.length - 1) return;
+      
+      // Advance to the next phase
+      const nextPhase = statusOptions[currentPhaseIndex + 1];
+      
+      // Update the client status
+      updateClientMutation.mutate({ status: nextPhase });
+      
+      console.log(`All tasks in ${currentPhase} completed. Advancing to ${nextPhase}.`);
+    }
+  }, [tasks]);
+  
   // State to track which task types are currently generating
   const [generatingTasks, setGeneratingTasks] = useState<Record<string, boolean>>({});
   
