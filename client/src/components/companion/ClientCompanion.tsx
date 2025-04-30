@@ -770,14 +770,24 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                         {phaseTasks.map(({ type, task }) => {
                           const taskInfo = taskTypes[type as keyof typeof taskTypes];
                           return (
-                            <Card key={type} className="overflow-hidden">
-                              <CardHeader className="p-4 pb-2">
+                            <Card key={type} className={`overflow-hidden ${task?.content ? "border-green-200" : ""}`}>
+                              <CardHeader className={`p-4 pb-2 ${task?.content ? "bg-green-50" : ""}`}>
                                 <div className="flex items-start">
-                                  <div className={`p-2 rounded-md ${taskInfo.iconColor} mr-3`}>
+                                  <div className={`p-2 rounded-md ${task?.content ? "bg-green-100 text-green-700" : taskInfo.iconColor} mr-3 relative`}>
                                     {taskInfo.icon}
+                                    {task?.content && (
+                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                                        <Check className="h-3 w-3 text-white" />
+                                      </div>
+                                    )}
                                   </div>
                                   <div className="flex-1">
-                                    <CardTitle className="text-base">{taskInfo.label}</CardTitle>
+                                    <CardTitle className="text-base flex items-center gap-2">
+                                      {taskInfo.label}
+                                      {task?.content && (
+                                        <span className="text-xs text-green-600 font-normal">(Completed)</span>
+                                      )}
+                                    </CardTitle>
                                     <CardDescription className="text-xs line-clamp-2">
                                       {taskInfo.description}
                                     </CardDescription>
@@ -822,7 +832,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   {/* Button - only show if not currently generating */}
                                   {!generatingTasks[type] && (
                                     <Button 
-                                      className="w-full" 
+                                      className="w-full"
+                                      variant={task?.content ? "default" : "outline"}
                                       onClick={() => {
                                         if (type === 'schedule_discovery') {
                                           setIsDiscoveryDialogOpen(true);
@@ -852,6 +863,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       }}
                                       disabled={Object.keys(generatingTasks).length > 0}
                                     >
+                                      {task?.content && (
+                                        <CheckCircle className="h-4 w-4 mr-2 text-white" />
+                                      )}
                                       {type === 'schedule_discovery' 
                                         ? 'Schedule Call'
                                         : type === 'proposal' && task?.content
