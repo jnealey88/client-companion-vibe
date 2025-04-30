@@ -121,6 +121,9 @@ export default function SiteMapDialog({
   const [activePage, setActivePage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>("pages");
   
+  // Track which sections are currently being expanded with AI
+  const [expandingSections, setExpandingSections] = useState<Record<string, boolean>>({});
+  
   // UI state
   const [loading, setLoading] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -421,11 +424,9 @@ Your Web Professional`);
     const section = page.sections.find(s => s.id === sectionId);
     if (!section) return;
     
-    // Show loading state
-    toast({
-      title: "Expanding Content",
-      description: "Using AI to expand the section content...",
-    });
+    // Mark this section as expanding
+    const sectionKey = `${pageId}_${sectionId}`;
+    setExpandingSections(prev => ({ ...prev, [sectionKey]: true }));
     
     try {
       // Use the OpenAI API via our existing endpoint
@@ -439,19 +440,38 @@ Your Web Professional`);
         }
       });
       
-      // Type assertion to handle the response structure
-      const contentResponse = response as unknown as ContentExpansionResponse;
-      if (contentResponse && contentResponse.expandedContent) {
-        // Update the section content with the expanded text
-        handleSectionUpdate(pageId, sectionId, contentResponse.expandedContent);
+      // Extra validation to handle different response formats
+      if (response && typeof response === 'object') {
+        // First try to parse as our expected ContentExpansionResponse
+        if ('expandedContent' in response && typeof response.expandedContent === 'string') {
+          // Update the section content with the expanded text
+          handleSectionUpdate(pageId, sectionId, response.expandedContent);
+          
+          toast({
+            title: "Content Expanded",
+            description: "Section content has been expanded with AI assistance.",
+          });
+          return;
+        }
         
-        toast({
-          title: "Content Expanded",
-          description: "Section content has been expanded with AI assistance.",
-        });
-      } else {
-        throw new Error("Invalid response from AI service");
+        // Try other potential response formats
+        if ('originalContent' in response && 'success' in response) {
+          const contentData = response as unknown as ContentExpansionResponse;
+          if (contentData.expandedContent) {
+            handleSectionUpdate(pageId, sectionId, contentData.expandedContent);
+            
+            toast({
+              title: "Content Expanded",
+              description: "Section content has been expanded with AI assistance.",
+            });
+            return;
+          }
+        }
+        
+        console.error("Unexpected response format:", response);
       }
+      
+      throw new Error("Invalid response from AI service");
     } catch (error) {
       console.error("Error expanding content:", error);
       toast({
@@ -459,6 +479,10 @@ Your Web Professional`);
         description: "Failed to expand content. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      // Reset expanding state
+      const sectionKey = `${pageId}_${sectionId}`;
+      setExpandingSections(prev => ({ ...prev, [sectionKey]: false }));
     }
   };
   
@@ -962,8 +986,17 @@ Your Web Professional`);
                                                 size="sm"
                                                 onClick={() => expandTextWithAI(page.id, section.id)}
                                                 className="text-xs"
+                                                disabled={expandingSections[`${page.id}_${section.id}`]}
                                               >
-                                                <span className="mr-1">✨</span> Expand with AI
+                                                {expandingSections[`${page.id}_${section.id}`] ? (
+                                                  <>
+                                                    <span className="animate-spin mr-1">⟳</span> Expanding...
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <span className="mr-1">✨</span> Expand with AI
+                                                  </>
+                                                )}
                                               </Button>
                                             </div>
                                           </div>
