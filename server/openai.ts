@@ -2041,10 +2041,36 @@ export async function expandSectionContent(content: string, context: any): Promi
     let contentForPrompt = content;
     const isEditorContent = context.isEditorContent === true;
     
+    // Try to extract plain text if we're working with Editor.js content
+    if (isEditorContent && typeof content === 'string' && content.includes('"blocks"')) {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed && parsed.blocks) {
+          // Extract text from Editor.js blocks
+          contentForPrompt = parsed.blocks
+            .map((block: any) => {
+              if (block.type === 'header') {
+                const level = block.data.level || 2;
+                return `${'#'.repeat(level)} ${block.data.text}\n`;
+              } else if (block.type === 'paragraph') {
+                return block.data.text;
+              } else if (block.type === 'list') {
+                return (block.data.items || []).map((item: string) => `- ${item}`).join('\n');
+              }
+              return block.data.text || '';
+            })
+            .filter(Boolean)
+            .join('\n\n');
+        }
+      } catch (e) {
+        console.log("Failed to parse Editor.js content, using as-is");
+      }
+    }
+    
     // Build a more detailed prompt with additional context if provided
     const prompt = `
-You are a professional content writer helping to expand website content for a business website.
-Please transform the following section content into PRODUCTION-READY, POLISHED WEBSITE COPY that requires no further editing.
+You are a professional content writer helping to create engaging, visually appealing website content.
+Please transform the following section content into PREMIUM, PRODUCTION-READY WEBSITE COPY with rich formatting.
 
 SECTION CONTEXT:
 - Page Title: ${context.pageTitle || "Unknown Page"}
@@ -2060,16 +2086,42 @@ ${contentForPrompt}
 
 INSTRUCTIONS:
 1. Create COMPREHENSIVE, PROFESSIONAL-QUALITY content that is ready for immediate website implementation.
-2. Write complete paragraphs with proper headlines, subheadlines, and body copy exactly as they should appear on the live website.
+2. Write complete paragraphs with proper headlines (H2, H3) and body copy exactly as they should appear on the live website.
 3. Use industry-specific terminology that resonates with the target audience.
 4. Include persuasive marketing messages and compelling calls-to-action.
-5. Format the content with proper paragraphs, bullet points, or other appropriate structure.
+5. Format the content using a mix of elements:
+   - Headlines and subheadlines for clear hierarchy
+   - Short, engaging paragraphs
+   - Bullet points for key features/benefits
+   - Bold text for emphasis on key points
+   - Quotes or testimonial-style elements when appropriate
+   - Tables for comparing options/features if relevant
 6. Write with SEO in mind, naturally incorporating relevant keywords.
 7. Ensure the content directly addresses customer pain points and offers clear solutions.
 8. The expanded content should be 3-4 times more comprehensive than the original but remain focused and strategic.
 9. Produce professional-grade content that could be published immediately without any further editing.
-10. Maintain the same overall message and purpose while making it more effective and conversion-focused.
-${isEditorContent ? `11. Return the content in a format suitable for a rich text editor, with appropriate paragraph breaks and formatting.` : ''}
+10. Include suggestions for visual elements (images, icons, diagrams) that would enhance the content.
+
+FORMAT YOUR RESPONSE USING MARKDOWN WITH THE FOLLOWING ELEMENTS:
+- Use # and ## for headings
+- Use **bold** for emphasis
+- Use > for blockquotes or callouts
+- Use - for bullet points
+- Use numbered lists when sequence matters
+- Use --- for dividers between sections
+- Use [CTA Text] to indicate where buttons/call-to-actions should go
+
+For example:
+## Main Heading
+This is a paragraph with **important text** highlighted.
+
+> This is a callout box with an important message or testimonial.
+
+- Bullet point 1
+- Bullet point 2
+
+[LEARN MORE]
+
 `;
 
     console.log("Sending prompt to OpenAI for content expansion...");
@@ -2100,58 +2152,272 @@ ${isEditorContent ? `11. Return the content in a format suitable for a rich text
         version: "2.22.2"
       };
       
-      // Split the expanded content by double line breaks to create separate paragraphs
-      const paragraphs = expandedTextContent.split(/\n\n+/);
+      // Process the content line by line for better formatting detection
+      const lines = expandedTextContent.split('\n');
+      let currentListItems: string[] = [];
+      let inList = false;
+      let currentListType = 'unordered';
       
-      // Add each paragraph as a block
-      paragraphs.forEach(paragraph => {
-        if (paragraph.trim()) {
-          // Check if it's a heading (starts with # or ##)
-          if (paragraph.trim().startsWith('# ')) {
-            editorJsContent.blocks.push({
-              type: "header",
-              data: {
-                text: paragraph.trim().substring(2),
-                level: 1
-              }
-            });
-          } else if (paragraph.trim().startsWith('## ')) {
-            editorJsContent.blocks.push({
-              type: "header",
-              data: {
-                text: paragraph.trim().substring(3),
-                level: 2
-              }
-            });
-          } else if (paragraph.trim().startsWith('### ')) {
-            editorJsContent.blocks.push({
-              type: "header",
-              data: {
-                text: paragraph.trim().substring(4),
-                level: 3
-              }
-            });
-          } else if (paragraph.trim().startsWith('- ')) {
-            // Create list from items starting with '-'
-            const items = paragraph.split('\n').map(item => item.trim().substring(2));
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        if (!line) {
+          // Empty line - if we were building a list, finish it
+          if (inList && currentListItems.length > 0) {
             editorJsContent.blocks.push({
               type: "list",
               data: {
-                style: "unordered",
-                items: items
+                style: currentListType,
+                items: currentListItems
               }
             });
-          } else {
-            // Regular paragraph
-            editorJsContent.blocks.push({
-              type: "paragraph",
-              data: {
-                text: paragraph.trim()
-              }
-            });
+            currentListItems = [];
+            inList = false;
           }
+          continue;
         }
-      });
+        
+        // Check for headings (# or ## format)
+        if (line.startsWith('# ')) {
+          // If we were building a list, finish it first
+          if (inList && currentListItems.length > 0) {
+            editorJsContent.blocks.push({
+              type: "list",
+              data: {
+                style: currentListType,
+                items: currentListItems
+              }
+            });
+            currentListItems = [];
+            inList = false;
+          }
+          
+          editorJsContent.blocks.push({
+            type: "header",
+            data: {
+              text: line.substring(2),
+              level: 1
+            }
+          });
+        } 
+        else if (line.startsWith('## ')) {
+          // If we were building a list, finish it first
+          if (inList && currentListItems.length > 0) {
+            editorJsContent.blocks.push({
+              type: "list",
+              data: {
+                style: currentListType,
+                items: currentListItems
+              }
+            });
+            currentListItems = [];
+            inList = false;
+          }
+          
+          editorJsContent.blocks.push({
+            type: "header",
+            data: {
+              text: line.substring(3),
+              level: 2
+            }
+          });
+        }
+        else if (line.startsWith('### ')) {
+          // If we were building a list, finish it first
+          if (inList && currentListItems.length > 0) {
+            editorJsContent.blocks.push({
+              type: "list",
+              data: {
+                style: currentListType,
+                items: currentListItems
+              }
+            });
+            currentListItems = [];
+            inList = false;
+          }
+          
+          editorJsContent.blocks.push({
+            type: "header",
+            data: {
+              text: line.substring(4),
+              level: 3
+            }
+          });
+        }
+        // Check for bullet points
+        else if (line.startsWith('- ') || line.startsWith('* ')) {
+          // Start or continue a list
+          inList = true;
+          currentListType = 'unordered';
+          currentListItems.push(line.substring(2));
+        }
+        // Check for numbered lists
+        else if (/^\d+\.\s/.test(line)) {
+          // Start or continue a list
+          inList = true;
+          currentListType = 'ordered';
+          // Extract content after the number and period
+          const content = line.replace(/^\d+\.\s/, '');
+          currentListItems.push(content);
+        }
+        // Check for blockquotes
+        else if (line.startsWith('> ')) {
+          // If we were building a list, finish it first
+          if (inList && currentListItems.length > 0) {
+            editorJsContent.blocks.push({
+              type: "list",
+              data: {
+                style: currentListType,
+                items: currentListItems
+              }
+            });
+            currentListItems = [];
+            inList = false;
+          }
+          
+          editorJsContent.blocks.push({
+            type: "quote",
+            data: {
+              text: line.substring(2),
+              caption: ""
+            }
+          });
+        }
+        // Check for dividers
+        else if (line === '---' || line === '***' || line === '___') {
+          // If we were building a list, finish it first
+          if (inList && currentListItems.length > 0) {
+            editorJsContent.blocks.push({
+              type: "list",
+              data: {
+                style: currentListType,
+                items: currentListItems
+              }
+            });
+            currentListItems = [];
+            inList = false;
+          }
+          
+          editorJsContent.blocks.push({
+            type: "delimiter",
+            data: {}
+          });
+        }
+        // Check for call-to-action buttons [TEXT]
+        else if (/^\[([^\]]+)\]$/.test(line)) {
+          // If we were building a list, finish it first
+          if (inList && currentListItems.length > 0) {
+            editorJsContent.blocks.push({
+              type: "list",
+              data: {
+                style: currentListType,
+                items: currentListItems
+              }
+            });
+            currentListItems = [];
+            inList = false;
+          }
+          
+          // Extract button text
+          const buttonText = line.match(/^\[([^\]]+)\]$/)?.[1] || line;
+          
+          // Add a special paragraph with button styling
+          editorJsContent.blocks.push({
+            type: "paragraph",
+            data: {
+              text: `<div class="cta-button">${buttonText}</div>`
+            }
+          });
+        }
+        // Regular paragraph
+        else {
+          // If we were building a list, finish it first
+          if (inList && currentListItems.length > 0) {
+            editorJsContent.blocks.push({
+              type: "list",
+              data: {
+                style: currentListType,
+                items: currentListItems
+              }
+            });
+            currentListItems = [];
+            inList = false;
+          }
+          
+          // Process bold text (**text**)
+          let processedText = line;
+          processedText = processedText.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+          
+          editorJsContent.blocks.push({
+            type: "paragraph",
+            data: {
+              text: processedText
+            }
+          });
+        }
+      }
+      
+      // If we ended with an unfinished list, add it now
+      if (inList && currentListItems.length > 0) {
+        editorJsContent.blocks.push({
+          type: "list",
+          data: {
+            style: currentListType,
+            items: currentListItems
+          }
+        });
+      }
+      
+      // Add a visual element suggestion at the end if none exists
+      let hasVisualSuggestion = false;
+      for (const block of editorJsContent.blocks) {
+        if (block.type === 'paragraph' && 
+            block.data.text.toLowerCase().includes('visual') && 
+            block.data.text.toLowerCase().includes('suggest')) {
+          hasVisualSuggestion = true;
+          break;
+        }
+      }
+      
+      if (!hasVisualSuggestion && editorJsContent.blocks.length > 0) {
+        editorJsContent.blocks.push({
+          type: "delimiter",
+          data: {}
+        });
+        
+        editorJsContent.blocks.push({
+          type: "header",
+          data: {
+            text: "Visual Elements Suggestion",
+            level: 3
+          }
+        });
+        
+        // Determine potential visual elements based on the context
+        let visualSuggestion = "Consider adding a high-quality image that illustrates ";
+        if (context.elementTypes) {
+          if (context.elementTypes.toLowerCase().includes('chart') || 
+              context.elementTypes.toLowerCase().includes('graph')) {
+            visualSuggestion += "data visualization showing key metrics or growth potential.";
+          } else if (context.elementTypes.toLowerCase().includes('photo') || 
+                    context.elementTypes.toLowerCase().includes('image')) {
+            visualSuggestion += "real-world examples of your products or services in action.";
+          } else if (context.elementTypes.toLowerCase().includes('icon')) {
+            visualSuggestion += "the key benefits using simple, recognizable icons.";
+          } else {
+            visualSuggestion += "the main concepts from this section visually.";
+          }
+        } else {
+          visualSuggestion += "the main concepts from this section to enhance engagement.";
+        }
+        
+        editorJsContent.blocks.push({
+          type: "paragraph",
+          data: {
+            text: visualSuggestion
+          }
+        });
+      }
       
       return JSON.stringify(editorJsContent);
     }

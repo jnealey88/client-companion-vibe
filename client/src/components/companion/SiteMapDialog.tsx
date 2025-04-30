@@ -1254,22 +1254,22 @@ Your Web Professional`);
                                             )}
                                           </div>
                                           <div className="prose prose-sm max-w-none">
-                                            <div className="section-editor-container border rounded">
+                                            <div className="section-editor-container border rounded p-1 bg-white">
                                               {/* Using Editor.js for rich content editing */}
                                               <EditorJs
                                                 content={section.content}
                                                 onChange={(content) => handleSectionUpdate(page.id, section.id, content)}
                                                 readOnly={false}
-                                                className="prose max-w-none min-h-[150px]"
-                                                placeholder="Enter section content here..."
+                                                className="prose max-w-none min-h-[200px] rich-editor-container"
+                                                placeholder="Enter section content here or use the 'Expand with AI' button to create production-ready content..."
                                               />
                                             </div>
                                             <div className="mt-2 flex justify-end">
                                               <Button
-                                                variant="outline"
+                                                variant={expandingSections[`${page.id}_${section.id}`] ? "outline" : "default"}
                                                 size="sm"
                                                 onClick={() => expandTextWithAI(page.id, section.id)}
-                                                className="text-xs"
+                                                className={`text-xs ${expandingSections[`${page.id}_${section.id}`] ? "" : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"}`}
                                                 disabled={expandingSections[`${page.id}_${section.id}`]}
                                               >
                                                 {expandingSections[`${page.id}_${section.id}`] ? (
@@ -1282,7 +1282,7 @@ Your Web Professional`);
                                                   </div>
                                                 ) : (
                                                   <div className="flex items-center">
-                                                    <span className="mr-1">✨</span> Create Production-Ready Content
+                                                    <span className="mr-1">✨</span> Generate Professional Content with AI
                                                   </div>
                                                 )}
                                               </Button>

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, Suspense } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
+import './editor-js-styles.css';
 
 // Define the props interface for our EditorJs component
 interface EditorJsProps {
