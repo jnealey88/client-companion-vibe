@@ -48,7 +48,6 @@ export default function AddClientDialog({
   
   const formSchema = insertClientSchema.extend({
     status: z.string().min(1, "Status is required"),
-    businessDescription: z.string().optional(),
   });
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -62,8 +61,8 @@ export default function AddClientDialog({
       industry: "Technology", // Set a default industry
       status: "Discovery",
       websiteUrl: "",
-      businessDescription: "",
       projectName: "Website Redesign", // Set a default project name
+      projectDescription: "", // This will be used for business description
       projectStatus: "Active",
       projectValue: 5000, // Set a default value
     },
@@ -249,9 +248,34 @@ export default function AddClientDialog({
                 )}
               />
               
+              {/* Hidden fields required by the database schema */}
               <FormField
                 control={form.control}
-                name="businessDescription"
+                name="projectName"
+                render={({ field }) => (
+                  <input type="hidden" {...field} />
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="projectValue"
+                render={({ field }) => (
+                  <input type="hidden" {...field} />
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="projectStatus"
+                render={({ field }) => (
+                  <input type="hidden" {...field} />
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="projectDescription"
                 render={({ field }) => (
                   <FormItem className="col-span-2">
                     <FormLabel>Business Description</FormLabel>
