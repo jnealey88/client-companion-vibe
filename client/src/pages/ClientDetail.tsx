@@ -14,12 +14,17 @@ import {
   Globe,
   ChevronRight,
   ChevronDown,
-  Info
+  Info,
+  FileSearch,
+  ArrowRight,
+  Zap,
+  AlertCircle
 } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import ClientCompanion from "@/components/companion/ClientCompanion";
 import GoDaddyProductsManager from "@/components/godaddy/GoDaddyProductsManager";
+import RecommendedNextStep from "@/components/companion/RecommendedNextStep";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -251,6 +256,9 @@ export default function ClientDetail() {
                 </Card>
               </CollapsibleContent>
             </Collapsible>
+            
+            {/* Recommended Next Step Card above Client Companion */}
+            <RecommendedNextStep client={client} tasks={tasks || []} />
             
             {/* Two-column layout for Client Companion (2/3) and GoDaddy Products (1/3) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
