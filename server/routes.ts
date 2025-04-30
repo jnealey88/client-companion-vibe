@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
@@ -18,14 +18,63 @@ import {
   generateScheduleDiscovery,
   TaskType
 } from "./openai";
+import { setupAuth } from "./auth";
+
+// Middleware to check if user is authenticated
+function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ error: "Unauthorized" });
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication routes and middleware
+  setupAuth(app);
+  
   const httpServer = createServer(app);
 
+  // ===== User-Client Association Routes =====
+  
+  // Associate a client with the authenticated user
+  app.post("/api/user/clients/:clientId", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const clientId = parseInt(req.params.clientId);
+      if (isNaN(clientId)) {
+        return res.status(400).json({ message: "Invalid client ID" });
+      }
+      
+      const client = await storage.getClient(clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Client not found" });
+      }
+      
+      const userId = (req.user as any).id;
+      await storage.addClientToUser(userId, clientId);
+      
+      return res.status(201).json({ message: "Client associated with user" });
+    } catch (error) {
+      console.error("Error associating client with user:", error);
+      return res.status(500).json({ message: "Failed to associate client with user" });
+    }
+  });
+  
+  // Get all clients for the authenticated user
+  app.get("/api/user/clients", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any).id;
+      const clients = await storage.getUserClients(userId);
+      return res.json(clients);
+    } catch (error) {
+      console.error("Error fetching user's clients:", error);
+      return res.status(500).json({ message: "Failed to fetch user's clients" });
+    }
+  });
+  
   // ===== Client Routes =====
   
   // Get all clients with filters
-  app.get("/api/clients", async (req: Request, res: Response) => {
+  app.get("/api/clients", isAuthenticated, async (req: Request, res: Response) => {
     try {
       const filters: ClientFilters = {
         search: req.query.search as string | undefined,

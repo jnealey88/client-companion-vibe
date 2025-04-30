@@ -5,8 +5,18 @@ import {
   ClientFilters,
   CompanionTask,
   InsertCompanionTask,
-  UpdateCompanionTask
+  UpdateCompanionTask,
+  User,
+  InsertUser,
+  UpdateUser,
+  InsertUserClient
 } from "@shared/schema";
+import { Pool } from 'pg';
+import session from "express-session";
+import connectPg from "connect-pg-simple";
+
+// Configure session stores
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   // Client operations
@@ -22,9 +32,30 @@ export interface IStorage {
   createCompanionTask(task: InsertCompanionTask): Promise<CompanionTask>;
   updateCompanionTask(id: number, task: UpdateCompanionTask): Promise<CompanionTask | undefined>;
   deleteCompanionTask(id: number): Promise<boolean>;
+  
+  // User operations
+  getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, user: UpdateUser): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
+  
+  // User-Client relationship operations
+  addClientToUser(userId: number, clientId: number): Promise<boolean>;
+  removeClientFromUser(userId: number, clientId: number): Promise<boolean>;
+  getUserClients(userId: number): Promise<Client[]>;
+  
+  // Session store
+  sessionStore: session.Store;
 }
 
 export class DatabaseStorage implements IStorage {
+  // Initialize with express's built-in memory store
+  sessionStore: session.Store;
+  
+  constructor() {
+    this.sessionStore = new session.MemoryStore();
+  }
   async getClients(filters?: ClientFilters): Promise<Client[]> {
     try {
       // Import db here to avoid circular dependencies
@@ -285,6 +316,162 @@ export class DatabaseStorage implements IStorage {
       return deletedTasks.length > 0;
     } catch (error) {
       console.error(`Error deleting companion task with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  // User operations
+  async getUser(id: number): Promise<User | undefined> {
+    try {
+      const { db } = await import('./db');
+      const { users } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const result = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, id));
+      
+      return result[0];
+    } catch (error) {
+      console.error(`Error fetching user with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    try {
+      const { db } = await import('./db');
+      const { users } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const result = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username));
+      
+      return result[0];
+    } catch (error) {
+      console.error(`Error fetching user with username ${username}:`, error);
+      throw error;
+    }
+  }
+  
+  async createUser(user: InsertUser): Promise<User> {
+    try {
+      const { db } = await import('./db');
+      const { users } = await import('@shared/schema');
+      
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          ...user,
+          createdAt: new Date()
+        })
+        .returning();
+      
+      return newUser;
+    } catch (error) {
+      console.error("Error creating user:", error);
+      throw error;
+    }
+  }
+  
+  async updateUser(id: number, updateData: UpdateUser): Promise<User | undefined> {
+    try {
+      const { db } = await import('./db');
+      const { users } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const [updatedUser] = await db
+        .update(users)
+        .set(updateData)
+        .where(eq(users.id, id))
+        .returning();
+      
+      return updatedUser;
+    } catch (error) {
+      console.error(`Error updating user with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    try {
+      const { db } = await import('./db');
+      const { users } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const deletedUsers = await db
+        .delete(users)
+        .where(eq(users.id, id))
+        .returning();
+      
+      return deletedUsers.length > 0;
+    } catch (error) {
+      console.error(`Error deleting user with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  // User-Client relationship operations
+  async addClientToUser(userId: number, clientId: number): Promise<boolean> {
+    try {
+      const { db } = await import('./db');
+      const { userClients } = await import('@shared/schema');
+      
+      await db
+        .insert(userClients)
+        .values({
+          userId,
+          clientId
+        })
+        .onConflictDoNothing();
+      
+      return true;
+    } catch (error) {
+      console.error(`Error adding client ${clientId} to user ${userId}:`, error);
+      throw error;
+    }
+  }
+  
+  async removeClientFromUser(userId: number, clientId: number): Promise<boolean> {
+    try {
+      const { db } = await import('./db');
+      const { userClients } = await import('@shared/schema');
+      const { and, eq } = await import('drizzle-orm');
+      
+      const result = await db
+        .delete(userClients)
+        .where(
+          and(
+            eq(userClients.userId, userId),
+            eq(userClients.clientId, clientId)
+          )
+        )
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error(`Error removing client ${clientId} from user ${userId}:`, error);
+      throw error;
+    }
+  }
+  
+  async getUserClients(userId: number): Promise<Client[]> {
+    try {
+      const { db } = await import('./db');
+      const { userClients, clients } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      return await db
+        .select()
+        .from(clients)
+        .innerJoin(userClients, eq(clients.id, userClients.clientId))
+        .where(eq(userClients.userId, userId))
+        .then(rows => rows.map(row => row.clients));
+    } catch (error) {
+      console.error(`Error fetching clients for user ${userId}:`, error);
       throw error;
     }
   }

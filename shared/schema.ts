@@ -1,7 +1,41 @@
-import { pgTable, text, serial, integer, boolean, timestamp, json, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, pgEnum, primaryKey, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
+
+// Users table for authentication
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").notNull().default(new Date()),
+});
+
+// User-client relation
+export const userClients = pgTable("user_clients", {
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.userId, t.clientId] }),
+}));
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  userClients: many(userClients)
+}));
+
+export const userClientsRelations = relations(userClients, ({ one }) => ({
+  user: one(users, {
+    fields: [userClients.userId],
+    references: [users.id]
+  }),
+  client: one(clients, {
+    fields: [userClients.clientId],
+    references: [clients.id]
+  })
+}));
 
 export const clients = pgTable("clients", {
   id: serial("id").primaryKey(),
@@ -157,3 +191,34 @@ export const statusOptions = ["All Status", "Discovery", "Planning", "Design and
 export const industryOptions = ["All Industries", "Technology", "Healthcare", "Education", "E-commerce", "Finance", "Media", "Sustainability", "Data Analytics"];
 export const projectStatusOptions = ["All Projects", "Active Projects", "Completed Projects", "Pending Projects"];
 export const sortOptions = ["Sort by: Recent", "Name (A-Z)", "Name (Z-A)", "Value (High-Low)", "Value (Low-High)"];
+
+// User Schemas
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const userSchema = z.object({
+  id: z.number(),
+  username: z.string(),
+  email: z.string().email(),
+  name: z.string(),
+  createdAt: z.date(),
+});
+
+export const loginUserSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export const updateUserSchema = insertUserSchema.partial();
+
+// User Types
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
+export type User = typeof users.$inferSelect;
+export type LoginUser = z.infer<typeof loginUserSchema>;
+
+// UserClient Types
+export type UserClient = typeof userClients.$inferSelect;
+export type InsertUserClient = typeof userClients.$inferInsert;
