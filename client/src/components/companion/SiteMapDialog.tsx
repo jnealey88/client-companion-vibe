@@ -1592,9 +1592,25 @@ Your Web Professional`);
               />
               <Button type="button" onClick={addSectionTag} size="sm">Add</Button>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mb-2">
               Add elements like "Text", "Image", "Video", "Form", etc.
             </p>
+            
+            <div className="mt-2">
+              <Label className="text-xs mb-2">Suggested Tags:</Label>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {sectionTagSuggestions.slice(0, 8).map((tag) => (
+                  <Badge 
+                    key={tag} 
+                    variant="outline" 
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => addSuggestedSectionTag(tag)}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
         
