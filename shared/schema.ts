@@ -52,9 +52,10 @@ export const taskTypeEnum = pgEnum("task_type", [
   "ai_qa_tool",
   
   // Post Launch Management phase tasks
-  "status_update",
-  "site_maintenance",
-  "site_optimizer"
+  "seo_performance",
+  "site_speed",
+  "security_scan",
+  "uptime_monitor"
 ]);
 
 // Define task status enum
@@ -156,9 +157,10 @@ export const companionTaskSchema = z.object({
     "ai_qa_tool",
     
     // Post Launch Management phase tasks
-    "status_update",
-    "site_maintenance",
-    "site_optimizer"
+    "seo_performance",
+    "site_speed",
+    "security_scan",
+    "uptime_monitor"
   ]),
   status: z.enum(["pending", "in_progress", "completed"]),
   content: z.string().nullable(),
