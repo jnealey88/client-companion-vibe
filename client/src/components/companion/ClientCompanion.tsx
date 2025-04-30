@@ -794,25 +794,36 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           </div>
         ) : (
           <Tabs defaultValue="tasks" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
-              <TabsTrigger value="tasks" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                Tasks by Phase
-              </TabsTrigger>
-              <TabsTrigger value="content" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                Generated Content
-              </TabsTrigger>
-            </TabsList>
+            <div className="border-b mb-4">
+              <TabsList className="bg-transparent p-0 border-0 w-auto inline-flex h-auto gap-8">
+                <TabsTrigger 
+                  value="tasks" 
+                  className="px-0 py-3 rounded-none text-base font-medium text-gray-600 data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent data-[state=active]:shadow-none bg-transparent"
+                >
+                  <Layers className="h-4 w-4 mr-2" />
+                  Tasks by Phase
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="content" 
+                  className="px-0 py-3 rounded-none text-base font-medium text-gray-600 data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent data-[state=active]:shadow-none bg-transparent"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Generated Content
+                </TabsTrigger>
+              </TabsList>
+            </div>
             
             <TabsContent value="tasks" className="mt-4">
               <div className="space-y-6">
                 {/* Phase filter pills */}
-                <div className="flex flex-wrap gap-2 pb-2 border-b mb-6">
+                <div className="flex flex-wrap gap-3 pb-4 border-b mb-6">
                   <Button 
                     variant={selectedPhase === null ? "default" : "outline"}
                     size="sm"
-                    className="rounded-full"
+                    className="rounded-full shadow-sm flex items-center gap-1.5 px-4"
                     onClick={() => setSelectedPhase(null)}
                   >
+                    <Layers className="h-3.5 w-3.5" />
                     All Tools
                   </Button>
                   
@@ -825,11 +836,15 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                         key={phase}
                         variant={isSelected ? "default" : "outline"}
                         size="sm"
-                        className={`rounded-full ${isCurrentPhase ? "border-green-200" : ""}`}
+                        className={`rounded-full shadow-sm flex items-center gap-1.5 px-4 ${isCurrentPhase ? "border-green-200" : ""}`}
                         onClick={() => setSelectedPhase(phase)}
                       >
                         {phase}
-                        {isCurrentPhase && <div className="ml-1 w-2 h-2 rounded-full bg-green-500" />}
+                        {isCurrentPhase && (
+                          <span className="flex h-4 w-4 items-center justify-center">
+                            <span className="absolute inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                          </span>
+                        )}
                       </Button>
                     );
                   })}
