@@ -698,18 +698,36 @@ Your Web Professional`);
         }
         
         // Check for expanded content in the response
-        if (typeof response === 'object' && 'expandedContent' in response && typeof response.expandedContent === 'string') {
-          // Use the expanded content directly as plain text
-          let expandedContent = response.expandedContent;
+        if (typeof response === 'object') {
+          console.log("Response object keys:", Object.keys(response));
           
-          handleSectionUpdate(pageId, sectionId, expandedContent);
+          // First check for expandedContent structure
+          if ('expandedContent' in response && typeof response.expandedContent === 'string') {
+            // Use the expanded content directly as plain text
+            let expandedContent = response.expandedContent;
+            
+            handleSectionUpdate(pageId, sectionId, expandedContent);
+            
+            toast({
+              title: "Production-Ready Content Created",
+              description: "Professional-grade content has been generated and is ready for immediate use.",
+              variant: "default"
+            });
+            return;
+          }
           
-          toast({
-            title: "Production-Ready Content Created",
-            description: "Professional-grade content has been generated and is ready for immediate use.",
-            variant: "default"
-          });
-          return;
+          // Check if response has originalContent and expandedContent properties (common API format)
+          if ('originalContent' in response && 'expandedContent' in response) {
+            let expandedContent = String(response.expandedContent);
+            handleSectionUpdate(pageId, sectionId, expandedContent);
+            
+            toast({
+              title: "Production-Ready Content Created",
+              description: "Professional-grade content has been generated and is ready for immediate use.",
+              variant: "default"
+            });
+            return;
+          }
         }
         
         // Secondary check for direct string content (some APIs might just return the content directly)
@@ -1489,7 +1507,7 @@ Your Web Professional`);
                                                   </div>
                                                 ) : (
                                                   <div className="flex items-center">
-                                                    <span className="mr-1">✨</span> Generate Professional Content with AI
+                                                    <span className="mr-1">✨</span> Expand Text with AI
                                                   </div>
                                                 )}
                                               </Button>
