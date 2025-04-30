@@ -280,7 +280,7 @@ export default function ProjectScopeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ListFilter className="h-5 w-5" />
@@ -364,11 +364,12 @@ export default function ProjectScopeDialog({
             
             <Separator />
             
-            <div className="flex-1 overflow-auto">
+            <div className="min-h-[300px]">
               <EditorJs
                 content={scopeContent}
                 onChange={handleEditorUpdate}
                 readOnly={false}
+                className="prose max-w-none"
               />
             </div>
           </div>
