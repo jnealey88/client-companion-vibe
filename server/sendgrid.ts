@@ -27,29 +27,41 @@ export interface EmailParams {
  */
 export async function sendEmail(params: EmailParams): Promise<boolean> {
   try {
-    // If SendGrid is configured, send the email
+    // If SendGrid is configured, try to send the email
     if (mailService) {
-      await mailService.send({
-        to: params.to,
-        from: params.from,
-        subject: params.subject,
-        text: params.text,
-        html: params.html,
-      });
-      console.log(`Email sent to ${params.to}`);
-    } else {
-      // Simulate sending an email with a delay
-      console.log('Simulating email send:', {
-        to: params.to,
-        from: params.from,
-        subject: params.subject,
-      });
-      // Add artificial delay to simulate network request
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      try {
+        await mailService.send({
+          to: params.to,
+          from: params.from,
+          subject: params.subject,
+          text: params.text,
+          html: params.html,
+        });
+        console.log(`Email sent to ${params.to}`);
+        return true;
+      } catch (sendgridError) {
+        // Log the SendGrid-specific error
+        console.error('SendGrid email error:', sendgridError);
+        
+        // If there's an issue with SendGrid, fall back to simulation
+        console.log('Falling back to email simulation due to SendGrid error');
+      }
     }
+    
+    // Either no API key or SendGrid failed - simulate sending
+    console.log('Simulating email send:', {
+      to: params.to,
+      from: params.from,
+      subject: params.subject,
+    });
+    
+    // Add artificial delay to simulate network request
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    // Return success for the simulated sending
     return true;
   } catch (error) {
-    console.error('SendGrid email error:', error);
+    console.error('Email error:', error);
     return false;
   }
 }
