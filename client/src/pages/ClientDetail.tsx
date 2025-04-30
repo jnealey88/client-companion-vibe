@@ -161,11 +161,11 @@ export default function ClientDetail() {
             </div>
           </div>
           
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
             
             <Collapsible open={clientInfoOpen} onOpenChange={setClientInfoOpen} className="w-full">
               <CollapsibleContent>
-                <Card className="mb-6">
+                <Card className="mb-3">
                   <CardContent className="pt-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-4">
@@ -253,7 +253,7 @@ export default function ClientDetail() {
             </Collapsible>
             
             {/* Two-column layout for Client Companion (2/3) and GoDaddy Products (1/3) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Client Companion takes 2/3 of the width */}
               <div className="lg:col-span-2">
                 <ClientCompanion client={client} />

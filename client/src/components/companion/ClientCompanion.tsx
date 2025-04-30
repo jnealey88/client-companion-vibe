@@ -24,7 +24,8 @@ import {
   Link,
   Trash2,
   Clock,
-  Timer
+  Timer,
+  Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -704,9 +705,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           </div>
           
           <div className="flex justify-end items-center">
-            {/* Display total time saved */}
+            {/* Display total time saved with enhanced information */}
             {tasks && tasks.some(task => task.content) && (
-              <div className="flex items-center bg-white border border-green-300 rounded-lg shadow-sm px-4 py-3">
+              <div className="flex items-center bg-white border border-green-300 rounded-lg shadow-sm px-4 py-3 hover:shadow-md transition-all duration-200">
                 <div className="bg-green-100 text-green-700 p-2 rounded-md mr-3">
                   <Timer className="h-5 w-5" />
                 </div>
@@ -714,8 +715,27 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                   <div className="font-bold text-green-700 text-lg">
                     {formatTimeSaved(calculateTotalTimeSaved(tasks))}
                   </div>
-                  <div className="text-xs text-green-600 font-medium">
-                    Total time saved with AI
+                  <div className="text-xs flex gap-1 items-center">
+                    <span className="text-green-600 font-medium">Total time saved</span>
+                    <div className="relative group">
+                      <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                      <div className="absolute hidden group-hover:block right-0 top-full mt-1 p-2 bg-white border border-gray-200 rounded-md shadow-md text-xs text-gray-600 w-64 z-10">
+                        <p className="font-medium mb-1">AI tools save valuable time</p>
+                        <p className="mb-1">Each completed task saves an estimated amount of manual work time.</p>
+                        <div className="flex flex-col gap-1 mt-2 border-t pt-1">
+                          {tasks.filter(task => task.content).map(task => {
+                            const taskInfo = taskTypes[task.type as keyof typeof taskTypes];
+                            if (!taskInfo) return null;
+                            return (
+                              <div key={task.id} className="flex justify-between">
+                                <span className="text-gray-500">{taskInfo.label}:</span>
+                                <span className="font-medium">{formatTimeSaved(taskInfo.timeSaved)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
