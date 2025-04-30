@@ -550,6 +550,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       setIsProjectScopeDialogOpen(false);
     } else if (task.type === 'contract' && contractTask?.id === task.id) {
       setIsContractDialogOpen(false);
+    } else if (task.type === 'site_map' && siteMapTask?.id === task.id) {
+      setSiteMapTask(undefined);
+      setIsSiteMapDialogOpen(false);
     }
     
     // Open the delete confirmation dialog
@@ -578,6 +581,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
     } else if (taskToDelete.type === 'contract' && contractTask?.id === taskToDelete.id) {
       setContractTask(undefined);
       setIsContractDialogOpen(false);
+    } else if (taskToDelete.type === 'site_map' && siteMapTask?.id === taskToDelete.id) {
+      setSiteMapTask(undefined);
+      setIsSiteMapDialogOpen(false);
     }
     
     // Close dialog and reset taskToDelete
@@ -767,6 +773,27 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
             setTimeout(() => {
               setContractTask(task);
               setIsContractDialogOpen(true);
+            }, 1000);
+          }
+        }}
+      />
+      
+      {/* Site Map dialog */}
+      <SiteMapDialog
+        open={isSiteMapDialogOpen}
+        onOpenChange={setIsSiteMapDialogOpen}
+        client={client}
+        existingTask={siteMapTask}
+        onTaskGenerated={(task) => {
+          // Check if this is a new task request (dummy task with no content)
+          if (!task.content && task.type === 'site_map') {
+            // Generate a new site map using the in-card loading state
+            handleGenerate('site_map');
+          } else {
+            // This is a real task, show it in the dialog
+            setTimeout(() => {
+              setSiteMapTask(task);
+              setIsSiteMapDialogOpen(true);
             }, 1000);
           }
         }}
