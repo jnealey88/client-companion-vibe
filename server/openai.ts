@@ -1979,6 +1979,31 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
     // Parse the JSON response to ensure it's valid
     try {
       const parsedJson = JSON.parse(jsonResponse);
+      
+      // Log the parsed structure for debugging
+      console.log("Parsed site map structure:", {
+        pageCount: parsedJson.pages?.length || 0,
+        sectionsByPage: parsedJson.pages?.map(page => ({
+          pageId: page.id,
+          pageTitle: page.title,
+          sectionCount: page.sections?.length || 0
+        }))
+      });
+      
+      // Check if each page has sections with content
+      if (parsedJson.pages) {
+        parsedJson.pages.forEach(page => {
+          if (page.sections && page.sections.length > 0) {
+            console.log(`Page "${page.title}" has ${page.sections.length} sections`);
+            page.sections.forEach((section, index) => {
+              console.log(`  Section ${index + 1} "${section.title}": content length = ${section.content?.length || 0} chars`);
+            });
+          } else {
+            console.log(`WARNING: Page "${page.title}" has no sections or empty sections array`);
+          }
+        });
+      }
+      
       // Convert back to a formatted string for storage
       return JSON.stringify(parsedJson, null, 2);
     } catch (parseError) {
