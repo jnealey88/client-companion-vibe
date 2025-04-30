@@ -560,8 +560,30 @@ Your Web Professional`);
         description: "Expanding content... This may take a few seconds.",
       });
       
+      // Extract plain text content if it's in Editor.js format
+      let contentToExpand = section.content;
+      let isEditorContent = false;
+      
+      try {
+        // Check if the content is in Editor.js format
+        const contentObj = typeof section.content === 'string' ? 
+          JSON.parse(section.content) : section.content;
+          
+        if (contentObj && contentObj.blocks) {
+          isEditorContent = true;
+          // Extract plain text from all blocks
+          contentToExpand = contentObj.blocks
+            .map((block: any) => block.data?.text || '')
+            .filter(Boolean)
+            .join('\n\n');
+        }
+      } catch (e) {
+        // Not JSON format, use as is
+        contentToExpand = String(section.content);
+      }
+      
       // Prevent expanding content that's too short
-      if (section.content.trim().length < 10) {
+      if (contentToExpand.trim().length < 10) {
         toast({
           title: "Content Too Short",
           description: "Please enter more initial content before expanding with AI.",
@@ -701,8 +723,37 @@ Your Web Professional`);
     const sectionIndex = updatedSiteMapData.pages[pageIndex].sections.findIndex(s => s.id === sectionId);
     if (sectionIndex === -1) return;
     
-    // Update the content
+    // Update the content - handle both string and EditorJs content
     updatedSiteMapData.pages[pageIndex].sections[sectionIndex].content = newContent;
+    
+    // Update word count based on new content
+    try {
+      // If it's a JSON string from EditorJs, try to estimate word count from blocks
+      let wordCount = 50; // Default fallback
+      const contentObj = typeof newContent === 'string' ? JSON.parse(newContent) : newContent;
+      
+      if (contentObj && contentObj.blocks) {
+        // Sum up word count from text in all blocks
+        wordCount = contentObj.blocks.reduce((count: number, block: any) => {
+          if (block.data && block.data.text) {
+            return count + block.data.text.split(/\s+/).filter(Boolean).length;
+          }
+          return count;
+        }, 0);
+      } else if (typeof newContent === 'string') {
+        // Plain text fallback
+        wordCount = newContent.split(/\s+/).filter(Boolean).length;
+      }
+      
+      updatedSiteMapData.pages[pageIndex].sections[sectionIndex].wordCount = 
+        wordCount > 0 ? wordCount : 50;
+    } catch (e) {
+      // If parsing fails, just count words in the raw string
+      if (typeof newContent === 'string') {
+        updatedSiteMapData.pages[pageIndex].sections[sectionIndex].wordCount = 
+          newContent.split(/\s+/).filter(Boolean).length || 50;
+      }
+    }
     
     // Update state
     setSiteMapData(updatedSiteMapData);
@@ -1176,12 +1227,16 @@ Your Web Professional`);
                                             )}
                                           </div>
                                           <div className="prose prose-sm max-w-none">
-                                            <Textarea 
-                                              value={section.content}
-                                              onChange={(e) => handleSectionUpdate(page.id, section.id, e.target.value)}
-                                              className="min-h-[100px] resize-y"
-                                              placeholder="Enter section content here..."
-                                            />
+                                            <div className="section-editor-container border rounded">
+                                              {/* Using Editor.js for rich content editing */}
+                                              <EditorJs
+                                                content={section.content}
+                                                onChange={(content) => handleSectionUpdate(page.id, section.id, content)}
+                                                readOnly={false}
+                                                className="prose max-w-none min-h-[150px]"
+                                                placeholder="Enter section content here..."
+                                              />
+                                            </div>
                                             <div className="mt-2 flex justify-end">
                                               <Button
                                                 variant="outline"
