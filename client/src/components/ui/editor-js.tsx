@@ -1,23 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createReactEditorJS } from 'react-editor-js';
 import { OutputData } from '@editorjs/editorjs';
 
-// Import EditorJS tools (with type assertions to avoid TypeScript errors)
-import Header from '@editorjs/header';
-import List from '@editorjs/list';
-import Paragraph from '@editorjs/paragraph';
-import Quote from '@editorjs/quote';
-import Checklist from '@editorjs/checklist';
-import LinkTool from '@editorjs/link';
-import Table from '@editorjs/table';
-import Marker from '@editorjs/marker';
-import Code from '@editorjs/code';
-import Embed from '@editorjs/embed';
-import Image from '@editorjs/image';
-import Delimiter from '@editorjs/delimiter';
-import Warning from '@editorjs/warning';
-
-const ReactEditorJS = createReactEditorJS();
+// We'll dynamically import the tools to avoid 'require is not defined' errors in production
+// Dynamically import createReactEditorJS to prevent "require is not defined" error
+const ReactEditorJS = React.lazy(() => 
+  import('react-editor-js').then(module => {
+    const { createReactEditorJS } = module;
+    return { default: createReactEditorJS() };
+  })
+);
 
 interface EditorJsProps {
   content: string;
