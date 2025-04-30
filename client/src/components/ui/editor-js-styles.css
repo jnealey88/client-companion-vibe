@@ -48,10 +48,11 @@
   position: relative;
   margin: 1.5rem 0;
   padding: 1.5rem;
-  background-color: #f9fafb;
+  background-color: #f0f9ff;
   border-left: 4px solid #3b82f6;
   border-radius: 0.375rem;
   font-style: italic;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .ce-block--quote:before {
@@ -64,23 +65,45 @@
   opacity: 0.4;
 }
 
+/* Quote hover effect */
+.ce-block--quote:hover {
+  background-color: #e0f2fe;
+  transition: background-color 0.2s ease;
+}
+
 /* Enhance headings */
 .ce-header {
   margin-top: 1.5rem;
   margin-bottom: 1rem;
   font-weight: 700;
+  position: relative;
+  padding-bottom: 0.5rem;
 }
 
 .ce-header h1 {
   font-size: 1.875rem;
   line-height: 2.25rem;
   color: #1f2937;
+  border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+  padding-bottom: 0.5rem;
 }
 
 .ce-header h2 {
   font-size: 1.5rem;
   line-height: 2rem;
   color: #374151;
+  position: relative;
+}
+
+.ce-header h2:after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 2rem;
+  height: 3px;
+  background-color: #3b82f6;
+  border-radius: 1px;
 }
 
 .ce-header h3 {
@@ -92,18 +115,50 @@
 /* Enhance lists */
 .cdx-list {
   padding-left: 1.5rem;
-  margin: 1rem 0;
+  margin: 1.5rem 0;
 }
 
 .cdx-list__item {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  position: relative;
+  padding-left: 0.25rem;
+}
+
+/* Unordered list styling */
+.cdx-list--unordered .cdx-list__item::before {
+  content: '';
+  position: absolute;
+  left: -1rem;
+  top: 0.5rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+}
+
+/* Ordered list styling */
+.cdx-list--ordered {
+  counter-reset: item;
+}
+
+.cdx-list--ordered .cdx-list__item {
+  counter-increment: item;
+}
+
+.cdx-list--ordered .cdx-list__item::before {
+  content: counter(item) ".";
+  position: absolute;
+  left: -1.5rem;
+  color: #3b82f6;
+  font-weight: 600;
 }
 
 /* Enhance delimiters */
 .ce-delimiter {
-  margin: 1.5rem 0;
+  margin: 2rem 0;
   position: relative;
   text-align: center;
+  height: 20px;
 }
 
 .ce-delimiter:before {
@@ -111,7 +166,19 @@
   display: block;
   width: 100%;
   height: 1px;
-  background: linear-gradient(to right, rgba(209, 213, 219, 0), rgba(209, 213, 219, 1) 50%, rgba(209, 213, 219, 0));
+  background: linear-gradient(to right, rgba(59, 130, 246, 0), rgba(59, 130, 246, 0.5) 50%, rgba(59, 130, 246, 0));
+}
+
+.ce-delimiter:after {
+  content: '•••';
+  position: absolute;
+  top: -0.5rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: rgba(59, 130, 246, 0.5);
+  font-size: 1rem;
+  letter-spacing: 0.5rem;
 }
 
 /* Visual suggestion block */

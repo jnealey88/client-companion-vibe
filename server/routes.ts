@@ -630,7 +630,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Content expansion endpoint for AI-powered text enhancement
   app.post("/api/content/expand", async (req: Request, res: Response) => {
     try {
-      const { content, context } = req.body;
+      const { content, context, isEditorContent } = req.body;
       
       if (!content) {
         return res.status(400).json({ 
@@ -651,8 +651,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      console.log("Expanding content with context:", JSON.stringify(context));
+      // Create a complete context object with the Editor.js format flag
+      const enhancedContext = {
+        ...(context || {}),
+        isEditorContent: Boolean(isEditorContent)
+      };
+      
+      console.log("Expanding content with context:", JSON.stringify(enhancedContext));
       console.log("Original content length:", content.length);
+      console.log("Using Editor.js format:", Boolean(isEditorContent));
       
       // Add a timeout for the OpenAI call
       const timeoutPromise = new Promise((_, reject) => {
@@ -660,7 +667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Expand the content using OpenAI with timeout handling
-      const expandContentPromise = expandSectionContent(content, context || {});
+      const expandContentPromise = expandSectionContent(content, enhancedContext);
       const expandedContent = await Promise.race([expandContentPromise, timeoutPromise]) as string;
       
       // Validate the expanded content

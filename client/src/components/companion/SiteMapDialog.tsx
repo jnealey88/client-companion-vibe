@@ -571,16 +571,42 @@ Your Web Professional`);
           
         if (contentObj && contentObj.blocks) {
           isEditorContent = true;
-          // Extract plain text from all blocks
+          
+          // Extract plain text from all blocks with better formatting preservation
           contentToExpand = contentObj.blocks
-            .map((block: any) => block.data?.text || '')
+            .map((block: any) => {
+              // Handle different block types appropriately
+              if (block.type === 'header') {
+                const level = block.data.level || 2;
+                return `${'#'.repeat(level)} ${block.data.text}`;
+              } else if (block.type === 'list') {
+                if (block.data.style === 'ordered') {
+                  return (block.data.items || [])
+                    .map((item: string, i: number) => `${i+1}. ${item}`)
+                    .join('\n');
+                } else {
+                  return (block.data.items || [])
+                    .map((item: string) => `- ${item}`)
+                    .join('\n');
+                }
+              } else if (block.type === 'quote') {
+                return `> ${block.data.text}`;
+              } else if (block.type === 'delimiter') {
+                return '---';
+              } else {
+                return block.data.text || '';
+              }
+            })
             .filter(Boolean)
             .join('\n\n');
         }
       } catch (e) {
         // Not JSON format, use as is
         contentToExpand = String(section.content);
+        isEditorContent = false;
       }
+      
+      console.log("Content format detection - using Editor.js:", isEditorContent);
       
       // Prevent expanding content that's too short
       if (contentToExpand.trim().length < 10) {
