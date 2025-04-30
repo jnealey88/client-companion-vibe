@@ -1028,7 +1028,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                               key={type} 
                               className={`overflow-hidden shadow-sm transition-all duration-300 ease-in-out
                                 ${task?.content 
-                                  ? "border-gray-200 bg-white hover:shadow-sm" 
+                                  ? "border-gray-200 bg-gray-50 hover:shadow-sm" 
                                   : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md hover:transform hover:-translate-y-1"}`}
                             >
                               <CardHeader className={`p-4 ${task?.content ? "pb-2 bg-gray-50" : "pb-2"}`}>
@@ -1059,7 +1059,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   </div>
                                 </div>
                               </CardHeader>
-                              <CardContent className={`p-4 ${task?.content ? "pt-0 pb-4 bg-gray-50" : "pt-0"}`}>
+                              <CardContent className={`p-4 ${task?.content ? "pt-0 pb-4 bg-gray-50" : "pt-0"}`} style={{
+                                backgroundColor: task?.content ? "#f9fafb" : "white"
+                              }}>
                                 <div className="flex flex-col gap-2 mt-3">
                                   {/* Loading state with progress */}
                                   {generatingTasks[type] && (
