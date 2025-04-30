@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import ClientPerformanceDashboard from "../dashboard/ClientPerformanceDashboard";
 import { 
   FileText, 
   Check, 
@@ -26,12 +25,7 @@ import {
   Trash2,
   Clock,
   Timer,
-  Info,
-  Zap,
-  Lock,
-  Search,
-  Shield,
-  PieChart
+  Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,16 +92,16 @@ const taskTypes = {
   contract: {
     icon: <Scroll className="h-5 w-5" />,
     label: "Contract",
-    description: "Legal agreement with terms and conditions",
+    description: "Professional service agreement",
     iconColor: "bg-purple-50 text-purple-600",
     phase: "Planning",
-    timeSaved: 180 // Time saved in minutes (3 hours)
+    timeSaved: 90 // Time saved in minutes (1.5 hours)
   },
   third_party: {
     icon: <Link className="h-5 w-5" />,
-    label: "Third-Party Services",
-    description: "Additional service recommendations",
-    iconColor: "bg-purple-50 text-purple-600",
+    label: "3rd Party Integrations",
+    description: "Plan for CRM, payment gateways, analytics and other tools",
+    iconColor: "bg-indigo-50 text-indigo-600",
     phase: "Planning",
     timeSaved: 60 // Time saved in minutes (1 hour)
   },
@@ -115,68 +109,78 @@ const taskTypes = {
   // Design and Development phase tasks
   site_map: {
     icon: <FolderTree className="h-5 w-5" />,
-    label: "Site Map",
-    description: "Visual representation of website structure",
+    label: "Site Map & Content",
+    description: "Site structure and content plan",
     iconColor: "bg-amber-50 text-amber-600",
-    phase: "Design and Development",
-    timeSaved: 90 // Time saved in minutes (1.5 hours)
+    phase: "Planning",
+    timeSaved: 150 // Time saved in minutes (2.5 hours)
   },
   ai_site_designer: {
-    icon: <MessageCircle className="h-5 w-5" />,
+    icon: <Sparkles className="h-5 w-5" />,
     label: "AI Site Designer",
-    description: "AI-assisted website design recommendations",
+    description: "Generate design mockups and UI components",
     iconColor: "bg-amber-50 text-amber-600",
     phase: "Design and Development",
-    timeSaved: 120 // Time saved in minutes (2 hours)
+    timeSaved: 300 // Time saved in minutes (5 hours)
   },
   ai_qa_tool: {
-    icon: <Bot className="h-5 w-5" />,
+    icon: <TestTube className="h-5 w-5" />,
     label: "AI QA Tool",
-    description: "Quality assurance testing with AI",
-    iconColor: "bg-amber-50 text-amber-600",
+    description: "Automated testing and quality assurance",
+    iconColor: "bg-red-50 text-red-600",
     phase: "Design and Development",
-    timeSaved: 120 // Time saved in minutes (2 hours)
+    timeSaved: 180 // Time saved in minutes (3 hours)
   },
   
-  // Post Launch Management phase tasks (will be replaced by dashboard)
-  seo_performance: {
-    icon: <Search className="h-5 w-5" />,
-    label: "SEO Performance",
-    description: "Search engine optimization analysis",
-    iconColor: "bg-indigo-50 text-indigo-600",
-    phase: "Post Launch Management",
-    timeSaved: 90 // Time saved in minutes (1.5 hours)
-  },
-  site_speed: {
-    icon: <Zap className="h-5 w-5" />,
-    label: "Site Speed",
-    description: "Website performance analysis",
-    iconColor: "bg-indigo-50 text-indigo-600",
+  // Post Launch Management phase tasks
+  status_update: {
+    icon: <MessageCircle className="h-5 w-5" />,
+    label: "Status Update",
+    description: "Client status update email",
+    iconColor: "bg-pink-50 text-pink-600",
     phase: "Post Launch Management",
     timeSaved: 60 // Time saved in minutes (1 hour)
   },
-  security_scan: {
-    icon: <Lock className="h-5 w-5" />,
-    label: "Security Scan",
-    description: "Website security vulnerability assessment",
-    iconColor: "bg-indigo-50 text-indigo-600",
+  site_maintenance: {
+    icon: <Wrench className="h-5 w-5" />,
+    label: "Site Maintenance",
+    description: "Regular updates and maintenance tasks",
+    iconColor: "bg-green-50 text-green-600",
     phase: "Post Launch Management",
-    timeSaved: 90 // Time saved in minutes (1.5 hours)
+    timeSaved: 120 // Time saved in minutes (2 hours)
   },
-  uptime_monitor: {
-    icon: <Clock className="h-5 w-5" />,
-    label: "Uptime Monitor",
-    description: "Website availability monitoring",
-    iconColor: "bg-indigo-50 text-indigo-600",
+  site_optimizer: {
+    icon: <LineChart className="h-5 w-5" />,
+    label: "Site Optimizer",
+    description: "Performance optimization and SEO enhancements",
+    iconColor: "bg-orange-50 text-orange-600",
     phase: "Post Launch Management",
-    timeSaved: 60 // Time saved in minutes (1 hour)
+    timeSaved: 240 // Time saved in minutes (4 hours)
   }
 };
 
-// Project phases in order
-const projectPhases = ["Discovery", "Planning", "Design and Development", "Post Launch Management"];
+// Filter out "All Status" from the status options
+const projectPhases = statusOptions.filter(status => status !== "All Status");
 
-// Format minutes into a human-readable string (e.g., "3 hr 15 min")
+// Helper function for status badge styling
+const getPhaseStatusClass = (status: string): string => {
+  const normalizedStatus = status.toLowerCase();
+  
+  switch (normalizedStatus) {
+    case 'discovery':
+      return 'bg-blue-100 text-blue-800';
+    case 'planning':
+      return 'bg-purple-100 text-purple-800';
+    case 'design and development':
+      return 'bg-amber-100 text-amber-800';
+    case 'post launch management':
+      return 'bg-green-100 text-green-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
+// Helper function to format time saved in a human-readable format
 const formatTimeSaved = (minutes: number): string => {
   if (minutes < 60) {
     return `${minutes} min`;
@@ -210,9 +214,6 @@ interface ClientCompanionProps {
 }
 
 export default function ClientCompanion({ client }: ClientCompanionProps) {
-  // Check if we should show the dashboard (Post Launch Management phase)
-  const isPostLaunchPhase = client.status === "Post Launch Management";
-
   const [selectedTask, setSelectedTask] = useState<CompanionTask | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(client.status);
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
@@ -365,38 +366,13 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       "Adding terms and conditions...",
       "Finalizing contract document..."
     ],
-    // New post-launch dashboard tasks loading stages
-    seo_performance: [
-      "Analyzing search engine data...",
-      "Checking keyword positions...",
-      "Evaluating organic traffic trends...",
-      "Calculating search visibility scores...",
-      "Identifying keyword opportunities...",
-      "Finalizing SEO performance report..."
-    ],
-    site_speed: [
-      "Running page speed tests...",
-      "Measuring core web vitals...",
-      "Analyzing loading performance...",
-      "Checking mobile responsiveness...",
-      "Identifying optimization opportunities...",
-      "Finalizing performance report..."
-    ],
-    security_scan: [
-      "Running security checks...",
-      "Scanning for vulnerabilities...",
-      "Testing SSL configuration...",
-      "Checking for malware presence...",
-      "Evaluating security headers...",
-      "Finalizing security report..."
-    ],
-    uptime_monitor: [
-      "Checking website availability...",
-      "Measuring response times...",
-      "Analyzing uptime history...",
-      "Testing server performance...",
-      "Identifying reliability issues...",
-      "Finalizing uptime report..."
+    status_update: [
+      "Gathering project milestones...",
+      "Checking completion status...",
+      "Evaluating timeline adherence...",
+      "Calculating completion percentage...",
+      "Creating visual progress indicators...",
+      "Finalizing status report..."
     ],
     default: [
       "Starting process...",
@@ -518,151 +494,223 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         }
         
         const newProgress = Math.min(95, currentProgress + 1);
-        return { ...prev, [taskType]: newProgress };
-      });
-      
-      // Update stage based on progress
-      setGenerationStage(prev => {
-        const currentProgress = generationProgress[taskType] || 0;
-        const stages = loadingStages[taskType] || loadingStages.default;
-        const numStages = stages.length;
-        const stageIndex = Math.min(numStages - 1, Math.floor(currentProgress / (100 / numStages)));
-        return { ...prev, [taskType]: stages[stageIndex] };
+        
+        // Update stage based on progress (change message every ~20%)
+        if (newProgress % 20 === 0) {
+          const stageIndex = Math.floor(newProgress / 20);
+          if (stages[stageIndex]) {
+            setGenerationStage(prev => ({...prev, [taskType]: stages[stageIndex]}));
+          }
+        }
+        
+        return {...prev, [taskType]: newProgress};
       });
     }, 300);
     
-    // Start the API call
-    generateMutation.mutate(mutationParams, {
-      onSuccess: (newTask) => {
-        clearInterval(intervalId); // Stop the progress simulation
-        
-        // Set progress to 100% to show completion
-        setGenerationProgress(prev => ({...prev, [taskType]: 100}));
-        
-        // Clear the generating state after a delay to show the completion animation
-        setTimeout(() => {
-          // Update tasks and reset states
-          setGeneratingTasks(prev => ({...prev, [taskType]: false}));
-          setGenerationLocks(prev => ({...prev, [taskType]: false}));
+    // Function to clean up and release the lock
+    const finishGeneration = () => {
+      // Release the lock for this task type
+      setGenerationLocks(prev => {
+        const newState = {...prev};
+        delete newState[taskType];
+        return newState;
+      });
+      
+      // Clear the loading indicators
+      clearInterval(intervalId);
+      setGeneratingTasks(prev => {
+        const newState = {...prev};
+        delete newState[taskType];
+        return newState;
+      });
+    };
+    
+    // Delay the actual API call slightly to allow the loading UI to appear
+    setTimeout(() => {
+      generateMutation.mutate(mutationParams, {
+        onSuccess: (data: any) => {
+          // Complete the progress bar animation
+          setGenerationProgress(prev => ({...prev, [taskType]: 100}));
+          setGenerationStage(prev => ({...prev, [taskType]: "Complete!"}));
           
-          // Handle special tasks
-          if (taskType === 'company_analysis') {
-            setCompanyAnalysisTask(newTask);
-          } else if (taskType === 'proposal') {
-            setProposalTask(newTask);
-          } else if (taskType === 'define_scope') {
-            setProjectScopeTask(newTask);
-          } else if (taskType === 'contract') {
-            setContractTask(newTask);
-          } else if (taskType === 'site_map') {
-            setSiteMapTask(newTask);
-          }
+          // Keep "Complete!" shown briefly before removing the loading state
+          setTimeout(() => {
+            finishGeneration();
+            
+            // If the task was successfully generated, show the appropriate dialog
+            if (data && typeof data === 'object') {
+              // Make sure we have a valid CompanionTask object
+              const taskData = data as CompanionTask;
+              
+              if (taskType === 'proposal') {
+                setProposalTask(taskData);
+                setIsProposalDialogOpen(true);
+              } else if (taskType === 'company_analysis') {
+                setCompanyAnalysisTask(taskData);
+                setIsCompanyAnalysisDialogOpen(true); 
+              } else if (taskType === 'define_scope') {
+                setProjectScopeTask(taskData);
+                setIsProjectScopeDialogOpen(true);
+              } else if (taskType === 'contract') {
+                setContractTask(taskData);
+                setIsContractDialogOpen(true);
+              } else if (taskType === 'site_map') {
+                setSiteMapTask(taskData);
+                setIsSiteMapDialogOpen(true);
+              } else if (taskData.content) {
+                setSelectedTask(taskData);
+              }
+            }
+          }, 1000);
+        },
+        onError: (error) => {
+          console.error(`Error generating ${taskType}:`, error);
+          // Clear this task from tracking on error
+          finishGeneration();
           
-          // If this was a company analysis, open the analysis dialog
-          if (taskType === 'company_analysis') {
-            setIsCompanyAnalysisDialogOpen(true);
-          } else if (taskType === 'proposal') {
-            setIsProposalDialogOpen(true);
-          } else if (taskType === 'define_scope') {
-            setIsProjectScopeDialogOpen(true);
-          } else if (taskType === 'contract') {
-            setIsContractDialogOpen(true);
-          } else if (taskType === 'site_map') {
-            setIsSiteMapDialogOpen(true);
-          }
-        }, 1000);
-      },
-      onError: () => {
-        clearInterval(intervalId); // Stop the progress simulation
-        setGeneratingTasks(prev => ({...prev, [taskType]: false}));
-        setGenerationLocks(prev => ({...prev, [taskType]: false}));
-      }
-    });
+          toast({
+            title: `${taskType.charAt(0).toUpperCase() + taskType.slice(1)} generation failed`,
+            description: "There was an error generating the content. Please try again.",
+            variant: "destructive"
+          });
+        }
+      });
+    }, 500);
   };
   
-  // Handle task deletion with confirmation
+  // Handle re-generation of content (retry)
+  const handleRetry = (taskType: string) => {
+    // Use the same handler as generate for retry
+    handleGenerate(taskType);
+  };
+  
+  // Handle delete request - open confirmation dialog
   const handleDelete = (task: CompanionTask) => {
+    // Store the task to delete
     setTaskToDelete(task);
+    
+    // If we're deleting a task that's currently open in a dialog, close it
+    if (task.type === 'proposal' && proposalTask?.id === task.id) {
+      setIsProposalDialogOpen(false);
+    } else if (task.type === 'company_analysis' && companyAnalysisTask?.id === task.id) {
+      setIsCompanyAnalysisDialogOpen(false);
+    } else if (task.type === 'schedule_discovery') {
+      setIsDiscoveryDialogOpen(false);
+    } else if (task.type === 'define_scope' && projectScopeTask?.id === task.id) {
+      setIsProjectScopeDialogOpen(false);
+    } else if (task.type === 'contract' && contractTask?.id === task.id) {
+      setIsContractDialogOpen(false);
+    } else if (task.type === 'site_map' && siteMapTask?.id === task.id) {
+      setSiteMapTask(undefined);
+      setIsSiteMapDialogOpen(false);
+    }
+    
+    // Open the delete confirmation dialog
     setDeleteDialogOpen(true);
   };
   
-  // Get tasks organized by project phase
-  const tasksByPhase: Record<string, Array<{type: string, task: CompanionTask | undefined}>> = {};
+  // Handle confirmed deletion
+  const confirmDelete = () => {
+    if (!taskToDelete) return;
+    
+    deleteMutation.mutate(taskToDelete.id);
+    
+    // If this was a proposal task, make sure to reset the proposal task state
+    // and close any open dialogs
+    if (taskToDelete.type === 'proposal' && proposalTask?.id === taskToDelete.id) {
+      setProposalTask(undefined);
+      setIsProposalDialogOpen(false);
+    } else if (taskToDelete.type === 'company_analysis' && companyAnalysisTask?.id === taskToDelete.id) {
+      setCompanyAnalysisTask(undefined);
+      setIsCompanyAnalysisDialogOpen(false);
+    } else if (taskToDelete.type === 'schedule_discovery') {
+      setIsDiscoveryDialogOpen(false);
+    } else if (taskToDelete.type === 'define_scope' && projectScopeTask?.id === taskToDelete.id) {
+      setProjectScopeTask(undefined);
+      setIsProjectScopeDialogOpen(false);
+    } else if (taskToDelete.type === 'contract' && contractTask?.id === taskToDelete.id) {
+      setContractTask(undefined);
+      setIsContractDialogOpen(false);
+    } else if (taskToDelete.type === 'site_map' && siteMapTask?.id === taskToDelete.id) {
+      setSiteMapTask(undefined);
+      setIsSiteMapDialogOpen(false);
+    }
+    
+    // Close dialog and reset taskToDelete
+    setDeleteDialogOpen(false);
+    setTaskToDelete(null);
+  };
   
-  // Initialize empty arrays for each phase
+  // Group tasks by type for easier display
+  const tasksByType: Record<string, CompanionTask | undefined> = {};
+  if (tasks) {
+    // Get the latest task of each type
+    tasks.forEach(task => {
+      if (!tasksByType[task.type] || new Date(task.createdAt) > new Date(tasksByType[task.type]!.createdAt)) {
+        tasksByType[task.type] = task;
+      }
+    });
+  }
+  
+  // Group tasks by project phase
+  const tasksByPhase: Record<string, { type: string, task: CompanionTask | undefined }[]> = {};
+  
+  // Initialize all phases
   projectPhases.forEach(phase => {
     tasksByPhase[phase] = [];
   });
   
-  // Sort task types into their respective phases
+  // Group tasks by their respective phases
   Object.entries(taskTypes).forEach(([type, info]) => {
     const phase = info.phase;
-    const task = tasks?.find(t => t.type === type);
-    
-    if (tasksByPhase[phase]) {
+    if (phase && tasksByPhase[phase]) {
       tasksByPhase[phase].push({
         type,
-        task
+        task: tasksByType[type]
       });
     }
   });
-
-  // Check for completed tasks in each phase
-  const phaseHasCompletedTasks: Record<string, boolean> = {};
-  Object.entries(tasksByPhase).forEach(([phase, phaseTasks]) => {
-    phaseHasCompletedTasks[phase] = phaseTasks.some(({task}) => task?.content);
-  });
   
-  // Update tasks state when a dialog is closed
-  useEffect(() => {
-    if (companyAnalysisTask?.id && !isCompanyAnalysisDialogOpen) {
-      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
-    }
-  }, [companyAnalysisTask, isCompanyAnalysisDialogOpen]);
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Client Companion</CardTitle>
+          <CardDescription>Loading tasks...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
   
-  useEffect(() => {
-    if (proposalTask?.id && !isProposalDialogOpen) {
-      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
-    }
-  }, [proposalTask, isProposalDialogOpen]);
-  
-  // Close specific dialogs when selected task changes
-  useEffect(() => {
-    if (selectedTask) {
-      if (selectedTask.type === 'company_analysis' && companyAnalysisTask?.id === selectedTask.id) {
-        setIsCompanyAnalysisDialogOpen(false);
-      } else if (selectedTask.type === 'proposal' && proposalTask?.id === selectedTask.id) {
-        setIsProposalDialogOpen(false);
-      } else if (selectedTask.type === 'define_scope' && projectScopeTask?.id === selectedTask.id) {
-        setIsProjectScopeDialogOpen(false);
-      } else if (selectedTask.type === 'contract' && contractTask?.id === selectedTask.id) {
-        setIsContractDialogOpen(false);
-      } else if (selectedTask.type === 'site_map' && siteMapTask?.id === selectedTask.id) {
-        setIsSiteMapDialogOpen(false);
-      }
-    }
-  }, [selectedTask]);
-
   return (
-    <Card className="h-full shadow-md">
-      {/* Confirmation Dialog for deleting content */}
+    <Card className="h-full">
+      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this content?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the AI-generated content.
+              This action cannot be undone. The content will be permanently deleted.
+              {taskToDelete ? (
+                <div className="mt-2 p-2 bg-gray-50 rounded border">
+                  <div className="font-medium">
+                    {taskTypes[taskToDelete.type as keyof typeof taskTypes]?.label}
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Generated on {new Date(taskToDelete.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              ) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={() => {
-                if (taskToDelete?.id) {
-                  deleteMutation.mutate(taskToDelete.id);
-                }
-              }}
-              className="bg-destructive hover:bg-destructive/90"
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               Delete
             </AlertDialogAction>
@@ -670,43 +718,40 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* Schedule Discovery Call dialog */}
-      <ScheduleDiscoveryDialog
+      {/* Discovery call scheduling dialog */}
+      <ScheduleDiscoveryDialog 
         open={isDiscoveryDialogOpen}
         onOpenChange={setIsDiscoveryDialogOpen}
         client={client}
-        analysisId={companyAnalysisTask?.id}
-        onTaskGenerated={(task) => {
-          // Check if this is a new task request (dummy task with no content)
-          if (!task.content && task.type === 'schedule_discovery') {
-            // Generate a new schedule using the in-card loading state
-            handleGenerate('schedule_discovery', { analysisId: companyAnalysisTask?.id });
-          } else {
-            // This is a real task, show it in the dialog
-            setTimeout(() => {
-              // Update the selected task
-              setSelectedTask(task);
-            }, 1000);
-          }
-        }}
       />
       
-      {/* Proposal dialog */}
+      {/* Project proposal dialog */}
       <ProposalDialog
         open={isProposalDialogOpen}
         onOpenChange={setIsProposalDialogOpen}
         client={client}
         existingTask={proposalTask}
-        companyAnalysisTask={companyAnalysisTask}
         onTaskGenerated={(task) => {
           // Check if this is a new task request (dummy task with no content)
           if (!task.content && task.type === 'proposal') {
-            // Generate a new proposal using the in-card loading state
-            handleGenerate('proposal', {
-              marketResearch: companyAnalysisTask?.content,
-            });
+            // Check if there are discovery notes in the metadata
+            if (task.metadata) {
+              try {
+                // Try to parse discovery notes from metadata
+                const metadata = JSON.parse(task.metadata);
+                if (metadata.discoveryNotes) {
+                  // Start in-card loading with discovery notes
+                  handleGenerate('proposal', { discoveryNotes: metadata.discoveryNotes });
+                  return;
+                }
+              } catch (e) {
+                console.error("Error parsing metadata:", e);
+              }
+            }
+            // No valid metadata with notes, generate without notes
+            handleGenerate('proposal');
           } else {
-            // This is a real task, show it in the dialog
+            // This is a real task with content, show it in the dialog
             setTimeout(() => {
               setProposalTask(task);
               setIsProposalDialogOpen(true);
@@ -715,15 +760,20 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         }}
       />
       
-      {/* Company Analysis dialog */}
+      {/* Company analysis dialog */}
       <CompanyAnalysisDialog
         open={isCompanyAnalysisDialogOpen}
         onOpenChange={setIsCompanyAnalysisDialogOpen}
         client={client}
         existingTask={companyAnalysisTask}
         onTaskGenerated={(task) => {
+          // Check if this is a request to schedule a discovery call
+          if (task.type === 'schedule_discovery') {
+            // Open the discovery dialog
+            setIsDiscoveryDialogOpen(true);
+          }
           // Check if this is a new task request (dummy task with no content)
-          if (!task.content && task.type === 'company_analysis') {
+          else if (!task.content && task.type === 'company_analysis') {
             // Generate a new analysis using the in-card loading state
             handleGenerate('company_analysis');
           } else {
@@ -736,20 +786,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         }}
       />
       
-      {/* Project Scope dialog */}
+      {/* Project scope dialog */}
       <ProjectScopeDialog
         open={isProjectScopeDialogOpen}
         onOpenChange={setIsProjectScopeDialogOpen}
         client={client}
         existingTask={projectScopeTask}
-        proposalTask={proposalTask}
         onTaskGenerated={(task) => {
           // Check if this is a new task request (dummy task with no content)
           if (!task.content && task.type === 'define_scope') {
-            // Generate a new project scope using the in-card loading state
-            handleGenerate('define_scope', {
-              proposalContent: proposalTask?.content,
-            });
+            // Generate a new scope document using the in-card loading state
+            handleGenerate('define_scope');
           } else {
             // This is a real task, show it in the dialog
             setTimeout(() => {
@@ -766,7 +813,6 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         onOpenChange={setIsContractDialogOpen}
         client={client}
         existingTask={contractTask}
-        proposalTask={proposalTask}
         onTaskGenerated={(task) => {
           // Check if this is a new task request (dummy task with no content)
           if (!task.content && task.type === 'contract') {
@@ -807,24 +853,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
           <div>
             <CardTitle className="flex items-center text-xl">
-              {isPostLaunchPhase ? (
-                <span>Website Performance Dashboard</span>
-              ) : (
-                <span>Client Companion</span>
-              )}
-              <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 border-blue-200">
-                {isPostLaunchPhase ? 'Post-Launch Care' : 'AI Assistant'}
-              </Badge>
+              <span>Client Companion</span>
+              <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 border-blue-200">AI Assistant</Badge>
             </CardTitle>
             <CardDescription className="text-gray-600 mt-1">
-              {isPostLaunchPhase 
-                ? "Monitor and manage your client's website performance and security"
-                : "AI-powered workflow assistant that helps you manage client projects efficiently"}
+              AI-powered workflow assistant that helps you manage client projects efficiently
             </CardDescription>
           </div>
           
-          {!isPostLaunchPhase && tasks && tasks.some(task => task.content) && (
-            <div className="flex justify-end items-center">
+          <div className="flex justify-end items-center">
+            {/* Display total time saved with enhanced information */}
+            {tasks && tasks.some(task => task.content) && (
               <div className="flex items-center bg-white border border-green-300 rounded-lg shadow-sm px-4 py-3 hover:shadow-md transition-all duration-200">
                 <div className="bg-green-100 text-green-700 p-2 rounded-md mr-3">
                   <Timer className="h-5 w-5" />
@@ -857,15 +896,13 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </CardHeader>
       
       <CardContent>
-        {isPostLaunchPhase ? (
-          <ClientPerformanceDashboard client={client} />
-        ) : selectedTask ? (
+        {selectedTask ? (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
@@ -1037,126 +1074,312 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                         {phaseTasks.map(({ type, task }) => {
                           const taskInfo = taskTypes[type as keyof typeof taskTypes];
                           return (
-                            <CompanionTaskCard 
-                              key={type}
-                              task={task}
-                              taskType={type}
-                              taskInfo={taskInfo}
-                              isGenerating={!!generatingTasks[type]}
-                              generationProgress={generationProgress[type] || 0}
-                              generationStage={generationStage[type] || ""}
-                              onSelect={handleTaskSelect}
-                              onGenerate={handleGenerate}
-                            />
+                            <Card 
+                              key={type} 
+                              className={`overflow-hidden shadow-sm transition-all duration-300 ease-in-out
+                                ${task?.content 
+                                  ? "border-gray-200 bg-gray-50 hover:shadow-sm" 
+                                  : type === 'company_analysis'
+                                    ? "border-blue-200 bg-white hover:border-blue-300 hover:shadow-md hover:transform hover:-translate-y-1 ring-2 ring-blue-100"
+                                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md hover:transform hover:-translate-y-1"}`}
+                            >
+                              <CardHeader className={`p-4 ${task?.content ? "pb-2 bg-gray-50" : "pb-2"}`}>
+                                <div className="flex items-start">
+                                  <div className={`p-2.5 rounded-md ${task?.content ? "bg-gray-100 text-gray-700" : taskInfo.iconColor} mr-3 relative`}>
+                                    {taskInfo.icon}
+                                    {task?.content && (
+                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-gray-500 rounded-full flex items-center justify-center shadow-sm">
+                                        <Check className="h-3 w-3 text-white" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex justify-between items-start w-full">
+                                      <CardTitle className="text-base flex items-center gap-2">
+                                        {taskInfo.label}
+                                        {task?.content ? (
+                                          <span className="text-xs text-gray-600 font-medium bg-gray-50 px-1.5 py-0.5 rounded-sm">Completed</span>
+                                        ) : (
+                                          // Add "Start Here" tag for Company Analysis when it hasn't been generated
+                                          type === 'company_analysis' && (
+                                            <span className="text-xs text-white font-medium bg-blue-500 px-1.5 py-0.5 rounded-sm animate-pulse">
+                                              Start Here
+                                            </span>
+                                          )
+                                        )}
+                                      </CardTitle>
+                                      {/* Time-saved badge removed from individual tasks */}
+                                    </div>
+                                    {!task?.content && (
+                                      <CardDescription className="text-xs line-clamp-2 mt-1 text-gray-600">
+                                        {taskInfo.description}
+                                      </CardDescription>
+                                    )}
+                                  </div>
+                                </div>
+                              </CardHeader>
+                              <CardContent className={`p-4 ${task?.content ? "pt-0 pb-4 bg-gray-50" : "pt-0"}`} style={{
+                                backgroundColor: task?.content ? "#f9fafb" : "white"
+                              }}>
+                                <div className="flex flex-col gap-2 mt-3">
+                                  {/* Loading state with progress */}
+                                  {generatingTasks[type] && (
+                                    <div className="space-y-2 p-3 border rounded-md bg-white">
+                                      <div className="text-sm font-medium text-center text-primary">
+                                        {generationStage[type] || "Generating..."}
+                                      </div>
+                                      
+                                      <div className="w-full bg-gray-100 rounded-full h-2">
+                                        <div 
+                                          className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out" 
+                                          style={{ 
+                                            width: `${generationProgress[type] || 0}%` 
+                                          }}
+                                        />
+                                      </div>
+                                      
+                                      <div className="flex justify-between text-xs text-gray-500">
+                                        <span>Research</span>
+                                        <span>Analysis</span>
+                                        <span>Completion</span>
+                                      </div>
+                                      
+                                      <p className="text-xs text-center text-gray-600 mt-1">
+                                        {/* Type-specific loading messages */}
+                                        {type === 'company_analysis' 
+                                          ? "Analyzing business data and website performance..."
+                                          : type === 'proposal'
+                                            ? "Creating proposal with pricing recommendations..."
+                                            : "Generating content, please wait..."}
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Button - only show if not currently generating */}
+                                  {!generatingTasks[type] && (
+                                    <Button 
+                                      className={`w-full shadow-sm transition-all duration-300 ${
+                                        task?.content 
+                                          ? "bg-gray-200 hover:bg-gray-300 text-gray-800 hover:shadow h-10" 
+                                          : type === 'company_analysis'
+                                            ? "bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md h-10"
+                                            : "hover:border-gray-400 hover:shadow h-10"
+                                      }`}
+                                      variant={
+                                        task?.content 
+                                          ? "secondary" 
+                                          : type === 'company_analysis'
+                                            ? "default"
+                                            : "outline"
+                                      }
+                                      onClick={() => {
+                                        if (type === 'schedule_discovery') {
+                                          setIsDiscoveryDialogOpen(true);
+                                        } else if (type === 'proposal') {
+                                          if (task?.content) {
+                                            // Open existing proposal in the dialog
+                                            setProposalTask(task);
+                                            setIsProposalDialogOpen(true);
+                                          } else {
+                                            // For new proposals, always show the dialog to collect notes first
+                                            setIsProposalDialogOpen(true);
+                                          }
+                                        } else if (type === 'company_analysis' && task?.content) {
+                                          // Open company analysis dialog only for existing tasks
+                                          setCompanyAnalysisTask(task);
+                                          setIsCompanyAnalysisDialogOpen(true);
+                                        } else if (type === 'define_scope' && task?.content) {
+                                          // Open project scope dialog for existing tasks
+                                          setProjectScopeTask(task);
+                                          setIsProjectScopeDialogOpen(true);
+                                        } else if (type === 'contract' && task?.content) {
+                                          // Open contract dialog for existing tasks
+                                          setContractTask(task);
+                                          setIsContractDialogOpen(true);
+                                        } else if (type === 'site_map' && task?.content) {
+                                          // Open site map dialog for existing tasks
+                                          setSiteMapTask(task);
+                                          setIsSiteMapDialogOpen(true);
+                                        } else if (task?.content) {
+                                          // View any other type of content
+                                          handleTaskSelect(task);
+                                        } else if (type === 'company_analysis') {
+                                          // Generate company analysis with in-card loading
+                                          handleGenerate(type);
+                                        } else {
+                                          // Generate other content types with in-card loading
+                                          handleGenerate(type);
+                                        }
+                                      }}
+                                      disabled={Object.keys(generatingTasks).length > 0}
+                                    >
+                                      {task?.content && (
+                                        <CheckCircle className="h-4 w-4 mr-2 text-gray-700" />
+                                      )}
+                                      {/* Follow the Generate → Review → Edit → View pattern */}
+                                      {!task?.content
+                                        ? 'Generate'
+                                        : ['company_analysis', 'site_map', 'ai_site_designer', 'ai_qa_tool', 'status_update', 'site_maintenance', 'site_optimizer'].includes(type)
+                                          ? 'Review'
+                                        : ['proposal', 'define_scope', 'contract', 'third_party'].includes(type)
+                                          ? 'Edit'
+                                        : 'View'}
+                                      <ArrowRight className="h-4 w-4 ml-1" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
                           );
                         })}
                       </div>
                     </div>
                   );
                 })}
+                
+                {selectedPhase && tasksByPhase[selectedPhase]?.length === 0 && (
+                  <div className="py-8 text-center">
+                    <div className="bg-gray-50 rounded-md p-6 flex flex-col items-center">
+                      <AlertCircle className="h-10 w-10 text-gray-400 mb-3" />
+                      <h3 className="text-lg font-medium text-gray-700">No tasks in this phase</h3>
+                      <p className="text-gray-500 mt-2 max-w-md">
+                        There are no tasks available for the {selectedPhase} phase.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </TabsContent>
             
             <TabsContent value="content" className="mt-4">
-              {phaseHasCompletedTasks.Discovery || 
-               phaseHasCompletedTasks.Planning || 
-               phaseHasCompletedTasks["Design and Development"] || 
-               phaseHasCompletedTasks["Post Launch Management"] ? (
-                <div className="space-y-8">
-                  {/* Generated content listing */}
-                  {Object.entries(tasksByPhase).map(([phase, phaseTasks]) => {
-                    const completedTasks = phaseTasks.filter(({task}) => task?.content);
-                    
-                    if (completedTasks.length === 0) return null;
-                    
-                    return (
-                      <div key={phase} className="mb-8">
-                        <h3 className="text-lg font-medium mb-4 pb-2 border-b">{phase}</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {completedTasks.map(({type, task}) => {
-                            if (!task) return null;
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Generated Content Library</h3>
+                  <Badge variant="outline" className="bg-transparent">
+                    {tasks?.filter(task => task.content).length || 0} items
+                  </Badge>
+                </div>
+                
+                {tasks && tasks.filter(task => task.content).length > 0 ? (
+                  <div className="space-y-6">
+                    {Object.entries(tasksByType)
+                      .filter(([_, task]) => task?.content)
+                      .map(([type, task]) => {
+                        const taskInfo = taskTypes[type as keyof typeof taskTypes];
+                        
+                        return (
+                          <Card 
+                            key={type} 
+                            className="overflow-hidden shadow-sm border border-gray-200 transition-all duration-300 ease-in-out hover:shadow-md hover:transform hover:-translate-y-1"
+                          >
+                            <CardHeader className="bg-white p-4 border-b border-gray-100">
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                  <div className={`p-2.5 rounded-md ${taskInfo?.iconColor} relative`}>
+                                    {taskInfo?.icon}
+                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-gray-500 rounded-full flex items-center justify-center shadow-sm">
+                                      <Check className="h-3 w-3 text-white" />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <CardTitle className="text-base flex items-center gap-2">
+                                      {taskInfo?.label}
+                                      <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 font-medium text-xs">
+                                        Completed
+                                      </Badge>
+                                    </CardTitle>
+                                    <CardDescription className="text-xs mt-1">
+                                      Phase: <span className="font-medium">{taskInfo?.phase}</span> • Generated: {new Date(task!.createdAt).toLocaleDateString()}
+                                    </CardDescription>
+                                  </div>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="text-destructive hover:bg-destructive/10 border-gray-200 shadow-sm transition-all duration-300 hover:shadow"
+                                    onClick={() => task && handleDelete(task)}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                    Delete
+                                  </Button>
+                                  
+                                  <Button 
+                                    variant="default"
+                                    size="sm"
+                                    className="bg-[#111111] hover:bg-[#333333] text-white shadow-sm transition-all duration-300 hover:shadow"
+                                    onClick={() => {
+                                      if (type === 'schedule_discovery') {
+                                        setIsDiscoveryDialogOpen(true);
+                                      } else if (type === 'proposal' && task) {
+                                        setProposalTask(task);
+                                        setIsProposalDialogOpen(true);
+                                      } else if (type === 'company_analysis' && task) {
+                                        setCompanyAnalysisTask(task);
+                                        setIsCompanyAnalysisDialogOpen(true);
+                                      } else if (type === 'define_scope' && task) {
+                                        setProjectScopeTask(task);
+                                        setIsProjectScopeDialogOpen(true);
+                                      } else if (type === 'contract' && task) {
+                                        setContractTask(task);
+                                        setIsContractDialogOpen(true);
+                                      } else if (type === 'site_map' && task) {
+                                        setSiteMapTask(task);
+                                        setIsSiteMapDialogOpen(true);
+                                      } else if (task) {
+                                        setSelectedTask(task);
+                                      }
+                                    }}
+                                  >
+                                    {/* Follow the Generate → Review → Edit → View pattern */}
+                                    {type === 'schedule_discovery' 
+                                      ? <><Calendar className="h-3.5 w-3.5 mr-1" /> Review</> 
+                                      : type === 'proposal' 
+                                        ? <><FileText className="h-3.5 w-3.5 mr-1" /> Edit</> 
+                                        : type === 'company_analysis' 
+                                          ? <><FileSearch className="h-3.5 w-3.5 mr-1" /> Review</> 
+                                          : type === 'define_scope'
+                                            ? <><ListFilter className="h-3.5 w-3.5 mr-1" /> Edit</>
+                                            : type === 'contract'
+                                              ? <><Scroll className="h-3.5 w-3.5 mr-1" /> Edit</>
+                                              : type === 'site_map'
+                                                ? <><FolderTree className="h-3.5 w-3.5 mr-1" /> Review</>
+                                                : <><FileText className="h-3.5 w-3.5 mr-1" /> View</>}
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardHeader>
                             
-                            const taskInfo = taskTypes[type as keyof typeof taskTypes];
-                            return (
-                              <Card 
-                                key={task.id} 
-                                className="border-gray-200 hover:border-gray-300 hover:shadow-sm cursor-pointer transition-all duration-200"
-                                onClick={() => handleTaskSelect(task)}
-                              >
-                                <CardHeader className="p-4 pb-2">
-                                  <div className="flex items-start gap-3">
-                                    <div className={`p-2 rounded-md ${taskInfo.iconColor}`}>
-                                      {taskInfo.icon}
-                                    </div>
-                                    <div>
-                                      <CardTitle className="text-base">
-                                        {taskInfo.label}
-                                      </CardTitle>
-                                      <CardDescription className="text-xs mt-1">
-                                        Generated: {new Date(task.createdAt).toLocaleDateString()}
-                                      </CardDescription>
-                                    </div>
-                                  </div>
-                                </CardHeader>
-                                <CardContent className="p-4 pt-2">
-                                  <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-1 text-sm text-gray-600">
-                                      <Clock className="h-3.5 w-3.5" />
-                                      <span>Saved {formatTimeSaved(taskInfo.timeSaved || 0)}</span>
-                                    </div>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      className="gap-1"
-                                    >
-                                      {type === 'company_analysis'
-                                        ? <><Bot className="h-3.5 w-3.5 mr-1" /> View Analysis</>
-                                        : type === 'schedule_discovery'
-                                        ? <><Calendar className="h-3.5 w-3.5 mr-1" /> View Email</>
-                                        : type === 'proposal'
-                                        ? <><LineChart className="h-3.5 w-3.5 mr-1" /> View Proposal</>
-                                        : type === 'define_scope'
-                                        ? <><ListFilter className="h-3.5 w-3.5 mr-1" /> View Scope</>
-                                        : type === 'contract'
-                                        ? <><Scroll className="h-3.5 w-3.5 mr-1" /> View Contract</>
-                                        : type === 'site_map'
-                                        ? <><FolderTree className="h-3.5 w-3.5 mr-1" /> Review</>
-                                        : <><FileText className="h-3.5 w-3.5 mr-1" /> View</>}
-                                    </Button>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <div className="bg-white rounded-lg p-8 flex flex-col items-center border border-gray-200 shadow-sm">
-                    <div className="bg-gray-50 p-6 rounded-full mb-6">
-                      <FileText className="h-12 w-12 text-gray-400" />
-                    </div>
-                    <h3 className="text-xl font-medium text-gray-700 mb-2">No content generated yet</h3>
-                    <p className="text-gray-500 mt-2 max-w-md">
-                      Generate content using the tools in the Tasks tab to build your content library.
-                    </p>
-                    <Button 
-                      variant="outline" 
-                      className="mt-6 shadow-sm hover:shadow"
-                      onClick={() => {
-                        const tasksTab = document.querySelector('[data-value="tasks"]') as HTMLElement;
-                        if (tasksTab) tasksTab.click();
-                      }}
-                    >
-                      <Layers className="h-4 w-4 mr-2" />
-                      Go to Tasks
-                    </Button>
+
+                          </Card>
+                        );
+                      })}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="py-12 text-center">
+                    <div className="bg-white rounded-lg p-8 flex flex-col items-center border border-gray-200 shadow-sm">
+                      <div className="bg-gray-50 p-6 rounded-full mb-6">
+                        <FileText className="h-12 w-12 text-gray-400" />
+                      </div>
+                      <h3 className="text-xl font-medium text-gray-700 mb-2">No content generated yet</h3>
+                      <p className="text-gray-500 mt-2 max-w-md">
+                        Generate content using the tools in the Tasks tab to build your content library.
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-6 shadow-sm hover:shadow"
+                        onClick={() => {
+                          const tasksTab = document.querySelector('[data-value="tasks"]') as HTMLElement;
+                          if (tasksTab) tasksTab.click();
+                        }}
+                      >
+                        <Layers className="h-4 w-4 mr-2" />
+                        Go to Tasks
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
         )}
@@ -1168,26 +1391,22 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
             <Sparkles className="h-4 w-4 text-blue-500" />
           </div>
           <div className="text-sm text-gray-600 font-medium">
-            {isPostLaunchPhase 
-              ? "Monitor and optimize your client's website with real-time metrics" 
-              : "Powered by AI to save time and help you focus on building great sites"}
+            Powered by AI to save time and help you focus on building great sites
           </div>
         </div>
         
-        {!isPostLaunchPhase && (
-          <div className="flex gap-2">
-            <Badge variant="outline" className="bg-green-50 border-green-100 text-green-700 flex items-center gap-1 shadow-sm">
-              <CheckCircle className="h-3 w-3 text-green-500" />
-              Tasks saved automatically
+        <div className="flex gap-2">
+          <Badge variant="outline" className="bg-green-50 border-green-100 text-green-700 flex items-center gap-1 shadow-sm">
+            <CheckCircle className="h-3 w-3 text-green-500" />
+            Tasks saved automatically
+          </Badge>
+          {tasks && calculateTotalTimeSaved(tasks) > 0 && (
+            <Badge variant="outline" className="bg-blue-50 border-blue-100 text-blue-700 flex items-center gap-1 shadow-sm">
+              <Timer className="h-3 w-3 text-blue-500" />
+              {formatTimeSaved(calculateTotalTimeSaved(tasks))} saved total
             </Badge>
-            {tasks && calculateTotalTimeSaved(tasks) > 0 && (
-              <Badge variant="outline" className="bg-blue-50 border-blue-100 text-blue-700 flex items-center gap-1 shadow-sm">
-                <Timer className="h-3 w-3 text-blue-500" />
-                {formatTimeSaved(calculateTotalTimeSaved(tasks))} saved total
-              </Badge>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </CardFooter>
     </Card>
   );

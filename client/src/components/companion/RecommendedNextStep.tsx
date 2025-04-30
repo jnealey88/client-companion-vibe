@@ -34,10 +34,9 @@ enum TaskType {
   AI_QA_TOOL = "ai_qa_tool",
   
   // Post Launch Management phase tasks
-  SEO_PERFORMANCE = "seo_performance",
-  SITE_SPEED = "site_speed",
-  SECURITY_SCAN = "security_scan",
-  UPTIME_MONITOR = "uptime_monitor"
+  STATUS_UPDATE = "status_update",
+  SITE_MAINTENANCE = "site_maintenance",
+  SITE_OPTIMIZER = "site_optimizer"
 }
 import { useToast } from "@/hooks/use-toast";
 
@@ -64,10 +63,9 @@ const phaseProgression = {
     { type: TaskType.AI_QA_TOOL, label: "AI QA Tool", description: "Test site quality" },
   ],
   "Post Launch Management": [
-    { type: TaskType.SEO_PERFORMANCE, label: "SEO Performance", description: "Monitor search rankings" },
-    { type: TaskType.SITE_SPEED, label: "Site Speed", description: "Analyze page load times" },
-    { type: TaskType.SECURITY_SCAN, label: "Security Scan", description: "Check for vulnerabilities" },
-    { type: TaskType.UPTIME_MONITOR, label: "Uptime Monitor", description: "Track website availability" },
+    { type: TaskType.STATUS_UPDATE, label: "Status Update", description: "Send status report" },
+    { type: TaskType.SITE_MAINTENANCE, label: "Site Maintenance", description: "Regular updates" },
+    { type: TaskType.SITE_OPTIMIZER, label: "Site Optimizer", description: "Optimize performance" },
   ]
 };
 

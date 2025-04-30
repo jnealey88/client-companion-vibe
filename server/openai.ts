@@ -29,10 +29,9 @@ export enum TaskType {
   AI_QA_TOOL = "ai_qa_tool",
   
   // Post Launch Management phase tasks
-  SEO_PERFORMANCE = "seo_performance",
-  SITE_SPEED = "site_speed",
-  SECURITY_SCAN = "security_scan",
-  UPTIME_MONITOR = "uptime_monitor"
+  STATUS_UPDATE = "status_update",
+  SITE_MAINTENANCE = "site_maintenance",
+  SITE_OPTIMIZER = "site_optimizer"
 }
 
 // Define interfaces for companion tasks
