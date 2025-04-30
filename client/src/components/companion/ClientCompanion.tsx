@@ -256,9 +256,7 @@ export default function ClientCompanion({ client, tasks }: ClientCompanionProps)
   // Mutation for deleting tasks
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest(`/api/companion-tasks/${id}`, {
-        method: 'DELETE',
-      });
+      await apiRequest(`/api/companion-tasks/${id}`, 'DELETE');
       return id;
     },
     onSuccess: (id) => {
@@ -282,15 +280,9 @@ export default function ClientCompanion({ client, tasks }: ClientCompanionProps)
   // Mutation for creating new tasks
   const createTaskMutation = useMutation({
     mutationFn: async ({ type, metadata }: { type: string, metadata?: any }) => {
-      const response = await apiRequest(`/api/clients/${client.id}/generate/${type}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(metadata || {}),
-      });
+      const response = await apiRequest(`/api/clients/${client.id}/generate/${type}`, 'POST', metadata || {});
       
-      return response as CompanionTask;
+      return response as unknown as CompanionTask;
     },
     onSuccess: (newTask) => {
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
