@@ -114,9 +114,7 @@ export default function AddClientDialog({
                         {...field} 
                       />
                     </FormControl>
-                    <FormDescription className="text-xs text-gray-500">
-                      The name of the company or organization
-                    </FormDescription>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -135,9 +133,7 @@ export default function AddClientDialog({
                         {...field} 
                       />
                     </FormControl>
-                    <FormDescription className="text-xs text-gray-500">
-                      Your main contact person at the company
-                    </FormDescription>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -156,9 +152,7 @@ export default function AddClientDialog({
                         {...field} 
                       />
                     </FormControl>
-                    <FormDescription className="text-xs text-gray-500">
-                      Job position or role of the contact
-                    </FormDescription>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -178,9 +172,7 @@ export default function AddClientDialog({
                         {...field} 
                       />
                     </FormControl>
-                    <FormDescription className="text-xs text-gray-500">
-                      Primary email for client communication
-                    </FormDescription>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -199,9 +191,7 @@ export default function AddClientDialog({
                         {...field} 
                       />
                     </FormControl>
-                    <FormDescription className="text-xs text-gray-500">
-                      Contact's business phone number
-                    </FormDescription>
+
                     <FormMessage />
                   </FormItem>
                 )}
@@ -216,58 +206,54 @@ export default function AddClientDialog({
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base">Project Phase *</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
+              <div className="flex space-x-4">
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel className="text-base">Project Phase *</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="h-[42px]">
+                            <SelectValue placeholder="Select phase" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {statusOptions.slice(1).map((status: string) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="websiteUrl"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel className="text-base">Website URL (optional)</FormLabel>
                       <FormControl>
-                        <SelectTrigger className="h-[42px]">
-                          <SelectValue placeholder="Select project phase" />
-                        </SelectTrigger>
+                        <Input 
+                          placeholder="https://example.com" 
+                          className="py-5"
+                          {...field} 
+                          value={field.value || ''}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {statusOptions.slice(1).map((status: string) => (
-                          <SelectItem key={status} value={status}>
-                            {status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription className="text-xs text-gray-500">
-                      Current phase in the client relationship
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="websiteUrl"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel className="text-base">Website URL (optional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="https://example.com" 
-                        className="py-5"
-                        {...field} 
-                        value={field.value || ''}
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs text-gray-500">
-                      Client's company website address - useful for analysis and research
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               
               {/* Hidden fields required by the database schema */}
               <FormField
@@ -302,15 +288,13 @@ export default function AddClientDialog({
                     <FormLabel className="text-base">Business Description</FormLabel>
                     <FormControl>
                       <Textarea 
-                        placeholder="Describe the business operations, goals, target audience, and any specific project requirements or challenges" 
-                        className="min-h-[150px] p-4 text-base"
+                        placeholder="Brief description of business operations and goals" 
+                        className="min-h-[100px] p-3 text-base"
                         {...field} 
                         value={field.value || ''}
                       />
                     </FormControl>
-                    <FormDescription className="text-xs text-gray-500 mt-2">
-                      This information helps us understand the client's business and will be used for AI-powered analysis and recommendations
-                    </FormDescription>
+
                     <FormMessage />
                   </FormItem>
                 )}
