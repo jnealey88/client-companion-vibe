@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { FileText, Copy, CheckCircle2, Send, AlertCircle, Trash2, FileSearch } from "lucide-react";
+import { FileText, Copy, CheckCircle2, Send, AlertCircle, Trash2, FileSearch, Calendar } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -265,13 +265,30 @@ export default function CompanyAnalysisDialog({
     setIsEdited(false);
   };
 
-  // Handle sending the analysis (would connect to email provider in a real app)
-  const handleSend = () => {
-    toast({
-      title: "Analysis ready to send",
-      description: "This would connect to your email provider in a real application.",
-    });
-    // In a real application, this would send the analysis via an email provider API
+  // Handle scheduling a discovery call
+  const handleScheduleDiscovery = () => {
+    // Close this dialog and notify the parent to open the discovery dialog
+    onOpenChange(false);
+    
+    // Use setTimeout to allow this dialog to close first
+    setTimeout(() => {
+      // Call the onTaskGenerated callback with a dummy task to request a discovery call
+      if (onTaskGenerated) {
+        // Create a dummy task for the parent to identify as a discovery request
+        const dummyTask = { 
+          id: 0,
+          clientId: client.id,
+          type: 'schedule_discovery',
+          status: 'pending',
+          content: null,
+          createdAt: new Date(),
+          completedAt: null
+        } as CompanionTask;
+        
+        // Tell the parent component to open the discovery dialog
+        onTaskGenerated(dummyTask);
+      }
+    }, 300);
   };
   
   // Extract recommendations from HTML content
@@ -633,10 +650,10 @@ export default function CompanyAnalysisDialog({
               {!isEdited && (
                 <Button 
                   variant="outline" 
-                  onClick={handleSend}
+                  onClick={handleScheduleDiscovery}
                 >
-                  <Send className="h-4 w-4 mr-2" />
-                  Send to Client
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Schedule Discovery Call
                 </Button>
               )}
               
