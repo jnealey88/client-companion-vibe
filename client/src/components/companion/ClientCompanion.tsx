@@ -199,603 +199,243 @@ const calculateTotalTimeSaved = (tasks: CompanionTask[] | undefined): number => 
   return tasks
     .filter(task => task.content) // Only count completed tasks
     .reduce((total, task) => {
-      const taskType = task.type as keyof typeof taskTypes;
-      const timeSaved = taskTypes[taskType]?.timeSaved || 0;
+      // Get the time saved for this task type
+      const timeSaved = taskTypes[task.type as keyof typeof taskTypes]?.timeSaved || 0;
       return total + timeSaved;
     }, 0);
 };
 
 interface ClientCompanionProps {
   client: Client;
+  tasks?: CompanionTask[];
 }
 
-export default function ClientCompanion({ client }: ClientCompanionProps) {
-  const [selectedTask, setSelectedTask] = useState<CompanionTask | null>(null);
-  const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
-  const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
-  const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
-  const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
-  const [isCompanyAnalysisDialogOpen, setIsCompanyAnalysisDialogOpen] = useState(false);
-  const [proposalTask, setProposalTask] = useState<CompanionTask | undefined>(undefined);
-  const [companyAnalysisTask, setCompanyAnalysisTask] = useState<CompanionTask | undefined>(undefined);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<CompanionTask | null>(null);
-  const [generationLocks, setGenerationLocks] = useState<Record<string, boolean>>({});
+export default function ClientCompanion({ client, tasks }: ClientCompanionProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // Fetch companion tasks for the client
-  const { data: tasks, isLoading } = useQuery<CompanionTask[]>({
-    queryKey: [`/api/clients/${client.id}/companion-tasks`],
-    enabled: !!client.id
-  });
+  // State for task management and UI
+  const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<CompanionTask | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<CompanionTask | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
+  const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
+  const [proposalTask, setProposalTask] = useState<CompanionTask | null>(null);
+  const [isCompanyAnalysisDialogOpen, setIsCompanyAnalysisDialogOpen] = useState(false);
+  const [companyAnalysisTask, setCompanyAnalysisTask] = useState<CompanionTask | null>(null);
   
-  // Initialize expanded task view when data is loaded
-  useEffect(() => {
-    if (tasks && tasks.length > 0) {
-      // Initialize all completed tasks as expanded
-      const newExpandedTasks: Record<string, boolean> = {};
-      
-      tasks.forEach(task => {
-        if (task.content) {
-          newExpandedTasks[task.type] = true;
-        }
-      });
-      
-      // Don't auto-select any task by default, just expand them
-      setExpandedTasks(newExpandedTasks);
-    }
-  }, [tasks]);
-  
-  // State to track which task types are currently generating
+  // Generation states
   const [generatingTasks, setGeneratingTasks] = useState<Record<string, boolean>>({});
-  
-  // Loading states for task generation
   const [generationProgress, setGenerationProgress] = useState<Record<string, number>>({});
   const [generationStage, setGenerationStage] = useState<Record<string, string>>({});
-  
-  // Task generation loading stages - each with unique messaging
-  const loadingStages: Record<string, string[]> = {
-    company_analysis: [
-      "Analyzing business information...",
-      "Researching industry competitors...",
-      "Evaluating target audience data...",
-      "Examining SEO and keyword positioning...",
-      "Checking website performance metrics...",
-      "Analyzing user experience elements...",
-      "Creating industry benchmarks...",
-      "Identifying business opportunities...",
-      "Crafting strategic recommendations...",
-      "Finalizing comprehensive analysis..."
-    ],
-    proposal: [
-      "Gathering project requirements...",
-      "Evaluating technical needs...",
-      "Calculating optimal pricing...",
-      "Researching industry benchmarks...",
-      "Identifying recommended GoDaddy products...",
-      "Calculating hosting requirements...",
-      "Estimating development timeline...",
-      "Preparing proposal document...",
-      "Adding payment options...",
-      "Finalizing proposal with recommendations..."
-    ],
-    site_map: [
-      "Analyzing website structure needs...",
-      "Evaluating user journey patterns...",
-      "Mapping content hierarchies...",
-      "Optimizing navigation flows...",
-      "Creating sitemap structure...",
-      "Finalizing recommendations..."
-    ],
-    contract: [
-      "Reviewing project details...",
-      "Creating legal framework...",
-      "Adding payment milestones...",
-      "Specifying deliverables...",
-      "Adding terms and conditions...",
-      "Finalizing contract document..."
-    ],
-    status_update: [
-      "Gathering project milestones...",
-      "Checking completion status...",
-      "Evaluating timeline adherence...",
-      "Calculating completion percentage...",
-      "Creating visual progress indicators...",
-      "Finalizing status report..."
-    ],
-    default: [
-      "Starting process...",
-      "Gathering information...",
-      "Processing data...",
-      "Analyzing results...",
-      "Evaluating alternatives...",
-      "Creating recommendations...",
-      "Finalizing results..."
-    ]
-  };
 
-  // Create mutation for generating content
-  const generateMutation = useMutation<CompanionTask, Error, { clientId: number, taskType: string, [key: string]: any }>({
-    mutationFn: async ({ clientId, taskType, ...options }: { clientId: number, taskType: string, [key: string]: any }) => {
-      try {
-        // Make the API request with any additional options
-        const response = await apiRequest(
-          "POST", 
-          `/api/clients/${clientId}/generate/${taskType}`, 
-          options
-        );
-        
-        // Extract JSON data from the response
-        const jsonData = await response.json();
-        
-        // The API should return a full companion task object
-        return jsonData as CompanionTask;
-      } catch (error) {
-        console.error("Error generating task:", error);
-        throw error;
+  // Group tasks by phase for organization
+  const tasksByPhase = tasks ? tasks.reduce((acc, task) => {
+    const taskType = task.type;
+    const phase = taskTypes[taskType as keyof typeof taskTypes]?.phase;
+    
+    if (phase) {
+      if (!acc[phase]) {
+        acc[phase] = [];
+      }
+      
+      // Add task to the phase
+      acc[phase].push({ task, type: taskType });
+    }
+    
+    return acc;
+  }, {} as Record<string, { task: CompanionTask, type: string }[]>) : {};
+  
+  // Group tasks by type for content library
+  const tasksByType = tasks ? tasks.reduce((acc, task) => {
+    acc[task.type] = task;
+    return acc;
+  }, {} as Record<string, CompanionTask>) : {};
+  
+  // Mutation for deleting tasks
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest(`/api/companion-tasks/${id}`, {
+        method: 'DELETE',
+      });
+      return id;
+    },
+    onSuccess: (id) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
+      toast({
+        title: "Task Deleted",
+        description: "The task has been permanently deleted.",
+      });
+      setTaskToDelete(null);
+      setIsDeleteDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to delete task: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Mutation for creating new tasks
+  const createTaskMutation = useMutation({
+    mutationFn: async ({ type, metadata }: { type: string, metadata?: any }) => {
+      const response = await apiRequest(`/api/clients/${client.id}/generate/${type}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(metadata || {}),
+      });
+      
+      return response as CompanionTask;
+    },
+    onSuccess: (newTask) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
+      
+      // Clear the generating state for this task type
+      setGeneratingTasks(prev => ({ ...prev, [newTask.type]: false }));
+      setGenerationProgress(prev => ({ ...prev, [newTask.type]: 0 }));
+      
+      toast({
+        title: "Content Generated",
+        description: `The ${taskTypes[newTask.type as keyof typeof taskTypes]?.label} has been created.`,
+      });
+      
+      // If it's a company analysis, open the dialog to view it
+      if (newTask.type === 'company_analysis') {
+        setCompanyAnalysisTask(newTask);
+        setIsCompanyAnalysisDialogOpen(true);
+      }
+      
+      // If it's a proposal, open the dialog to view it
+      if (newTask.type === 'proposal') {
+        setProposalTask(newTask);
+        setIsProposalDialogOpen(true);
       }
     },
-    onSuccess: () => {
-      // Refresh the task list
-      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
+    onError: (error: Error) => {
+      // Clear generating state for all tasks on error
+      setGeneratingTasks({});
+      setGenerationProgress({});
+      
       toast({
-        title: "Content generated",
-        description: "AI-generated content has been created successfully.",
-        variant: "default"
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Generation failed",
-        description: "Failed to generate content. Please try again.",
-        variant: "destructive"
+        title: "Error",
+        description: `Failed to generate content: ${error.message}`,
+        variant: "destructive",
       });
     }
   });
   
-  // Create mutation for deleting content
-  const deleteMutation = useMutation({
-    mutationFn: async (taskId: number) => {
-      return apiRequest("DELETE", `/api/companion-tasks/${taskId}`);
-    },
-    onSuccess: () => {
-      // Clear selected task if it was deleted
-      setSelectedTask(null);
-      
-      // Invalidate the tasks query to refresh the list
-      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
-      
-      toast({
-        title: "Content deleted",
-        description: "The content has been deleted successfully.",
-        variant: "default"
+  // Handle task generation
+  const handleGenerate = (type: string, metadata?: any) => {
+    // Prevent duplicate generation
+    if (generatingTasks[type]) return;
+    
+    // Set the task as generating
+    setGeneratingTasks(prev => ({ ...prev, [type]: true }));
+    
+    // Simulate progress updates - in production this could be real-time via websockets
+    // Start with researching (0-30%)
+    setGenerationProgress(prev => ({ ...prev, [type]: 0 }));
+    setGenerationStage(prev => ({ ...prev, [type]: "Researching..." }));
+    
+    const researchInterval = setInterval(() => {
+      setGenerationProgress(prev => {
+        const current = prev[type] || 0;
+        if (current < 30) {
+          return { ...prev, [type]: current + 2 };
+        } else {
+          clearInterval(researchInterval);
+          return prev;
+        }
       });
-    },
-    onError: () => {
-      toast({
-        title: "Deletion failed",
-        description: "Failed to delete content. Please try again.",
-        variant: "destructive"
-      });
-    }
-  });
+    }, 100);
+    
+    // After 3s, move to analyzing (30-60%)
+    setTimeout(() => {
+      setGenerationStage(prev => ({ ...prev, [type]: "Analyzing data..." }));
+      const analyzeInterval = setInterval(() => {
+        setGenerationProgress(prev => {
+          const current = prev[type] || 0;
+          if (current >= 30 && current < 60) {
+            return { ...prev, [type]: current + 2 };
+          } else {
+            clearInterval(analyzeInterval);
+            return prev;
+          }
+        });
+      }, 100);
+    }, 3000);
+    
+    // After 6s, move to generating content (60-95%)
+    setTimeout(() => {
+      setGenerationStage(prev => ({ ...prev, [type]: "Generating content..." }));
+      const contentInterval = setInterval(() => {
+        setGenerationProgress(prev => {
+          const current = prev[type] || 0;
+          if (current >= 60 && current < 95) {
+            return { ...prev, [type]: current + 1 };
+          } else {
+            clearInterval(contentInterval);
+            return prev;
+          }
+        });
+      }, 100);
+    }, 6000);
+    
+    // After 9s, do the actual generation
+    setTimeout(() => {
+      setGenerationStage(prev => ({ ...prev, [type]: "Finalizing..." }));
+      createTaskMutation.mutate({ type, metadata });
+    }, 9000);
+  };
   
-  // Handle task selection
+  // Handler for deleting tasks
+  const handleDelete = (task: CompanionTask) => {
+    setTaskToDelete(task);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Handler for task selection
   const handleTaskSelect = (task: CompanionTask) => {
     setSelectedTask(task);
   };
   
-  // Handle content generation with discovery notes if applicable
-  const handleGenerate = (taskType: string, options: any = {}) => {
-    // Check if a generation is already in progress for this task type
-    if (generationLocks[taskType]) {
-      console.log(`Generation for ${taskType} already in progress, skipping duplicate request`);
-      return;
-    }
-    
-    // Lock this task type to prevent duplicate generations
-    setGenerationLocks(prev => ({...prev, [taskType]: true}));
-    
-    // For proposal generation, we might want to include discovery notes
-    const mutationParams = { 
-      clientId: client.id, 
-      taskType,
-      ...options
-    };
-    
-    // Start the loading indicator in the task card
-    setGeneratingTasks(prev => ({...prev, [taskType]: true}));
-    
-    // Initialize progress and stage
-    setGenerationProgress(prev => ({...prev, [taskType]: 0}));
-    
-    const stages = loadingStages[taskType] || loadingStages.default;
-    setGenerationStage(prev => ({...prev, [taskType]: stages[0]}));
-    
-    // Use an interval to simulate progress updates until the API call completes
-    const intervalId = setInterval(() => {
-      setGenerationProgress(prev => {
-        const currentProgress = prev[taskType] || 0;
-        // Stop at 95% until the actual API call completes
-        if (currentProgress >= 95) {
-          clearInterval(intervalId);
-          return prev;
-        }
-        
-        const newProgress = Math.min(95, currentProgress + 1);
-        
-        // Update stage based on progress (change message every ~20%)
-        if (newProgress % 20 === 0) {
-          const stageIndex = Math.floor(newProgress / 20);
-          if (stages[stageIndex]) {
-            setGenerationStage(prev => ({...prev, [taskType]: stages[stageIndex]}));
-          }
-        }
-        
-        return {...prev, [taskType]: newProgress};
-      });
-    }, 300);
-    
-    // Function to clean up and release the lock
-    const finishGeneration = () => {
-      // Release the lock for this task type
-      setGenerationLocks(prev => {
-        const newState = {...prev};
-        delete newState[taskType];
-        return newState;
-      });
-      
-      // Clear the loading indicators
-      clearInterval(intervalId);
-      setGeneratingTasks(prev => {
-        const newState = {...prev};
-        delete newState[taskType];
-        return newState;
-      });
-    };
-    
-    // Delay the actual API call slightly to allow the loading UI to appear
-    setTimeout(() => {
-      generateMutation.mutate(mutationParams, {
-        onSuccess: (data: any) => {
-          // Complete the progress bar animation
-          setGenerationProgress(prev => ({...prev, [taskType]: 100}));
-          setGenerationStage(prev => ({...prev, [taskType]: "Complete!"}));
-          
-          // Keep "Complete!" shown briefly before removing the loading state
-          setTimeout(() => {
-            finishGeneration();
-            
-            // If the task was successfully generated, show the appropriate dialog
-            if (data && typeof data === 'object') {
-              // Make sure we have a valid CompanionTask object
-              const taskData = data as CompanionTask;
-              
-              if (taskType === 'proposal') {
-                setProposalTask(taskData);
-                setIsProposalDialogOpen(true);
-              } else if (taskType === 'company_analysis') {
-                setCompanyAnalysisTask(taskData);
-                setIsCompanyAnalysisDialogOpen(true); 
-              } else if (taskData.content) {
-                setSelectedTask(taskData);
-              }
-            }
-          }, 1000);
-        },
-        onError: (error) => {
-          console.error(`Error generating ${taskType}:`, error);
-          // Clear this task from tracking on error
-          finishGeneration();
-          
-          toast({
-            title: `${taskType.charAt(0).toUpperCase() + taskType.slice(1)} generation failed`,
-            description: "There was an error generating the content. Please try again.",
-            variant: "destructive"
-          });
-        }
-      });
-    }, 500);
-  };
-  
-  // Handle re-generation of content (retry)
-  const handleRetry = (taskType: string) => {
-    // Use the same handler as generate for retry
-    handleGenerate(taskType);
-  };
-  
-  // Handle delete request - open confirmation dialog
-  const handleDelete = (task: CompanionTask) => {
-    // Store the task to delete
-    setTaskToDelete(task);
-    
-    // If we're deleting a task that's currently open in a dialog, close it
-    if (task.type === 'proposal' && proposalTask?.id === task.id) {
-      setIsProposalDialogOpen(false);
-    } else if (task.type === 'company_analysis' && companyAnalysisTask?.id === task.id) {
-      setIsCompanyAnalysisDialogOpen(false);
-    } else if (task.type === 'schedule_discovery') {
-      setIsDiscoveryDialogOpen(false);
-    }
-    
-    // Open the delete confirmation dialog
-    setDeleteDialogOpen(true);
-  };
-  
-  // Handle confirmed deletion
+  // Confirm deletion of a task
   const confirmDelete = () => {
-    if (!taskToDelete) return;
-    
-    deleteMutation.mutate(taskToDelete.id);
-    
-    // If this was a proposal task, make sure to reset the proposal task state
-    // and close any open dialogs
-    if (taskToDelete.type === 'proposal' && proposalTask?.id === taskToDelete.id) {
-      setProposalTask(undefined);
-      setIsProposalDialogOpen(false);
-    } else if (taskToDelete.type === 'company_analysis' && companyAnalysisTask?.id === taskToDelete.id) {
-      setCompanyAnalysisTask(undefined);
-      setIsCompanyAnalysisDialogOpen(false);
-    } else if (taskToDelete.type === 'schedule_discovery') {
-      setIsDiscoveryDialogOpen(false);
+    if (taskToDelete) {
+      deleteMutation.mutate(taskToDelete.id);
     }
-    
-    // Close dialog and reset taskToDelete
-    setDeleteDialogOpen(false);
-    setTaskToDelete(null);
   };
-  
-  // Group tasks by type for easier display
-  const tasksByType: Record<string, CompanionTask | undefined> = {};
-  if (tasks) {
-    // Get the latest task of each type
-    tasks.forEach(task => {
-      if (!tasksByType[task.type] || new Date(task.createdAt) > new Date(tasksByType[task.type]!.createdAt)) {
-        tasksByType[task.type] = task;
-      }
-    });
-  }
-  
-  // Group tasks by project phase
-  const tasksByPhase: Record<string, { type: string, task: CompanionTask | undefined }[]> = {};
-  
-  // Initialize all phases
-  projectPhases.forEach(phase => {
-    tasksByPhase[phase] = [];
-  });
-  
-  // Group tasks by their respective phases
-  Object.entries(taskTypes).forEach(([type, info]) => {
-    const phase = info.phase;
-    if (phase && tasksByPhase[phase]) {
-      tasksByPhase[phase].push({
-        type,
-        task: tasksByType[type]
-      });
-    }
-  });
-  
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Client Companion</CardTitle>
-          <CardDescription>Loading tasks...</CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </CardContent>
-      </Card>
-    );
-  }
   
   return (
-    <Card className="h-full">
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this content?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. The content will be permanently deleted.
-              {taskToDelete ? (
-                <div className="mt-2 p-2 bg-gray-50 rounded border">
-                  <div className="font-medium">
-                    {taskTypes[taskToDelete.type as keyof typeof taskTypes]?.label}
-                  </div>
-                  <div className="text-sm text-gray-500 mt-1">
-                    Generated on {new Date(taskToDelete.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-              ) : null}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      
-      {/* Discovery call scheduling dialog */}
-      <ScheduleDiscoveryDialog 
-        open={isDiscoveryDialogOpen}
-        onOpenChange={setIsDiscoveryDialogOpen}
-        client={client}
-      />
-      
-      {/* Project proposal dialog */}
-      <ProposalDialog
-        open={isProposalDialogOpen}
-        onOpenChange={setIsProposalDialogOpen}
-        client={client}
-        existingTask={proposalTask}
-        onTaskGenerated={(task) => {
-          // Check if this is a new task request (dummy task with no content)
-          if (!task.content && task.type === 'proposal') {
-            // Check if there are discovery notes in the metadata
-            if (task.metadata) {
-              try {
-                // Try to parse discovery notes from metadata
-                const metadata = JSON.parse(task.metadata);
-                if (metadata.discoveryNotes) {
-                  // Start in-card loading with discovery notes
-                  handleGenerate('proposal', { discoveryNotes: metadata.discoveryNotes });
-                  return;
-                }
-              } catch (e) {
-                console.error("Error parsing metadata:", e);
-              }
-            }
-            // No valid metadata with notes, generate without notes
-            handleGenerate('proposal');
-          } else {
-            // This is a real task with content, show it in the dialog
-            setTimeout(() => {
-              setProposalTask(task);
-              setIsProposalDialogOpen(true);
-            }, 1000);
-          }
-        }}
-      />
-      
-      {/* Company analysis dialog */}
-      <CompanyAnalysisDialog
-        open={isCompanyAnalysisDialogOpen}
-        onOpenChange={setIsCompanyAnalysisDialogOpen}
-        client={client}
-        existingTask={companyAnalysisTask}
-        onTaskGenerated={(task) => {
-          // Check if this is a request to schedule a discovery call
-          if (task.type === 'schedule_discovery') {
-            // Open the discovery dialog
-            setIsDiscoveryDialogOpen(true);
-          }
-          // Check if this is a new task request (dummy task with no content)
-          else if (!task.content && task.type === 'company_analysis') {
-            // Generate a new analysis using the in-card loading state
-            handleGenerate('company_analysis');
-          } else {
-            // This is a real task, show it in the dialog
-            setTimeout(() => {
-              setCompanyAnalysisTask(task);
-              setIsCompanyAnalysisDialogOpen(true);
-            }, 1000);
-          }
-        }}
-      />
-      
-      <CardHeader className="bg-white border-b">
-        <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
-          <div>
-            <CardTitle className="flex items-center text-xl">
-              <span>Client Companion</span>
-              <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 border-blue-200">AI Assistant</Badge>
-            </CardTitle>
-            <CardDescription className="text-gray-600 mt-1">
-              AI-powered workflow assistant that helps you manage client projects efficiently
-            </CardDescription>
+    <Card className="w-full overflow-hidden shadow-sm">
+      <CardHeader className="bg-white border-b px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-50 rounded-md">
+            <Bot className="h-5 w-5 text-blue-600" />
           </div>
-          
-          <div className="flex gap-4 items-center">
-            {/* Display total time saved */}
-            {tasks && tasks.some(task => task.content) && (
-              <div className="flex items-center bg-white border border-green-300 rounded-lg shadow-sm px-4 py-3">
-                <div className="bg-green-100 text-green-700 p-2 rounded-md mr-3">
-                  <Timer className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="font-bold text-green-700 text-lg">
-                    {formatTimeSaved(calculateTotalTimeSaved(tasks))}
-                  </div>
-                  <div className="text-xs text-green-600 font-medium">
-                    Total time saved with AI
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div className="bg-white border rounded-lg px-4 py-3 shadow-sm">
-              <div className="text-sm text-gray-500 mb-1">Current phase</div>
-              <Badge className={`${getPhaseStatusClass(client.status)} px-3 py-1 text-sm font-medium`}>
-                {client.status}
-              </Badge>
-            </div>
+          <div>
+            <CardTitle className="text-lg">Client Companion</CardTitle>
+            <CardDescription>
+              AI-powered tools to help you manage your client projects more efficiently
+            </CardDescription>
           </div>
         </div>
       </CardHeader>
       
-      <CardContent>
-        {selectedTask ? (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-1"
-                  onClick={() => setSelectedTask(null)}
-                >
-                  <ArrowRight className="h-4 w-4 rotate-180" />
-                  Back
-                </Button>
-                <div className={`p-2 rounded-md ${taskTypes[selectedTask.type as keyof typeof taskTypes]?.iconColor}`}>
-                  {taskTypes[selectedTask.type as keyof typeof taskTypes]?.icon}
-                </div>
-                <div>
-                  <h3 className="text-lg font-medium">
-                    {taskTypes[selectedTask.type as keyof typeof taskTypes]?.label}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Phase: {taskTypes[selectedTask.type as keyof typeof taskTypes]?.phase} • Generated: {new Date(selectedTask.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-destructive hover:bg-destructive/10"
-                  onClick={() => handleDelete(selectedTask)}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
-                </Button>
-                
-                {selectedTask.type === 'company_analysis' ? (
-                  <Button 
-                    variant="default" 
-                    size="sm"
-                    className="gap-1"
-                    onClick={() => {
-                      // Open the schedule discovery dialog when this button is clicked
-                      setIsDiscoveryDialogOpen(true);
-                    }}
-                  >
-                    <Calendar className="h-4 w-4" />
-                    Schedule Discovery Call
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div 
-              className="bg-white rounded-md p-4 max-h-[600px] overflow-y-auto border"
-              dangerouslySetInnerHTML={{ __html: selectedTask.content || "" }}
-            ></div>
+      <CardContent className="p-0">
+        {tasks === undefined ? (
+          <div className="p-6 flex justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : (
-          <Tabs defaultValue="tasks" className="w-full">
+          <Tabs defaultValue="tasks" className="w-full px-6 pt-4">
             <div className="border-b mb-4">
-              <TabsList className="bg-transparent p-0 border-0 w-auto inline-flex h-auto gap-8">
+              <TabsList className="bg-transparent p-0 h-auto gap-6">
                 <TabsTrigger 
                   value="tasks" 
                   className="px-0 py-3 rounded-none text-base font-medium text-gray-600 data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent data-[state=active]:shadow-none bg-transparent"
@@ -1128,8 +768,6 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                 </div>
                               </div>
                             </CardHeader>
-                            
-
                           </Card>
                         );
                       })}
@@ -1187,6 +825,91 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           )}
         </div>
       </CardFooter>
+      
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The content will be permanently deleted.
+              {taskToDelete ? (
+                <div className="mt-2 p-2 bg-gray-50 rounded border">
+                  <div className="font-medium">
+                    {taskTypes[taskToDelete.type as keyof typeof taskTypes]?.label}
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Generated on {new Date(taskToDelete.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Discovery call scheduling dialog */}
+      <ScheduleDiscoveryDialog 
+        open={isDiscoveryDialogOpen}
+        onOpenChange={setIsDiscoveryDialogOpen}
+        client={client}
+      />
+      
+      {/* Project proposal dialog */}
+      <ProposalDialog
+        open={isProposalDialogOpen}
+        onOpenChange={setIsProposalDialogOpen}
+        client={client}
+        existingTask={proposalTask}
+        onTaskGenerated={(task) => {
+          // Check if this is a new task request (dummy task with no content)
+          if (!task.content && task.type === 'proposal') {
+            // Check if there are discovery notes in the metadata
+            if (task.metadata) {
+              try {
+                // Try to parse discovery notes from metadata
+                const metadata = JSON.parse(task.metadata);
+                if (metadata.discoveryNotes) {
+                  // Start in-card loading with discovery notes
+                  handleGenerate('proposal', { discoveryNotes: metadata.discoveryNotes });
+                  return;
+                }
+              } catch (e) {
+                console.error("Error parsing metadata", e);
+              }
+            }
+            
+            // If no discovery notes or parsing failed, just generate without notes
+            handleGenerate('proposal');
+          }
+        }}
+      />
+      
+      {/* Company analysis dialog */}
+      <CompanyAnalysisDialog
+        open={isCompanyAnalysisDialogOpen}
+        onOpenChange={setIsCompanyAnalysisDialogOpen}
+        client={client}
+        task={companyAnalysisTask}
+      />
+      
+      {/* Task content viewer */}
+      {selectedTask && (
+        <CompanionTaskCard 
+          task={selectedTask} 
+          client={client}
+          onClose={() => setSelectedTask(null)}
+        />
+      )}
     </Card>
   );
 }
