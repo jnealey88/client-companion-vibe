@@ -90,17 +90,17 @@ export default function AddClientDialog({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader className="mb-2">
-          <DialogTitle className="text-xl font-semibold text-primary">Add New Client</DialogTitle>
-          <DialogDescription className="text-gray-500 mt-1">
-            Fill in the client details below. All fields marked with * are required.
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-1">
+          <DialogTitle className="text-lg font-semibold text-primary">Add New Client</DialogTitle>
+          <DialogDescription className="text-gray-500 text-sm">
+            Enter client details. Required fields marked with *
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-2 gap-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="name"
@@ -110,7 +110,7 @@ export default function AddClientDialog({
                     <FormControl>
                       <Input 
                         placeholder="Enter company name" 
-                        className="py-6" 
+                        className="py-2 h-9" 
                         {...field} 
                       />
                     </FormControl>
@@ -129,7 +129,7 @@ export default function AddClientDialog({
                     <FormControl>
                       <Input 
                         placeholder="Enter primary contact name" 
-                        className="py-5"
+                        className="py-2 h-9"
                         {...field} 
                       />
                     </FormControl>
@@ -148,7 +148,7 @@ export default function AddClientDialog({
                     <FormControl>
                       <Input 
                         placeholder="Enter job title" 
-                        className="py-5"
+                        className="py-2 h-9"
                         {...field} 
                       />
                     </FormControl>
@@ -168,7 +168,7 @@ export default function AddClientDialog({
                       <Input 
                         type="email" 
                         placeholder="contact@example.com" 
-                        className="py-5"
+                        className="py-2 h-9"
                         {...field} 
                       />
                     </FormControl>
@@ -187,7 +187,7 @@ export default function AddClientDialog({
                     <FormControl>
                       <Input 
                         placeholder="(555) 123-4567" 
-                        className="py-5"
+                        className="py-2 h-9"
                         {...field} 
                       />
                     </FormControl>
