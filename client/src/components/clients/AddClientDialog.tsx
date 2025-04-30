@@ -90,7 +90,7 @@ export default function AddClientDialog({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[450px] max-h-[85vh] overflow-y-auto">
         <DialogHeader className="pb-1">
           <DialogTitle className="text-lg font-semibold text-primary">Add New Client</DialogTitle>
           <DialogDescription className="text-gray-500 text-sm">
@@ -206,54 +206,52 @@ export default function AddClientDialog({
                 )}
               />
               
-              <div className="flex space-x-4">
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel className="text-base">Project Phase *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="h-[42px]">
-                            <SelectValue placeholder="Select phase" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {statusOptions.slice(1).map((status: string) => (
-                            <SelectItem key={status} value={status}>
-                              {status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="websiteUrl"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel className="text-base">Website URL (optional)</FormLabel>
+              <FormField
+                control={form.control}
+                name="websiteUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Website URL (optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="https://example.com" 
+                        className="py-2 h-9"
+                        {...field} 
+                        value={field.value || ''}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Project Phase *</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
-                        <Input 
-                          placeholder="https://example.com" 
-                          className="py-5"
-                          {...field} 
-                          value={field.value || ''}
-                        />
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select phase" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                      <SelectContent>
+                        {statusOptions.slice(1).map((status: string) => (
+                          <SelectItem key={status} value={status}>
+                            {status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               {/* Hidden fields required by the database schema */}
               <FormField
