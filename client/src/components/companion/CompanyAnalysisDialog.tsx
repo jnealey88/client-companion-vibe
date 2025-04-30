@@ -25,6 +25,7 @@ interface CompanyAnalysisDialogProps {
   onOpenChange: (open: boolean) => void;
   client: Client;
   existingTask?: CompanionTask;
+  task?: CompanionTask;
   onTaskGenerated?: (task: CompanionTask) => void;
 }
 
@@ -33,6 +34,7 @@ export default function CompanyAnalysisDialog({
   onOpenChange,
   client,
   existingTask,
+  task,
   onTaskGenerated
 }: CompanyAnalysisDialogProps) {
   // Core state
