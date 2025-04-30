@@ -217,7 +217,7 @@ export default function ClientCompanion({ client, tasks }: ClientCompanionProps)
   // State for task management and UI
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<CompanionTask | undefined>(undefined);
-  const [taskToDelete, setTaskToDelete] = useState<CompanionTask | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<CompanionTask | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
@@ -265,7 +265,7 @@ export default function ClientCompanion({ client, tasks }: ClientCompanionProps)
         title: "Task Deleted",
         description: "The task has been permanently deleted.",
       });
-      setTaskToDelete(null);
+      setTaskToDelete(undefined);
       setIsDeleteDialogOpen(false);
     },
     onError: (error: Error) => {

@@ -1,402 +1,432 @@
-import { useState, useEffect } from "react";
-import { 
-  User, 
-  Globe, 
-  Lock, 
-  Code, 
-  Check, 
-  AlertTriangle,
-  ShoppingCart,
-  RefreshCw,
-  Gauge,
-  Mail,
-  Settings,
-  Archive,
-  Clock,
-  Tag,
-  HelpCircle,
-  Info
-} from "lucide-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { useState } from "react";
 import { Client } from "@shared/schema";
-
-type ProductStatus = "active" | "expiring" | "inactive" | "suspended";
-
-interface Product {
-  id: string;
-  name: string;
-  type: "domain" | "hosting" | "email" | "security" | "marketing";
-  status: ProductStatus;
-  expiryDate: Date | null;
-  details: string;
-  renewalPrice?: number;
-  autoRenew: boolean;
-}
+import { 
+  Clock, 
+  Globe, 
+  Server, 
+  Database, 
+  Lock, 
+  Search, 
+  Mail, 
+  Grid, 
+  Plus,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw
+} from "lucide-react";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface GoDaddyProductsManagerProps {
   client: Client;
 }
 
-// Mock data for now - this would connect to GoDaddy API in production
-const mockProducts: Product[] = [
-  {
-    id: "1",
-    name: "fracturedchoices.com",
-    type: "domain",
-    status: "active",
-    expiryDate: new Date(2025, 11, 31),
-    details: "Primary domain registered through GoDaddy",
-    renewalPrice: 15.99,
-    autoRenew: true
-  },
-  {
-    id: "2",
-    name: "Economy Linux Hosting with cPanel",
-    type: "hosting",
-    status: "active",
-    expiryDate: new Date(2025, 5, 15),
-    details: "10GB storage, Unlimited bandwidth",
-    renewalPrice: 8.99,
-    autoRenew: true
-  },
-  {
-    id: "3",
-    name: "Email Essentials",
-    type: "email",
-    status: "expiring",
-    expiryDate: new Date(2025, 2, 10),
-    details: "5 mailboxes with 10GB storage each",
-    renewalPrice: 5.99,
-    autoRenew: false
-  },
-  {
-    id: "4",
-    name: "SSL Certificate (Standard)",
-    type: "security",
-    status: "active",
-    expiryDate: new Date(2025, 6, 22),
-    details: "Basic encryption and validation",
-    renewalPrice: 7.99,
-    autoRenew: true
-  },
-  {
-    id: "5",
-    name: "Website Builder",
-    type: "hosting",
-    status: "inactive",
-    expiryDate: null,
-    details: "GoDaddy Website Builder - unused",
-    renewalPrice: 9.99,
-    autoRenew: false
-  }
-];
+type ProductStatus = "active" | "expiring" | "expired" | "pending";
 
-const productIcons = {
-  domain: <Globe className="h-4 w-4" />,
-  hosting: <Code className="h-4 w-4" />,
-  email: <Mail className="h-4 w-4" />,
-  security: <Lock className="h-4 w-4" />,
-  marketing: <Gauge className="h-4 w-4" />
-};
-
-const getStatusBadge = (status: ProductStatus) => {
-  switch (status) {
-    case "active":
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Active</Badge>;
-    case "expiring":
-      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Expiring Soon</Badge>;
-    case "inactive":
-      return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Inactive</Badge>;
-    case "suspended":
-      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Suspended</Badge>;
-  }
-};
+interface Product {
+  id: string;
+  name: string;
+  type: string;
+  category: "domain" | "hosting" | "email" | "security" | "other";
+  status: ProductStatus;
+  expiration?: string;
+  price: number;
+  renewalPrice?: number;
+  features?: string[];
+}
 
 export default function GoDaddyProductsManager({ client }: GoDaddyProductsManagerProps) {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState("");
   
-  const filteredProducts = activeTab === "all" 
-    ? products 
-    : products.filter(product => product.type === activeTab);
-  
-  // Group products by type for the accordion view
-  const groupedProducts = products.reduce((acc, product) => {
-    if (!acc[product.type]) {
-      acc[product.type] = [];
+  // Demo products data
+  const products: Product[] = [
+    {
+      id: "d1",
+      name: client.websiteUrl?.replace(/^https?:\/\//i, "") || "example.com",
+      type: "Domain Name",
+      category: "domain",
+      status: "active",
+      expiration: "2026-02-15",
+      price: 14.99,
+      renewalPrice: 17.99,
+      features: ["WHOIS Privacy", "Auto-renewal", "DNS Management"]
+    },
+    {
+      id: "h1",
+      name: "Business Hosting",
+      type: "Web Hosting",
+      category: "hosting",
+      status: "active",
+      expiration: "2026-05-10",
+      price: 7.99,
+      renewalPrice: 9.99,
+      features: ["20GB Storage", "Unlimited Bandwidth", "Free SSL"]
+    },
+    {
+      id: "e1",
+      name: "Business Email",
+      type: "Professional Email",
+      category: "email",
+      status: "expiring",
+      expiration: "2025-06-22",
+      price: 5.99,
+      renewalPrice: 6.99,
+      features: ["10GB Storage", "Anti-spam", "Mobile access"]
+    },
+    {
+      id: "s1",
+      name: "SSL Certificate",
+      type: "Security",
+      category: "security",
+      status: "active",
+      expiration: "2026-02-15",
+      price: 69.99,
+      renewalPrice: 79.99,
+      features: ["256-bit encryption", "Trust seal", "Malware scanning"]
     }
-    acc[product.type].push(product);
+  ];
+
+  // Filter products by search term
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  // Group products by category
+  const productsByCategory = filteredProducts.reduce((acc, product) => {
+    if (!acc[product.category]) {
+      acc[product.category] = [];
+    }
+    acc[product.category].push(product);
     return acc;
   }, {} as Record<string, Product[]>);
   
-  const productTypeCounts = {
-    all: products.length,
-    domain: products.filter(p => p.type === "domain").length,
-    hosting: products.filter(p => p.type === "hosting").length,
-    email: products.filter(p => p.type === "email").length,
-    security: products.filter(p => p.type === "security").length,
-    marketing: products.filter(p => p.type === "marketing").length,
+  // Helper for status badge
+  const getStatusBadge = (status: ProductStatus) => {
+    switch (status) {
+      case "active":
+        return (
+          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1 font-medium">
+            <CheckCircle className="h-3 w-3" />
+            Active
+          </Badge>
+        );
+      case "expiring":
+        return (
+          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 font-medium">
+            <Clock className="h-3 w-3" />
+            Expiring Soon
+          </Badge>
+        );
+      case "expired":
+        return (
+          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 flex items-center gap-1 font-medium">
+            <AlertCircle className="h-3 w-3" />
+            Expired
+          </Badge>
+        );
+      case "pending":
+        return (
+          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 flex items-center gap-1 font-medium">
+            <RefreshCw className="h-3 w-3" />
+            Pending
+          </Badge>
+        );
+    }
   };
   
-  const productTypeLabels = {
-    domain: "Domains",
-    hosting: "Hosting",
-    email: "Email",
-    security: "Security",
-    marketing: "Marketing"
+  // Helper for category icons
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "domain":
+        return <Globe className="h-5 w-5 text-indigo-600" />;
+      case "hosting":
+        return <Server className="h-5 w-5 text-emerald-600" />;
+      case "email":
+        return <Mail className="h-5 w-5 text-blue-600" />;
+      case "security":
+        return <Lock className="h-5 w-5 text-amber-600" />;
+      default:
+        return <Grid className="h-5 w-5 text-gray-600" />;
+    }
   };
   
-  // Calculate if any products are expiring soon (within 30 days)
-  const hasExpiringSoon = products.some(product => {
-    if (!product.expiryDate) return false;
-    const daysUntilExpiry = Math.ceil((product.expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-    return daysUntilExpiry <= 30;
-  });
+  // Helper for category names
+  const getCategoryName = (category: string) => {
+    switch (category) {
+      case "domain":
+        return "Domain Names";
+      case "hosting":
+        return "Web Hosting";
+      case "email":
+        return "Email & Productivity";
+      case "security":
+        return "Website Security";
+      default:
+        return "Other Products";
+    }
+  };
+  
+  // Calculate days until expiration
+  const getDaysUntilExpiration = (expirationDate?: string) => {
+    if (!expirationDate) return null;
+    
+    const expDate = new Date(expirationDate);
+    const today = new Date();
+    const diffTime = expDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return diffDays;
+  };
   
   return (
-    <Card className="w-full overflow-hidden">
-      <CardHeader className="bg-white p-4 border-b">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-blue-50 rounded-md">
-              <User className="h-4 w-4 text-blue-600" />
-            </div>
-            <div>
-              <CardTitle className="text-base">GoDaddy Products & Services</CardTitle>
-              <CardDescription className="text-xs">
-                Manage client's GoDaddy products and services
-              </CardDescription>
-            </div>
+    <Card className="h-full overflow-hidden shadow-sm">
+      <CardHeader className="bg-white border-b px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-red-50 rounded-md">
+            <Globe className="h-5 w-5 text-red-600" />
           </div>
-          {hasExpiringSoon && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 shadow-sm">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Items expiring soon
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-sm">Some products are expiring within 30 days</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          <div>
+            <CardTitle className="text-lg">GoDaddy Products</CardTitle>
+            <CardDescription>
+              Manage domain, hosting, and other products
+            </CardDescription>
+          </div>
         </div>
       </CardHeader>
       
-      <CardContent className="p-0">
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="border-b bg-white">
-            <TabsList className="w-full justify-start px-2 h-auto flex-wrap overflow-x-auto">
-              <TabsTrigger 
-                value="all" 
-                className="py-2 px-3 text-xs rounded-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
-              >
-                All ({productTypeCounts.all})
-              </TabsTrigger>
-              <TabsTrigger 
-                value="domain" 
-                className="py-2 px-3 text-xs rounded-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
-              >
-                <Globe className="h-3 w-3 mr-1" />
-                Domains ({productTypeCounts.domain})
-              </TabsTrigger>
-              <TabsTrigger 
-                value="hosting" 
-                className="py-2 px-3 text-xs rounded-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
-              >
-                <Code className="h-3 w-3 mr-1" />
-                Hosting ({productTypeCounts.hosting})
-              </TabsTrigger>
-              <TabsTrigger 
-                value="email" 
-                className="py-2 px-3 text-xs rounded-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
-              >
-                <Mail className="h-3 w-3 mr-1" />
-                Email ({productTypeCounts.email})
-              </TabsTrigger>
-              <TabsTrigger 
-                value="security" 
-                className="py-2 px-3 text-xs rounded-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
-              >
-                <Lock className="h-3 w-3 mr-1" />
-                Security ({productTypeCounts.security})
-              </TabsTrigger>
-              <TabsTrigger 
-                value="marketing" 
-                className="py-2 px-3 text-xs rounded-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
-              >
-                <Gauge className="h-3 w-3 mr-1" />
-                Marketing ({productTypeCounts.marketing})
-              </TabsTrigger>
-            </TabsList>
-          </div>
+      <div className="border-b px-6 py-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input 
+            placeholder="Search products..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 bg-white"
+          />
+        </div>
+      </div>
+      
+      <CardContent className="p-0 overflow-auto max-h-[calc(100vh-350px)]">
+        <Tabs defaultValue="all" className="w-full p-6">
+          <TabsList className="grid grid-cols-3 mb-4">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="expiring">Expiring Soon</TabsTrigger>
+          </TabsList>
           
-          <TabsContent value={activeTab} className="pt-2">
-            {activeTab === "all" ? (
-              <div className="divide-y">
-                <Accordion type="multiple" defaultValue={["domain", "hosting", "email", "security", "marketing"]} className="w-full">
-                  {Object.entries(groupedProducts).map(([type, items]) => (
-                    <AccordionItem value={type} key={type} className="border-b border-gray-200 last:border-0 px-4">
-                      <AccordionTrigger className="py-3 hover:no-underline">
-                        <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                          {productIcons[type as keyof typeof productIcons]}
-                          {productTypeLabels[type as keyof typeof productTypeLabels]} ({items.length})
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-3 pb-2">
-                          {items.map(product => (
-                            <div key={product.id} className="border rounded-md p-3 bg-white shadow-sm">
-                              <div className="flex justify-between items-start mb-2">
-                                <div className="flex items-center gap-2">
-                                  <div className="p-1.5 rounded-md bg-gray-50">
-                                    {productIcons[product.type]}
-                                  </div>
-                                  <div>
-                                    <h4 className="text-sm font-medium">{product.name}</h4>
-                                    <p className="text-xs text-gray-500">{product.details}</p>
-                                  </div>
-                                </div>
-                                {getStatusBadge(product.status)}
-                              </div>
-                              
-                              <div className="flex justify-between items-center text-xs text-gray-600 mt-3">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {product.expiryDate ? (
-                                    `Expires: ${product.expiryDate.toLocaleDateString()}`
-                                  ) : (
-                                    "No expiration date"
-                                  )}
-                                </div>
-                                
-                                <div className="flex items-center gap-1.5">
-                                  {product.autoRenew ? (
-                                    <Badge variant="outline" className="px-1.5 py-0 h-4 bg-blue-50 text-blue-700 border-blue-200">
-                                      <RefreshCw className="h-2.5 w-2.5 mr-0.5" />
-                                      Auto-renew
-                                    </Badge>
-                                  ) : (
-                                    <Badge variant="outline" className="px-1.5 py-0 h-4 bg-gray-50 text-gray-600 border-gray-200">
-                                      Manual renewal
-                                    </Badge>
-                                  )}
-                                  
-                                  {product.renewalPrice && (
-                                    <Badge variant="outline" className="px-1.5 py-0 h-4 bg-green-50 text-green-700 border-green-200">
-                                      <Tag className="h-2.5 w-2.5 mr-0.5" />
-                                      ${product.renewalPrice}/yr
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </div>
-            ) : (
-              <div className="divide-y p-4 space-y-3">
-                {filteredProducts.length > 0 ? (
-                  filteredProducts.map(product => (
-                    <div key={product.id} className="border rounded-md p-3 bg-white shadow-sm">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="p-1.5 rounded-md bg-gray-50">
-                            {productIcons[product.type]}
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-medium">{product.name}</h4>
-                            <p className="text-xs text-gray-500">{product.details}</p>
-                          </div>
-                        </div>
-                        {getStatusBadge(product.status)}
+          <TabsContent value="all" className="space-y-6">
+            {Object.keys(productsByCategory).length > 0 ? (
+              <Accordion type="multiple" defaultValue={["domain", "hosting", "email", "security"]}>
+                {Object.keys(productsByCategory).map(category => (
+                  <AccordionItem key={category} value={category} className="border px-4 rounded-lg mb-4 border-gray-200 overflow-hidden">
+                    <AccordionTrigger className="py-3 hover:no-underline">
+                      <div className="flex items-center gap-3">
+                        {getCategoryIcon(category)}
+                        <span className="font-medium">{getCategoryName(category)}</span>
+                        <Badge variant="outline" className="ml-2 bg-gray-50">
+                          {productsByCategory[category].length}
+                        </Badge>
                       </div>
-                      
-                      <div className="flex justify-between items-center text-xs text-gray-600 mt-3">
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {product.expiryDate ? (
-                            `Expires: ${product.expiryDate.toLocaleDateString()}`
-                          ) : (
-                            "No expiration date"
-                          )}
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 pb-4">
+                      <div className="space-y-3">
+                        {productsByCategory[category].map(product => (
+                          <div 
+                            key={product.id} 
+                            className={`p-3 rounded-lg border ${product.status === 'active' ? 'border-green-100 bg-green-50/30' : 'border-gray-200'} hover:shadow-sm transition-all`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium text-gray-900">{product.name}</h4>
+                                <p className="text-sm text-gray-500">{product.type}</p>
+                              </div>
+                              {getStatusBadge(product.status)}
+                            </div>
+                            
+                            {product.expiration && (
+                              <div className="mt-2 text-sm flex items-center">
+                                <Clock className="h-3.5 w-3.5 text-gray-400 mr-1.5" />
+                                <span className={`${getDaysUntilExpiration(product.expiration)! < 30 ? 'text-amber-600 font-medium' : 'text-gray-500'}`}>
+                                  Expires: {new Date(product.expiration).toLocaleDateString()}
+                                  {getDaysUntilExpiration(product.expiration)! < 30 && getDaysUntilExpiration(product.expiration)! > 0 && 
+                                    ` (${getDaysUntilExpiration(product.expiration)} days)`
+                                  }
+                                </span>
+                              </div>
+                            )}
+                            
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {product.features?.map((feature, index) => (
+                                <Badge key={index} variant="outline" className="bg-white font-normal">
+                                  {feature}
+                                </Badge>
+                              ))}
+                            </div>
+                            
+                            <div className="mt-3 flex justify-between items-center">
+                              <div>
+                                <span className="text-sm font-medium">${product.price}/yr</span>
+                                {product.renewalPrice && product.renewalPrice > product.price && (
+                                  <span className="text-xs text-gray-500 ml-1.5">
+                                    renews at ${product.renewalPrice}/yr
+                                  </span>
+                                )}
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-xs h-7 px-2 border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+                              >
+                                Manage
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No products found matching your search.</p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="active" className="space-y-6">
+            {Object.keys(productsByCategory).map(category => {
+              const activeProducts = productsByCategory[category].filter(p => p.status === "active");
+              if (activeProducts.length === 0) return null;
+              
+              return (
+                <div key={category} className="border p-4 rounded-lg space-y-3">
+                  <div className="flex items-center gap-3">
+                    {getCategoryIcon(category)}
+                    <span className="font-medium">{getCategoryName(category)}</span>
+                  </div>
+                  
+                  <div className="space-y-3 mt-2">
+                    {activeProducts.map(product => (
+                      <div 
+                        key={product.id} 
+                        className="p-3 rounded-lg border border-green-100 bg-green-50/30 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{product.name}</h4>
+                            <p className="text-sm text-gray-500">{product.type}</p>
+                          </div>
+                          {getStatusBadge(product.status)}
                         </div>
                         
-                        <div className="flex items-center gap-1.5">
-                          {product.autoRenew ? (
-                            <Badge variant="outline" className="px-1.5 py-0 h-4 bg-blue-50 text-blue-700 border-blue-200">
-                              <RefreshCw className="h-2.5 w-2.5 mr-0.5" />
-                              Auto-renew
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="px-1.5 py-0 h-4 bg-gray-50 text-gray-600 border-gray-200">
-                              Manual renewal
-                            </Badge>
-                          )}
-                          
-                          {product.renewalPrice && (
-                            <Badge variant="outline" className="px-1.5 py-0 h-4 bg-green-50 text-green-700 border-green-200">
-                              <Tag className="h-2.5 w-2.5 mr-0.5" />
-                              ${product.renewalPrice}/yr
-                            </Badge>
-                          )}
+                        {product.expiration && (
+                          <div className="mt-2 text-sm text-gray-500 flex items-center">
+                            <Clock className="h-3.5 w-3.5 text-gray-400 mr-1.5" />
+                            Expires: {new Date(product.expiration).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </TabsContent>
+          
+          <TabsContent value="expiring" className="space-y-6">
+            {Object.keys(productsByCategory).map(category => {
+              const expiringProducts = productsByCategory[category].filter(p => 
+                p.status === "expiring" || 
+                (p.expiration && getDaysUntilExpiration(p.expiration)! < 30 && getDaysUntilExpiration(p.expiration)! > 0)
+              );
+              
+              if (expiringProducts.length === 0) return null;
+              
+              return (
+                <div key={category} className="border p-4 rounded-lg space-y-3">
+                  <div className="flex items-center gap-3">
+                    {getCategoryIcon(category)}
+                    <span className="font-medium">{getCategoryName(category)}</span>
+                  </div>
+                  
+                  <div className="space-y-3 mt-2">
+                    {expiringProducts.map(product => (
+                      <div 
+                        key={product.id} 
+                        className="p-3 rounded-lg border border-amber-100 bg-amber-50/30 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{product.name}</h4>
+                            <p className="text-sm text-gray-500">{product.type}</p>
+                          </div>
+                          {getStatusBadge(product.status)}
+                        </div>
+                        
+                        {product.expiration && (
+                          <div className="mt-2 text-sm text-amber-600 font-medium flex items-center">
+                            <Clock className="h-3.5 w-3.5 text-amber-500 mr-1.5" />
+                            Expires in {getDaysUntilExpiration(product.expiration)} days
+                            <span className="text-gray-500 font-normal ml-1">
+                              ({new Date(product.expiration).toLocaleDateString()})
+                            </span>
+                          </div>
+                        )}
+                        
+                        <div className="mt-3">
+                          <Button size="sm" className="w-full bg-amber-600 hover:bg-amber-700 text-white">
+                            Renew Now
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center py-6 bg-gray-50 rounded-md">
-                    <div className="flex flex-col items-center">
-                      <div className="p-3 bg-gray-100 rounded-full mb-3">
-                        <Info className="h-6 w-6 text-gray-400" />
-                      </div>
-                      <h3 className="text-sm font-medium text-gray-700">No {activeTab} products</h3>
-                      <p className="text-xs text-gray-500 mt-1 max-w-md">
-                        This client doesn't have any {activeTab} products or services.
-                      </p>
-                    </div>
+                    ))}
                   </div>
-                )}
+                </div>
+              );
+            })}
+            
+            {!Object.keys(productsByCategory).some(category => 
+              productsByCategory[category].some(p => 
+                p.status === "expiring" || 
+                (p.expiration && getDaysUntilExpiration(p.expiration)! < 30 && getDaysUntilExpiration(p.expiration)! > 0)
+              )
+            ) && (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No products expiring soon.</p>
               </div>
             )}
           </TabsContent>
         </Tabs>
       </CardContent>
       
-      <CardFooter className="bg-white border-t p-4 flex justify-between">
-        <Button variant="outline" size="sm" className="text-xs h-8 shadow-sm">
-          <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-          Add Product
+      <CardFooter className="border-t p-4 flex justify-between bg-white">
+        <Button variant="outline" size="sm" className="text-xs h-7 gap-1.5">
+          <Database className="h-3.5 w-3.5" />
+          Manage All Products
         </Button>
-        
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-8 shadow-sm">
-            <Settings className="h-3.5 w-3.5 mr-1.5" />
-            Manage
-          </Button>
-          <Button variant="default" size="sm" className="text-xs h-8 bg-blue-600 hover:bg-blue-700 shadow-sm">
-            <HelpCircle className="h-3.5 w-3.5 mr-1.5" />
-            Get Support
-          </Button>
-        </div>
+        <Button size="sm" className="text-xs h-7 bg-red-600 hover:bg-red-700 text-white gap-1.5">
+          <Plus className="h-3.5 w-3.5" />
+          Add New Product
+        </Button>
       </CardFooter>
     </Card>
   );
