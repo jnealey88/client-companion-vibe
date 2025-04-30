@@ -138,11 +138,13 @@ export default function RecommendedNextStep({ client, tasks }: RecommendedNextSt
       
       return await apiRequest('/api/clients/' + client.id + '/companion-tasks', 'POST', newTask);
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
       
       // Trigger task generation
-      generateTaskContent(data.id, recommendedTask.type);
+      if (data && data.id) {
+        generateTaskContent(data.id, recommendedTask.type);
+      }
     },
     onError: (error) => {
       setIsCreating(false);
@@ -157,10 +159,7 @@ export default function RecommendedNextStep({ client, tasks }: RecommendedNextSt
   // Generate task content
   const generateTaskContent = async (taskId: number, taskType: string) => {
     try {
-      await apiRequest(`/api/clients/${client.id}/generate/${taskType}`, {
-        method: 'POST',
-        data: { taskId }
-      });
+      await apiRequest('/api/clients/' + client.id + '/generate/' + taskType, 'POST', { taskId });
       
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
       setIsCreating(false);
