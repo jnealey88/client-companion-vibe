@@ -554,6 +554,49 @@ interface CompanyAnalysisOutput {
   };
 }
 
+// Helper function to generate specific keyword recommendations
+async function generateKeywordRecommendation(keyword: string, baseStrategy: string, clientInfo: any): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system", 
+          content: `You are an SEO expert providing specific, actionable content recommendations for keywords. 
+          Keep recommendations specific and actionable in 1-2 sentences only, focusing on practical steps.
+          Don't use generic advice - tailor recommendations to the specific keyword and business type.`
+        },
+        {
+          role: "user",
+          content: `
+          Create a specific, actionable content recommendation for the keyword "${keyword}" for a business in the ${clientInfo.industry} industry.
+          
+          Business name: ${clientInfo.name}
+          Business description: ${clientInfo.projectDescription || "No description provided"}
+          Base strategy: ${baseStrategy}
+          
+          Your recommendation should:
+          1. Be 1-2 concise sentences (maximum 50 words)
+          2. Provide specific, actionable content ideas tailored to this keyword and business
+          3. Focus on practical steps the business can take
+          4. Avoid generic advice - make it specific to this keyword and business type
+          
+          Return just the recommendation text with no additional explanation.
+          `
+        }
+      ],
+      max_tokens: 150,
+      temperature: 0.7,
+    });
+    
+    const recommendation = response.choices[0].message.content?.trim() || baseStrategy;
+    return recommendation;
+  } catch (error) {
+    console.error(`Error generating recommendation for keyword ${keyword}:`, error);
+    return baseStrategy;
+  }
+}
+
 // Function to generate comprehensive company analysis with integrated data
 export async function generateCompanyAnalysis(clientInfo: any): Promise<string> {
   try {
@@ -587,19 +630,65 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
     
     // Step 5: Generate structured analysis using OpenAI
     console.log("Generating final comprehensive analysis...");
+
+    // Define the keywordInfo interface to include baseStrategy outside the map function
+    interface KeywordInfo {
+      keyword: string;
+      volume: string;
+      clientPosition: string;
+      recommendation: string;
+      baseStrategy: string;
+    }
+    
+    // Helper function to calculate keyword difficulty
+    const calculateKeywordDifficulty = (keyword: string, volume: string, serpData: any): number => {
+      // If we have DataForSEO data, use it
+      if (serpData && serpData.keywordDifficulty !== undefined) {
+        return serpData.keywordDifficulty;
+      }
+      
+      // Otherwise, use our algorithm to calculate an estimated difficulty
+      let difficulty = 50; // Start with a neutral score (medium difficulty)
+      
+      // 1. Adjust based on keyword length (longer keywords are usually less competitive)
+      const wordCount = keyword.split(/\s+/).length;
+      difficulty -= (wordCount - 1) * 5; // Reduce difficulty by 5 for each additional word
+      
+      // 2. Adjust based on search volume (higher volume = higher competition)
+      const numericVolume = volume ? parseInt(volume.replace(/,/g, '')) : 0;
+      if (numericVolume > 0) {
+        if (numericVolume > 10000) difficulty += 20;
+        else if (numericVolume > 5000) difficulty += 15;
+        else if (numericVolume > 1000) difficulty += 10;
+        else if (numericVolume > 500) difficulty += 5;
+        else if (numericVolume < 100) difficulty -= 10;
+      }
+      
+      // 3. Adjust based on keyword specificity and commercial intent
+      const commercialTerms = ['buy', 'price', 'purchase', 'shop', 'cost', 'review', 'best', 'top', 'cheap', 'discount'];
+      const hasCommercialIntent = commercialTerms.some(term => keyword.toLowerCase().includes(term));
+      if (hasCommercialIntent) difficulty += 10;
+      
+      // 4. Adjust for long-tail specificity
+      if (keyword.length > 20) difficulty -= 5;
+      
+      // Ensure difficulty stays within 0-100 range
+      return Math.max(0, Math.min(100, difficulty));
+    };
     
     // Format keyword data for prompt with both search volume and SERP data
-    const keywordDataFormatted = keywords.map((keyword, index) => {
+    let keywordDataFormatted = keywords.map((keyword, index) => {
       const volumeData = keywordDataResults[index];
       const serpData = serpDataResults[index];
       
       // Default data
-      let keywordInfo = {
+      let keywordInfo: KeywordInfo = {
         keyword: keyword,
         volume: "Unknown",
         // Removed difficulty as it's consistently unreliable
         clientPosition: "Not ranked",
-        recommendation: "Needs research"
+        recommendation: "Needs research",
+        baseStrategy: "Consider targeting this keyword"
       };
       
       // Add volume data if available
@@ -607,71 +696,64 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
         keywordInfo.volume = volumeData[0].search_volume.toString();
       }
       
-      // Calculate keyword difficulty even when DataForSEO doesn't provide it
-      const calculateKeywordDifficulty = (keyword: string, volume?: string): number => {
-        // If we have DataForSEO data, use it
-        if (serpData && serpData.keywordDifficulty !== undefined) {
-          return serpData.keywordDifficulty;
-        }
-        
-        // Otherwise, use our algorithm to calculate an estimated difficulty
-        let difficulty = 50; // Start with a neutral score (medium difficulty)
-        
-        // 1. Adjust based on keyword length (longer keywords are usually less competitive)
-        const wordCount = keyword.split(/\s+/).length;
-        difficulty -= (wordCount - 1) * 5; // Reduce difficulty by 5 for each additional word
-        
-        // 2. Adjust based on search volume (higher volume = higher competition)
-        const numericVolume = volume ? parseInt(volume.replace(/,/g, '')) : 0;
-        if (numericVolume > 0) {
-          if (numericVolume > 10000) difficulty += 20;
-          else if (numericVolume > 5000) difficulty += 15;
-          else if (numericVolume > 1000) difficulty += 10;
-          else if (numericVolume > 500) difficulty += 5;
-          else if (numericVolume < 100) difficulty -= 10;
-        }
-        
-        // 3. Adjust based on keyword specificity and commercial intent
-        const commercialTerms = ['buy', 'price', 'purchase', 'shop', 'cost', 'review', 'best', 'top', 'cheap', 'discount'];
-        const hasCommercialIntent = commercialTerms.some(term => keyword.toLowerCase().includes(term));
-        if (hasCommercialIntent) difficulty += 10;
-        
-        // 4. Adjust for long-tail specificity
-        if (keyword.length > 20) difficulty -= 5;
-        
-        // Ensure difficulty stays within 0-100 range
-        return Math.max(0, Math.min(100, difficulty));
-      };
-      
       // Add SERP data if available
       if (serpData) {
         // Set client position if available
         keywordInfo.clientPosition = serpData.clientPosition ? 
           `Ranked #${serpData.clientPosition}` : "Not in top 100";
         
-        // Generate recommendation based on position data
+        // Generate recommendation base strategy based on position data
+        let baseStrategy = "";
         if (serpData.clientPosition && serpData.clientPosition <= 10) {
-          keywordInfo.recommendation = "Maintain position";
+          baseStrategy = "Maintain position";
         } else if (serpData.clientPosition && serpData.clientPosition <= 30) {
-          keywordInfo.recommendation = "Optimize content";
+          baseStrategy = "Optimize content";
         } else {
-          keywordInfo.recommendation = "Develop targeted content";
+          baseStrategy = "Develop targeted content";
         }
+        
+        // Store the base strategy for later use in specific recommendations
+        keywordInfo.baseStrategy = baseStrategy;
       } else {
         // No SERP data available, use volume to determine recommendation
         const volumeNum = keywordInfo.volume !== "Unknown" ? 
           parseInt(keywordInfo.volume.replace(/,/g, '')) : 0;
         
+        // Generate base strategy based on volume
+        let baseStrategy = "";
         if (volumeNum > 5000) {
-          keywordInfo.recommendation = "High-value target, develop optimized content";
+          baseStrategy = "High-value target, develop optimized content";
         } else if (volumeNum > 1000) {
-          keywordInfo.recommendation = "Good opportunity, develop relevant content";
+          baseStrategy = "Good opportunity, develop relevant content";
         } else {
-          keywordInfo.recommendation = "Consider targeting this keyword";
+          baseStrategy = "Consider targeting this keyword";
         }
+        
+        // Store the base strategy for later use in specific recommendations
+        keywordInfo.baseStrategy = baseStrategy;
       }
       
+      // Default recommendation will be replaced with AI-generated one later
+      keywordInfo.recommendation = keywordInfo.baseStrategy;
+      
       return keywordInfo;
+    });
+    
+    // Generate specific recommendations for each keyword
+    console.log("Generating specific keyword recommendations...");
+    const recommendationPromises = keywordDataFormatted.map(keywordInfo => 
+      generateKeywordRecommendation(keywordInfo.keyword, keywordInfo.baseStrategy, clientInfo)
+    );
+    
+    // Wait for all recommendations to complete
+    const recommendations = await Promise.all(recommendationPromises);
+    
+    // Update keyword data with specific recommendations
+    keywordDataFormatted = keywordDataFormatted.map((keywordInfo, index) => {
+      return {
+        ...keywordInfo,
+        recommendation: recommendations[index]
+      };
     });
     
     // Format performance data for prompt - clearly separate from DataForSEO SEO data
