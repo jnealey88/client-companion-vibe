@@ -61,25 +61,7 @@ export default function ClientFiltersComponent({
           </Select>
         </div>
         
-        <div className="relative">
-          <Select
-            value={localFilters.industry || "All Industries"}
-            onValueChange={(value) => handleFilterChange("industry", value)}
-          >
-            <SelectTrigger className="bg-gray-50 border border-gray-300 rounded-md w-44">
-              <SelectValue placeholder="All Industries" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {industryOptions.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Industry filter hidden */}
         
         <div className="relative">
           <Select

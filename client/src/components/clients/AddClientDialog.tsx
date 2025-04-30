@@ -171,31 +171,12 @@ export default function AddClientDialog({
                 )}
               />
               
+              {/* Industry field hidden but populated automatically */}
               <FormField
                 control={form.control}
                 name="industry"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Industry *</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an industry" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {industryOptions.slice(1).map((industry: string) => (
-                          <SelectItem key={industry} value={industry}>
-                            {industry}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+                  <input type="hidden" {...field} />
                 )}
               />
               

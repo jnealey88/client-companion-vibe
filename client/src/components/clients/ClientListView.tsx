@@ -70,14 +70,7 @@ export default function ClientListView({
                 Client & Contact
               </div>
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <div className="flex items-center">
-                Project
-                <button className="ml-1">
-                  <ArrowUp className="h-3 w-3 text-gray-400" />
-                </button>
-              </div>
-            </th>
+            {/* Project column hidden */}
             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               <div className="flex items-center">
                 Status
@@ -121,10 +114,7 @@ export default function ClientListView({
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{client.projectName}</div>
-                  <div className="text-sm text-gray-500"><Badge className={getStatusClass(client.projectStatus)}>{client.projectStatus}</Badge></div>
-                </td>
+                {/* Project column data hidden */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Badge className={getStatusClass(client.status)}>
                     {client.status}

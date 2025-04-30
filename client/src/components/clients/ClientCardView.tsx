@@ -33,18 +33,12 @@ export default function ClientCardView({ clients }: ClientCardViewProps) {
               </div>
               
               <div className="mt-6 grid grid-cols-2 gap-4">
-                <div className="col-span-1">
-                  <p className="text-sm text-gray-500">Project</p>
-                  <p className="text-sm font-medium">{client.projectName}</p>
-                </div>
+                {/* Project information hidden */}
                 <div className="col-span-1">
                   <p className="text-sm text-gray-500">Last Contact</p>
                   <p className="text-sm font-medium">{formatDate(client.lastContact)}</p>
                 </div>
-                <div className="col-span-1">
-                  <p className="text-sm text-gray-500">Industry</p>
-                  <p className="text-sm font-medium">{client.industry}</p>
-                </div>
+                {/* Industry information hidden */}
                 <div className="col-span-1">
                   <p className="text-sm text-gray-500">Project Value</p>
                   <p className="text-sm font-medium">{formatCurrency(client.projectValue)}</p>
