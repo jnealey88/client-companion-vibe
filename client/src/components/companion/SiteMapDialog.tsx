@@ -446,10 +446,13 @@ Your Web Professional`);
       if (response && typeof response === 'object') {
         let expandedContent = null;
         
-        // Try to get the expanded content from different possible response formats
-        if ('expandedContent' in response && typeof response.expandedContent === 'string') {
+        // First specifically check for the standard response format
+        if (response.success === true && typeof response.expandedContent === 'string') {
           expandedContent = response.expandedContent;
-        } else if (typeof response === 'string') {
+          console.log("Found expanded content in standard format:", expandedContent);
+        } 
+        // Other fallback formats 
+        else if (typeof response === 'string') {
           // Sometimes the API might directly return a string
           expandedContent = response;
         } else if (typeof response === 'object') {
@@ -459,6 +462,7 @@ Your Web Professional`);
           for (const key of contentKeys) {
             if (key in responseObj && typeof responseObj[key] === 'string') {
               expandedContent = responseObj[key];
+              console.log(`Found expanded content in key "${key}":`, expandedContent);
               break;
             }
           }
