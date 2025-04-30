@@ -1361,16 +1361,14 @@ ${strategicRecommendations ? "Based on our market research, we've identified the
 
 ## Proposal Sections
 
-Format the proposal as a professional HTML business proposal with clear sections. Use <h2>, <h3> tags for headings and proper HTML structure.
+Format the proposal as a professional HTML business proposal with clear sections. Use <h2>, <h3>, <h4>, <h5> tags for headings and proper HTML structure for lists and tables.
 
 IMPORTANT FORMATTING INSTRUCTIONS:
 - DO NOT include a title or main heading at the beginning (no "Website Redesign Proposal" or similar titles)
 - DO NOT start with an H1 heading of any kind
 - Start directly with the Executive Summary section using an H2 heading
-- Avoid any whitespace, line breaks, or empty paragraphs at the beginning
 - Make sure each section has a clear <h2> heading
 - Do not repeat the project name in headings
-- Again, DO NOT include any variation of "Website Redesign Proposal" as a heading
 
 Include these sections:
 
@@ -1384,7 +1382,7 @@ Include these sections:
    - Phase, Key Activities, Tangible Deliverables
  
 4. **Timeline & Milestones:**
-   - Week, Milestone
+   - Week, Milestone, deliverables or expectations
 
 5. **Investment & Pricing:**
    - Total Project Fee: $X,XXX
@@ -1405,9 +1403,7 @@ Include these sections:
   - By paying the deposit, you agree to our contract terms and conditions.
 
 # Output Format
-The proposal should be delivered as an HTML document with proper section headers and formatted text.
-DO NOT include a main title like "Website Redesign Proposal" - start directly with the Executive Summary section.
-IMPORTANT: THE FIRST HEADING IN YOUR RESPONSE MUST BE "Executive Summary" (h2 tag) - do not include any h1 headings.`;
+The proposal should be delivered as an HTML document with proper section headers and formatted text.`;
 
   try {
     // Update prompt to request pricing info extraction
