@@ -47,6 +47,10 @@ interface ContentExpansionResponse {
   success: boolean;
 }
 
+interface ApiResponse {
+  [key: string]: any;
+}
+
 // Define interfaces for the structured site map data
 interface SiteSection {
   id: string;
@@ -425,7 +429,7 @@ Your Web Professional`);
     
     try {
       // Use the OpenAI API via our existing endpoint
-      const response = await apiRequest<ContentExpansionResponse>("POST", `/api/content/expand`, {
+      const response = await apiRequest<ApiResponse>("POST", `/api/content/expand`, {
         content: section.content,
         context: {
           pageTitle: page.title,
@@ -437,7 +441,7 @@ Your Web Professional`);
       
       if (response && response.expandedContent) {
         // Update the section content with the expanded text
-        handleSectionUpdate(pageId, sectionId, response.expandedContent);
+        handleSectionUpdate(pageId, sectionId, response.expandedContent as string);
         
         toast({
           title: "Content Expanded",
@@ -893,6 +897,18 @@ Your Web Professional`);
                               </Button>
                             ))}
                           </div>
+                        </div>
+                        
+                        {/* Add New Page Button */}
+                        <div className="mt-4">
+                          <Button
+                            variant="outline"
+                            className="w-full flex items-center justify-center gap-2"
+                            onClick={handleAddNewPage}
+                          >
+                            <FileText className="h-4 w-4" />
+                            <span>Add New Page</span>
+                          </Button>
                         </div>
                       </div>
                       
