@@ -18,6 +18,7 @@ import {
   generateScheduleDiscovery,
   TaskType
 } from "./openai";
+import { sendEmail, EmailParams } from "./sendgrid";
 import { setupAuth } from "./auth";
 
 // Middleware to check if user is authenticated

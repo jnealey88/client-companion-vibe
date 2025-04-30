@@ -144,10 +144,7 @@ Web Design Consultant`;
   // Create mutation to update the task status
   const updateTaskMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return apiRequest(`/api/companion-tasks/${id}`, {
-        method: "PATCH",
-        data,
-      });
+      return apiRequest("PATCH", `/api/companion-tasks/${id}`, data);
     },
     onSuccess: () => {
       // Invalidate the tasks query to refresh the data
