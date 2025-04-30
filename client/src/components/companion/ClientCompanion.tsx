@@ -1079,7 +1079,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                               className={`overflow-hidden shadow-sm transition-all duration-300 ease-in-out
                                 ${task?.content 
                                   ? "border-gray-200 bg-gray-50 hover:shadow-sm" 
-                                  : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md hover:transform hover:-translate-y-1"}`}
+                                  : type === 'company_analysis'
+                                    ? "border-blue-200 bg-white hover:border-blue-300 hover:shadow-md hover:transform hover:-translate-y-1 ring-2 ring-blue-100"
+                                    : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-md hover:transform hover:-translate-y-1"}`}
                             >
                               <CardHeader className={`p-4 ${task?.content ? "pb-2 bg-gray-50" : "pb-2"}`}>
                                 <div className="flex items-start">
@@ -1095,8 +1097,15 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     <div className="flex justify-between items-start w-full">
                                       <CardTitle className="text-base flex items-center gap-2">
                                         {taskInfo.label}
-                                        {task?.content && (
+                                        {task?.content ? (
                                           <span className="text-xs text-gray-600 font-medium bg-gray-50 px-1.5 py-0.5 rounded-sm">Completed</span>
+                                        ) : (
+                                          // Add "Start Here" tag for Company Analysis when it hasn't been generated
+                                          type === 'company_analysis' && (
+                                            <span className="text-xs text-white font-medium bg-blue-500 px-1.5 py-0.5 rounded-sm animate-pulse">
+                                              Start Here
+                                            </span>
+                                          )
                                         )}
                                       </CardTitle>
                                       {/* Time-saved badge removed from individual tasks */}
