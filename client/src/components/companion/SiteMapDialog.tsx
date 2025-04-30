@@ -337,20 +337,82 @@ Your Web Professional`);
   };
   
   // Add a new page to the site map
+  // Page and section dialog states
+  const [isAddPageDialogOpen, setIsAddPageDialogOpen] = useState(false);
+  const [isAddSectionDialogOpen, setIsAddSectionDialogOpen] = useState(false);
+  const [newPageTitle, setNewPageTitle] = useState("New Page");
+  const [newPageUrl, setNewPageUrl] = useState("/new-page");
+  const [newPageMetaDescription, setNewPageMetaDescription] = useState("This is a new page added to the site map. Update this description.");
+  const [newPageIsParent, setNewPageIsParent] = useState(false);
+  const [newPageTags, setNewPageTags] = useState<string[]>(["Content page"]);
+  const [newPageTagInput, setNewPageTagInput] = useState("");
+  
+  const [activePageForSection, setActivePageForSection] = useState<string | null>(null);
+  const [newSectionTitle, setNewSectionTitle] = useState("New Section");
+  const [newSectionContent, setNewSectionContent] = useState("Enter the content for this section here.");
+  const [newSectionTags, setNewSectionTags] = useState<string[]>(["Content block"]);
+  const [newSectionTagInput, setNewSectionTagInput] = useState("");
+  
+  // Helper function to add tags
+  const addPageTag = () => {
+    if (newPageTagInput.trim() && !newPageTags.includes(newPageTagInput.trim())) {
+      setNewPageTags([...newPageTags, newPageTagInput.trim()]);
+      setNewPageTagInput("");
+    }
+  };
+  
+  const removePageTag = (tag: string) => {
+    setNewPageTags(newPageTags.filter(t => t !== tag));
+  };
+  
+  const addSectionTag = () => {
+    if (newSectionTagInput.trim() && !newSectionTags.includes(newSectionTagInput.trim())) {
+      setNewSectionTags([...newSectionTags, newSectionTagInput.trim()]);
+      setNewSectionTagInput("");
+    }
+  };
+  
+  const removeSectionTag = (tag: string) => {
+    setNewSectionTags(newSectionTags.filter(t => t !== tag));
+  };
+  
+  // Show the add page dialog
   const handleAddNewPage = () => {
+    if (!siteMapData) return;
+    
+    // Reset form values
+    setNewPageTitle("New Page");
+    setNewPageUrl("/new-page");
+    setNewPageMetaDescription("This is a new page added to the site map. Update this description.");
+    setNewPageIsParent(false);
+    setNewPageTags(["Content page"]);
+    setNewPageTagInput("");
+    
+    // Open the dialog
+    setIsAddPageDialogOpen(true);
+  };
+  
+  // Create a new page from the dialog input
+  const confirmAddNewPage = () => {
     if (!siteMapData) return;
     
     // Create a deep copy of the site map data
     const updatedSiteMapData = JSON.parse(JSON.stringify(siteMapData)) as SiteMapData;
     
-    // Create a new page with default values
+    // Format the URL if needed
+    let formattedUrl = newPageUrl;
+    if (formattedUrl && !formattedUrl.startsWith('/')) {
+      formattedUrl = '/' + formattedUrl;
+    }
+    
+    // Create a new page with the user-provided values
     const newPageId = generateUniqueId('page');
     const newPage: SitePageData = {
       id: newPageId,
-      title: "New Page",
-      url: "/new-page",
-      metaDescription: "This is a new page added to the site map. Update this description.",
-      isParent: false,
+      title: newPageTitle || "New Page",
+      url: formattedUrl || "/new-page",
+      metaDescription: newPageMetaDescription || "This is a new page added to the site map.",
+      isParent: newPageIsParent,
       children: [],
       sections: [
         {
@@ -358,7 +420,7 @@ Your Web Professional`);
           title: "Main Content",
           content: "Enter the content for this section here.",
           wordCount: 50,
-          elements: ["Content block"]
+          elements: newPageTags
         }
       ],
       technicalFeatures: []
@@ -372,10 +434,12 @@ Your Web Professional`);
     setEditedContent(JSON.stringify(updatedSiteMapData, null, 2));
     setActivePage(newPageId);
     setIsEdited(true);
+    setIsAddPageDialogOpen(false);
     
     toast({
       title: "Page Added",
-      description: "New page added to site map. You can now edit its details.",
+      description: `"${newPage.title}" page has been added to the site map.`,
+      variant: "default"
     });
   };
   
@@ -383,20 +447,41 @@ Your Web Professional`);
   const handleAddSectionToPage = (pageId: string) => {
     if (!siteMapData) return;
     
+    // Reset section form values 
+    setNewSectionTitle("New Section");
+    setNewSectionContent("Enter the content for this section here.");
+    setNewSectionTags(["Content block"]);
+    setNewSectionTagInput("");
+    
+    // Store the target page ID
+    setActivePageForSection(pageId);
+    
+    // Open the section creation dialog
+    setIsAddSectionDialogOpen(true);
+  };
+  
+  // Create a new section from dialog input
+  const confirmAddNewSection = () => {
+    if (!siteMapData || !activePageForSection) return;
+    
     // Create a deep copy of the site map data
     const updatedSiteMapData = JSON.parse(JSON.stringify(siteMapData)) as SiteMapData;
     
     // Find the page
-    const pageIndex = updatedSiteMapData.pages.findIndex(p => p.id === pageId);
+    const pageIndex = updatedSiteMapData.pages.findIndex(p => p.id === activePageForSection);
     if (pageIndex === -1) return;
+    
+    // Calculate word count based on content
+    const wordCount = newSectionContent.trim() ? 
+      newSectionContent.trim().split(/\s+/).length : 50;
     
     // Create a new section
     const newSection: SiteSection = {
       id: generateUniqueId('section'),
-      title: "New Section",
-      content: "Enter the content for this new section here.",
-      wordCount: 50,
-      elements: []
+      title: newSectionTitle || "New Section",
+      content: newSectionContent || "Enter the content for this new section here.",
+      wordCount: wordCount,
+      elements: newSectionTags.filter(tag => tag.trim() !== "")
     };
     
     // Add the section to the page
@@ -406,10 +491,13 @@ Your Web Professional`);
     setSiteMapData(updatedSiteMapData);
     setEditedContent(JSON.stringify(updatedSiteMapData, null, 2));
     setIsEdited(true);
+    setIsAddSectionDialogOpen(false);
+    setActivePageForSection(null);
     
     toast({
       title: "Section Added",
-      description: "New section added to the page.",
+      description: `"${newSection.title}" section has been added to the page.`,
+      variant: "default"
     });
   };
   
@@ -449,7 +537,7 @@ Your Web Professional`);
       console.log("Sending content expansion request with context:", contextData);
       
       // Use the OpenAI API via our existing endpoint
-      const response = await apiRequest<ContentExpansionResponse>("POST", `/api/content/expand`, {
+      const response = await apiRequest("POST", `/api/content/expand`, {
         content: section.content,
         context: contextData
       });
@@ -759,17 +847,18 @@ Your Web Professional`);
   }, [loading, loadingStages]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <LayoutGrid className="h-5 w-5" />
-            {generatedTask?.content ? "Website Sitemap" : "Generate Website Sitemap"}
-          </DialogTitle>
-          <DialogDescription>
-            {generatedTask?.content
-              ? "Review and edit the website sitemap and content plan below."
-              : "Generate a comprehensive website sitemap and content plan based on the client's needs and existing proposal."}
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LayoutGrid className="h-5 w-5" />
+              {generatedTask?.content ? "Website Sitemap" : "Generate Website Sitemap"}
+            </DialogTitle>
+            <DialogDescription>
+              {generatedTask?.content
+                ? "Review and edit the website sitemap and content plan below."
+                : "Generate a comprehensive website sitemap and content plan based on the client's needs and existing proposal."}
           </DialogDescription>
         </DialogHeader>
         
@@ -1231,5 +1320,189 @@ Your Web Professional`);
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    
+    {/* Add Page Dialog */}
+    <Dialog open={isAddPageDialogOpen} onOpenChange={setIsAddPageDialogOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add New Page</DialogTitle>
+          <DialogDescription>
+            Create a new page for the site map with detailed information.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="pageTitle">Page Title*</Label>
+            <Input
+              id="pageTitle"
+              value={newPageTitle}
+              onChange={(e) => setNewPageTitle(e.target.value)}
+              placeholder="Home Page"
+            />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="pageUrl">URL Path*</Label>
+            <Input
+              id="pageUrl"
+              value={newPageUrl}
+              onChange={(e) => setNewPageUrl(e.target.value)}
+              placeholder="/home"
+            />
+            <p className="text-xs text-muted-foreground">
+              Start with a forward slash (/) for the page path
+            </p>
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="pageMetaDescription">Meta Description</Label>
+            <Textarea
+              id="pageMetaDescription"
+              value={newPageMetaDescription}
+              onChange={(e) => setNewPageMetaDescription(e.target.value)}
+              placeholder="Brief description of this page for SEO purposes"
+              rows={3}
+            />
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="isParentPage"
+              checked={newPageIsParent}
+              onCheckedChange={(checked) => 
+                setNewPageIsParent(checked === true)
+              }
+            />
+            <Label htmlFor="isParentPage" className="cursor-pointer">
+              This is a parent page (has child pages)
+            </Label>
+          </div>
+          
+          <div className="grid gap-2">
+            <Label>Page Elements/Tags</Label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {newPageTags.map((tag, index) => (
+                <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                  {tag}
+                  <button 
+                    type="button" 
+                    className="ml-1 rounded-full h-4 w-4 inline-flex items-center justify-center bg-muted-foreground/20 hover:bg-muted-foreground/30"
+                    onClick={() => removePageTag(tag)}
+                  >
+                    <X className="h-2 w-2" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add a page element..."
+                value={newPageTagInput}
+                onChange={(e) => setNewPageTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addPageTag();
+                  }
+                }}
+              />
+              <Button type="button" onClick={addPageTag} size="sm">Add</Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Add elements like "Hero Section", "Contact Form", etc.
+            </p>
+          </div>
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setIsAddPageDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={confirmAddNewPage}>Add Page</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    
+    {/* Add Section Dialog */}
+    <Dialog open={isAddSectionDialogOpen} onOpenChange={setIsAddSectionDialogOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Add New Section</DialogTitle>
+          <DialogDescription>
+            Create a new content section for this page.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="sectionTitle">Section Title*</Label>
+            <Input
+              id="sectionTitle"
+              value={newSectionTitle}
+              onChange={(e) => setNewSectionTitle(e.target.value)}
+              placeholder="About Us"
+            />
+          </div>
+          
+          <div className="grid gap-2">
+            <Label htmlFor="sectionContent">Initial Content</Label>
+            <Textarea
+              id="sectionContent"
+              value={newSectionContent}
+              onChange={(e) => setNewSectionContent(e.target.value)}
+              placeholder="Enter the content for this section here..."
+              rows={5}
+            />
+            <p className="text-xs text-muted-foreground">
+              You can expand this content later using AI assistance
+            </p>
+          </div>
+          
+          <div className="grid gap-2">
+            <Label>Section Elements/Tags</Label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {newSectionTags.map((tag, index) => (
+                <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                  {tag}
+                  <button 
+                    type="button" 
+                    className="ml-1 rounded-full h-4 w-4 inline-flex items-center justify-center bg-muted-foreground/20 hover:bg-muted-foreground/30"
+                    onClick={() => removeSectionTag(tag)}
+                  >
+                    <X className="h-2 w-2" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add a section element..."
+                value={newSectionTagInput}
+                onChange={(e) => setNewSectionTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addSectionTag();
+                  }
+                }}
+              />
+              <Button type="button" onClick={addSectionTag} size="sm">Add</Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Add elements like "Text", "Image", "Video", "Form", etc.
+            </p>
+          </div>
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setIsAddSectionDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={confirmAddNewSection}>Add Section</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>
   );
 }
