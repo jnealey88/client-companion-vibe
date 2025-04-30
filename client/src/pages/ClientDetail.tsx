@@ -90,43 +90,50 @@ export default function ClientDetail() {
         <Header />
         
         <main className="flex-1 overflow-y-auto p-6 bg-background">
-          <div className="mb-6">
-            <div className="flex justify-between items-center">
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-6">
               <Link href="/">
-                <Button variant="ghost" className="px-0 text-gray-500 hover:text-gray-700">
+                <Button variant="ghost" className="px-0 text-gray-500 hover:text-gray-700 hover:bg-transparent">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Clients
                 </Button>
               </Link>
               
               <div className="flex gap-3 items-center">
-                <Badge className="bg-blue-100 text-blue-800 px-2 py-1">
+                <Badge variant="outline" className={`${getStatusClass(client.status)} border px-3 py-1.5 text-sm font-medium`}>
                   {client.status}
                 </Badge>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 border-gray-200 bg-white hover:bg-gray-50"
                   onClick={() => setClientInfoOpen(!clientInfoOpen)}
                 >
                   <Info className="h-4 w-4" />
                   Client Info
-                  {clientInfoOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  {clientInfoOpen ? <ChevronDown className="h-4 w-4 ml-1" /> : <ChevronRight className="h-4 w-4 ml-1" />}
                 </Button>
+              </div>
+            </div>
+          
+            <div className="flex items-center gap-5 p-4 bg-white border rounded-lg shadow-sm">
+              <Avatar className="h-18 w-18 rounded-lg shadow-sm">
+                <AvatarFallback className="bg-blue-100 text-blue-800 text-xl font-semibold">{client.name.substring(0, 2)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">{client.name}</h1>
+                <div className="flex items-center text-gray-600 mt-1">
+                  <Building className="h-4 w-4 mr-1" />
+                  <span className="text-sm">{client.industry}</span>
+                  <span className="mx-2">•</span>
+                  <Briefcase className="h-4 w-4 mr-1" />
+                  <span className="text-sm">{client.projectName}</span>
+                </div>
               </div>
             </div>
           </div>
           
           <div className="flex flex-col gap-6">
-            <div className="flex gap-4 items-center">
-              <Avatar className="h-16 w-16 rounded-md">
-                <AvatarFallback className="bg-gray-200 text-lg">{client.name.substring(0, 2)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <h1 className="text-3xl font-bold">{client.name}</h1>
-                <p className="text-gray-500">{client.industry} • {client.projectName}</p>
-              </div>
-            </div>
             
             <Collapsible open={clientInfoOpen} onOpenChange={setClientInfoOpen} className="w-full">
               <CollapsibleContent>

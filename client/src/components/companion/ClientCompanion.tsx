@@ -660,37 +660,41 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         }}
       />
       
-      <CardHeader>
-        <div className="flex justify-between items-center">
+      <CardHeader className="bg-white border-b">
+        <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
           <div>
-            <CardTitle className="flex items-center">
+            <CardTitle className="flex items-center text-xl">
               <span>Client Companion</span>
-              <Badge variant="outline" className="ml-2">AI Assistant</Badge>
+              <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700 border-blue-200">AI Assistant</Badge>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-gray-600 mt-1">
               AI-powered workflow assistant that helps you manage client projects efficiently
             </CardDescription>
           </div>
           
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex gap-4 items-center">
             {/* Display total time saved */}
             {tasks && tasks.some(task => task.content) && (
-              <div className="flex items-center rounded-md bg-green-50 border border-green-200 px-3 py-2">
-                <Timer className="h-5 w-5 text-green-600 mr-2" />
+              <div className="flex items-center bg-white border border-green-300 rounded-lg shadow-sm px-4 py-3">
+                <div className="bg-green-100 text-green-700 p-2 rounded-md mr-3">
+                  <Timer className="h-5 w-5" />
+                </div>
                 <div>
-                  <div className="font-semibold text-green-700">
+                  <div className="font-bold text-green-700 text-lg">
                     {formatTimeSaved(calculateTotalTimeSaved(tasks))}
                   </div>
-                  <div className="text-xs text-green-600">
-                    Total time saved
+                  <div className="text-xs text-green-600 font-medium">
+                    Total time saved with AI
                   </div>
                 </div>
               </div>
             )}
             
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500">Current phase:</span>
-              <Badge className={getPhaseStatusClass(client.status)}>{client.status}</Badge>
+            <div className="bg-white border rounded-lg px-4 py-3 shadow-sm">
+              <div className="text-sm text-gray-500 mb-1">Current phase</div>
+              <Badge className={`${getPhaseStatusClass(client.status)} px-3 py-1 text-sm font-medium`}>
+                {client.status}
+              </Badge>
             </div>
           </div>
         </div>
@@ -759,9 +763,13 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
           </div>
         ) : (
           <Tabs defaultValue="tasks" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="tasks">Tasks by Phase</TabsTrigger>
-              <TabsTrigger value="content">Generated Content</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
+              <TabsTrigger value="tasks" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                Tasks by Phase
+              </TabsTrigger>
+              <TabsTrigger value="content" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                Generated Content
+              </TabsTrigger>
             </TabsList>
             
             <TabsContent value="tasks" className="mt-4">
@@ -830,13 +838,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                         {phaseTasks.map(({ type, task }) => {
                           const taskInfo = taskTypes[type as keyof typeof taskTypes];
                           return (
-                            <Card key={type} className={`overflow-hidden ${task?.content ? "border-green-200" : ""}`}>
+                            <Card 
+                              key={type} 
+                              className={`overflow-hidden shadow-sm transition-all hover:shadow-md 
+                                ${task?.content ? "border-green-200 ring-1 ring-green-100" : "border-gray-200 hover:border-gray-300"}`}
+                            >
                               <CardHeader className={`p-4 pb-2 ${task?.content ? "bg-green-50" : ""}`}>
                                 <div className="flex items-start">
-                                  <div className={`p-2 rounded-md ${task?.content ? "bg-green-100 text-green-700" : taskInfo.iconColor} mr-3 relative`}>
+                                  <div className={`p-2.5 rounded-md ${task?.content ? "bg-green-100 text-green-700" : taskInfo.iconColor} mr-3 relative`}>
                                     {taskInfo.icon}
                                     {task?.content && (
-                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
                                         <Check className="h-3 w-3 text-white" />
                                       </div>
                                     )}
@@ -846,17 +858,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       <CardTitle className="text-base flex items-center gap-2">
                                         {taskInfo.label}
                                         {task?.content && (
-                                          <span className="text-xs text-green-600 font-normal">(Completed)</span>
+                                          <span className="text-xs text-green-600 font-medium bg-green-50 px-1.5 py-0.5 rounded-sm">Completed</span>
                                         )}
                                       </CardTitle>
                                       {task?.content && (
-                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1">
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium flex items-center gap-1">
                                           <Clock className="h-3 w-3" />
                                           {formatTimeSaved(taskInfo.timeSaved)} saved
                                         </Badge>
                                       )}
                                     </div>
-                                    <CardDescription className="text-xs line-clamp-2">
+                                    <CardDescription className="text-xs line-clamp-2 mt-1 text-gray-600">
                                       {taskInfo.description}
                                     </CardDescription>
                                   </div>
@@ -866,27 +878,27 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                 <div className="flex flex-col gap-2 mt-3">
                                   {/* Loading state with progress */}
                                   {generatingTasks[type] && (
-                                    <div className="space-y-2 p-3 border rounded-md bg-background">
+                                    <div className="space-y-2 p-3 border rounded-md bg-white">
                                       <div className="text-sm font-medium text-center text-primary">
                                         {generationStage[type] || "Generating..."}
                                       </div>
                                       
-                                      <div className="w-full bg-muted rounded-full h-2">
+                                      <div className="w-full bg-gray-100 rounded-full h-2">
                                         <div 
-                                          className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out" 
+                                          className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out" 
                                           style={{ 
                                             width: `${generationProgress[type] || 0}%` 
                                           }}
                                         />
                                       </div>
                                       
-                                      <div className="flex justify-between text-xs text-muted-foreground">
+                                      <div className="flex justify-between text-xs text-gray-500">
                                         <span>Research</span>
                                         <span>Analysis</span>
                                         <span>Completion</span>
                                       </div>
                                       
-                                      <p className="text-xs text-center text-muted-foreground mt-1">
+                                      <p className="text-xs text-center text-gray-600 mt-1">
                                         {/* Type-specific loading messages */}
                                         {type === 'company_analysis' 
                                           ? "Analyzing business data and website performance..."
@@ -900,7 +912,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   {/* Button - only show if not currently generating */}
                                   {!generatingTasks[type] && (
                                     <Button 
-                                      className="w-full"
+                                      className={`w-full ${task?.content ? "bg-green-600 hover:bg-green-700" : ""}`}
                                       variant={task?.content ? "default" : "outline"}
                                       onClick={() => {
                                         if (type === 'schedule_discovery') {
