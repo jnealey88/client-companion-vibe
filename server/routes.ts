@@ -19,6 +19,7 @@ import {
   TaskType
 } from "./openai";
 import { setupAuth } from "./auth";
+import { setupAuth } from "./auth";
 
 // Middleware to check if user is authenticated
 function isAuthenticated(req: Request, res: Response, next: NextFunction) {

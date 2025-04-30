@@ -1,14 +1,24 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { 
   Search, 
   Bell, 
-  ShoppingCart 
+  LogOut,
+  User
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { generateAvatarFallback } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel,
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   onSearch?: (searchTerm: string) => void;
@@ -16,6 +26,8 @@ interface HeaderProps {
 
 export default function Header({ onSearch }: HeaderProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const { user, logoutMutation } = useAuth();
+  const [, navigate] = useLocation();
   
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -24,11 +36,21 @@ export default function Header({ onSearch }: HeaderProps) {
       onSearch(value);
     }
   };
+
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        navigate('/auth');
+      }
+    });
+  };
   
   return (
     <header className="bg-white border-b border-gray-200 py-4 px-6 flex justify-between items-center">
       <div className="flex items-center">
-        <h1 className="text-xl font-semibold">Clients</h1>
+        <Link href="/">
+          <a className="text-xl font-semibold hover:text-primary">Clients</a>
+        </Link>
       </div>
       
       <div className="flex items-center space-x-4">
@@ -62,14 +84,27 @@ export default function Header({ onSearch }: HeaderProps) {
           </Button>
         </div>
         
-        <Avatar className="h-8 w-8">
-          <AvatarImage src="https://github.com/shadcn.png" alt="Profile" />
-          <AvatarFallback>{generateAvatarFallback("User Profile")}</AvatarFallback>
-        </Avatar>
-        
-        <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900">
-          <ShoppingCart className="h-5 w-5" />
-        </Button>
+        {user && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Avatar className="h-8 w-8 cursor-pointer">
+                <AvatarFallback>{generateAvatarFallback(user.name || user.username)}</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </header>
   );
