@@ -764,17 +764,38 @@ Your Web Professional`);
   
   // Handle section content update
   const handleSectionUpdate = (pageId: string, sectionId: string, newContent: string) => {
-    if (!siteMapData) return;
+    if (!siteMapData) {
+      console.error("Cannot update section: siteMapData is null");
+      return;
+    }
+    
+    // Log section update operation for debugging
+    console.log(`Updating section content - Page ID: ${pageId}, Section ID: ${sectionId}`);
+    console.log(`Content length: ${newContent?.length || 0} chars`);
+    console.log(`Content preview: ${typeof newContent === 'string' ? newContent.substring(0, 50) + '...' : 'Not a string'}`);
     
     // Create a deep copy of the site map data
     const updatedSiteMapData = JSON.parse(JSON.stringify(siteMapData)) as SiteMapData;
     
     // Find the page and section
     const pageIndex = updatedSiteMapData.pages.findIndex(p => p.id === pageId);
-    if (pageIndex === -1) return;
+    if (pageIndex === -1) {
+      console.error(`Page with ID ${pageId} not found in site map data`);
+      return;
+    }
     
     const sectionIndex = updatedSiteMapData.pages[pageIndex].sections.findIndex(s => s.id === sectionId);
-    if (sectionIndex === -1) return;
+    if (sectionIndex === -1) {
+      console.error(`Section with ID ${sectionId} not found in page ${pageId}`);
+      return;
+    }
+    
+    console.log(`Found section at index ${sectionIndex} in page ${pageIndex} (${updatedSiteMapData.pages[pageIndex].title})`);
+    
+    // Log the current content before updating
+    const currentContent = updatedSiteMapData.pages[pageIndex].sections[sectionIndex].content;
+    console.log(`Current content length: ${currentContent?.length || 0} chars`);
+    console.log(`Current content preview: ${typeof currentContent === 'string' ? currentContent.substring(0, 50) + '...' : 'Not a string'}`);
     
     // Update the content - handle both string and EditorJs content
     updatedSiteMapData.pages[pageIndex].sections[sectionIndex].content = newContent;
