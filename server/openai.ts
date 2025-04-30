@@ -400,12 +400,12 @@ async function extractKeywords(text: string): Promise<string[]> {
       messages: [
         { 
           role: "system", 
-          content: `You are an expert SEO keyword research specialist. Extract exactly 12 high-value keywords or keyphrases from the text that would generate traffic and conversions for the business.
+          content: `You are an expert SEO keyword research specialist. Extract exactly 6 high-value keywords or keyphrases from the text that would generate traffic and conversions for the business.
 
 Your keywords should include:
-- 4 head terms (1-2 words with higher search volume)
-- 4 mid-tail terms (2-3 words with moderate search volume)
-- 4 long-tail terms (3-5 words with specific intent and lower competition)
+- 2 head terms (1-2 words with higher search volume)
+- 2 mid-tail terms (2-3 words with moderate search volume)
+- 2 long-tail terms (3-5 words with specific intent and lower competition)
 
 For each category, prioritize:
 1. Commercially valuable terms (purchase intent, solution-seeking)
@@ -426,8 +426,8 @@ Format: {"keywords": ["keyword1", "keyword2", ...]}. Do not include any other fi
     const result = JSON.parse(response.choices[0].message.content || "{}");
     let keywords = result.keywords || [];
     
-    // Ensure we have at least 5 keywords
-    if (keywords.length < 5) {
+    // Ensure we have at least 3 keywords
+    if (keywords.length < 3) {
       // Extract important words from the text as a fallback
       const words = text.split(/\s+/);
       const commonWords = new Set(['the', 'and', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'of', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'but', 'or', 'as', 'if', 'then', 'else', 'when', 'up', 'down', 'in', 'out', 'no', 'yes', 'so', 'such', 'than', 'that', 'which', 'who', 'whom', 'this', 'these', 'those', 'am', 'will', 'shall']);
@@ -446,13 +446,13 @@ Format: {"keywords": ["keyword1", "keyword2", ...]}. Do not include any other fi
       const additionalKeywords = Object.entries(wordCount)
         .sort((a, b) => b[1] - a[1])
         .map(([word]) => word)
-        .slice(0, 8 - keywords.length);
+        .slice(0, 6 - keywords.length);
       
       keywords = [...keywords, ...additionalKeywords];
     }
     
-    // Keep up to 12 keywords for a more comprehensive analysis
-    return keywords.slice(0, 12);
+    // Keep up to 6 keywords to match what we display
+    return keywords.slice(0, 6);
   } catch (error) {
     console.error("Error extracting keywords:", error);
     return ["error extracting keywords"];
@@ -483,7 +483,7 @@ The analysis should include:
 - Target audience analysis specifically for this business
 - Challenges specific to this business based on their description
 - Initial SEO strategy recommendations tailored for their specific business
-- Suggested keywords they should focus on (list exactly 5 specific keywords that are most relevant to this business)
+- Suggested keywords they should focus on (list 3-4 specific keywords that are most relevant to this business)
 
 When suggesting keywords, focus on terms that:
 1. Reflect the client's specific business offerings
@@ -726,10 +726,7 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
           "opportunities": ["Opportunity 1", "Opportunity 2"]
         },
         "keywordAnalysis": {
-          "recommendedKeywords": [
-            {"keyword": "Keyword 1", "volume": "Volume data", "recommendation": "Specific recommendation"},
-            {"keyword": "Keyword 2", "volume": "Volume data", "recommendation": "Specific recommendation"}
-          ],
+          "recommendedKeywords": ${JSON.stringify(keywordDataFormatted)},
           "seoStrategy": "Brief SEO strategy overview"
         },
         "websitePerformance": {
