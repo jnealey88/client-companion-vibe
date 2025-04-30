@@ -1161,9 +1161,17 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       className={`w-full shadow-sm transition-all duration-300 ${
                                         task?.content 
                                           ? "bg-gray-200 hover:bg-gray-300 text-gray-800 hover:shadow h-10" 
-                                          : "hover:border-gray-400 hover:shadow h-10"
+                                          : type === 'company_analysis'
+                                            ? "bg-blue-600 hover:bg-blue-700 text-white hover:shadow-md h-10"
+                                            : "hover:border-gray-400 hover:shadow h-10"
                                       }`}
-                                      variant={task?.content ? "secondary" : "outline"}
+                                      variant={
+                                        task?.content 
+                                          ? "secondary" 
+                                          : type === 'company_analysis'
+                                            ? "default"
+                                            : "outline"
+                                      }
                                       onClick={() => {
                                         if (type === 'schedule_discovery') {
                                           setIsDiscoveryDialogOpen(true);
