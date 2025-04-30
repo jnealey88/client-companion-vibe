@@ -543,7 +543,7 @@ export default function CompanyAnalysisDialog({
               className="w-full"
               disabled={loading}
             >
-              Generate Company Analysis
+              Generate Analysis
             </Button>
           </div>
         )}

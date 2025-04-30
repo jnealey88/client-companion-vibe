@@ -20,18 +20,18 @@ import {
   Zap,
   AlertCircle
 } from "lucide-react";
-import Sidebar from "@/components/Sidebar";
-import Header from "@/components/Header";
-import ClientCompanion from "@/components/companion/ClientCompanion";
-import GoDaddyProductsManager from "@/components/godaddy/GoDaddyProductsManager";
-import RecommendedNextStep from "@/components/companion/RecommendedNextStep";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { formatCurrency, formatDate, getStatusClass } from "@/lib/utils";
+import Sidebar from "../components/Sidebar";
+import Header from "../components/Header";
+import ClientCompanion from "../components/companion/ClientCompanion";
+import GoDaddyProductsManager from "../components/godaddy/GoDaddyProductsManager";
+import RecommendedNextStep from "../components/companion/RecommendedNextStep";
+import { Button } from "../components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../components/ui/collapsible";
+import { formatCurrency, formatDate, getStatusClass } from "../lib/utils";
 import { Client, CompanionTask } from "@shared/schema";
 
 export default function ClientDetail() {

@@ -221,7 +221,7 @@ export default function RecommendedNextStep({ client, tasks }: RecommendedNextSt
               </>
             ) : (
               <>
-                Start Now
+                Generate
                 <ArrowRight className="ml-2 h-4 w-4" />
               </>
             )}

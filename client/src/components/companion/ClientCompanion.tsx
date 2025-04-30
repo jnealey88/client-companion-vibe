@@ -1142,19 +1142,22 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       {task?.content && (
                                         <CheckCircle className="h-4 w-4 mr-2 text-white" />
                                       )}
-                                      {type === 'schedule_discovery' 
-                                        ? 'Schedule Call'
+                                      {/* Follow the Generate → Review → Edit → View pattern */}
+                                      {!task?.content
+                                        ? 'Generate'
+                                        : type === 'schedule_discovery' 
+                                          ? 'Review Schedule'
                                         : type === 'proposal' && task?.content
                                           ? 'Edit Proposal'
                                         : type === 'company_analysis' && task?.content
-                                          ? 'View Analysis'
+                                          ? 'Review Analysis'
                                         : type === 'define_scope' && task?.content
                                           ? 'Edit Scope'
                                         : type === 'contract' && task?.content
                                           ? 'Edit Contract'
-                                        : task?.content 
-                                          ? 'View Content' 
-                                          : 'Generate'}
+                                        : type === 'site_map' && task?.content
+                                          ? 'Review Site Map'
+                                        : 'View Content'}
                                       <ArrowRight className="h-4 w-4 ml-1" />
                                     </Button>
                                   )}
@@ -1262,19 +1265,20 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       }
                                     }}
                                   >
+                                    {/* Follow the Generate → Review → Edit → View pattern */}
                                     {type === 'schedule_discovery' 
-                                      ? <><Calendar className="h-3.5 w-3.5 mr-1" /> Schedule</> 
+                                      ? <><Calendar className="h-3.5 w-3.5 mr-1" /> Review Schedule</> 
                                       : type === 'proposal' 
                                         ? <><FileText className="h-3.5 w-3.5 mr-1" /> Edit Proposal</> 
                                         : type === 'company_analysis' 
-                                          ? <><FileSearch className="h-3.5 w-3.5 mr-1" /> View Analysis</> 
+                                          ? <><FileSearch className="h-3.5 w-3.5 mr-1" /> Review Analysis</> 
                                           : type === 'define_scope'
-                                            ? <><ListFilter className="h-3.5 w-3.5 mr-1" /> View Scope</>
+                                            ? <><ListFilter className="h-3.5 w-3.5 mr-1" /> Edit Scope</>
                                             : type === 'contract'
-                                              ? <><Scroll className="h-3.5 w-3.5 mr-1" /> View Contract</>
+                                              ? <><Scroll className="h-3.5 w-3.5 mr-1" /> Edit Contract</>
                                               : type === 'site_map'
-                                                ? <><FolderTree className="h-3.5 w-3.5 mr-1" /> View Site Map</>
-                                                : <><FileText className="h-3.5 w-3.5 mr-1" /> View</>}
+                                                ? <><FolderTree className="h-3.5 w-3.5 mr-1" /> Review Site Map</>
+                                                : <><FileText className="h-3.5 w-3.5 mr-1" /> View Content</>}
                                   </Button>
                                 </div>
                               </div>
