@@ -2037,6 +2037,10 @@ export async function expandSectionContent(content: string, context: any): Promi
   try {
     console.log("Expanding content with context:", context);
     
+    // Check if we need to handle Editor.js formatted content
+    let contentForPrompt = content;
+    const isEditorContent = context.isEditorContent === true;
+    
     // Build a more detailed prompt with additional context if provided
     const prompt = `
 You are a professional content writer helping to expand website content for a business website.
@@ -2049,9 +2053,10 @@ SECTION CONTEXT:
 - Industry: ${context.industry || "General Business"}
 ${context.siteType ? `- Site Type: ${context.siteType}` : ''}
 ${context.audienceType ? `- Target Audience: ${context.audienceType}` : ''}
+${context.elementTypes ? `- Section Elements: ${context.elementTypes}` : ''}
 
 CURRENT CONTENT:
-${content}
+${contentForPrompt}
 
 INSTRUCTIONS:
 1. Create COMPREHENSIVE, PROFESSIONAL-QUALITY content that is ready for immediate website implementation.
@@ -2064,6 +2069,7 @@ INSTRUCTIONS:
 8. The expanded content should be 3-4 times more comprehensive than the original but remain focused and strategic.
 9. Produce professional-grade content that could be published immediately without any further editing.
 10. Maintain the same overall message and purpose while making it more effective and conversion-focused.
+${isEditorContent ? `11. Return the content in a format suitable for a rich text editor, with appropriate paragraph breaks and formatting.` : ''}
 `;
 
     console.log("Sending prompt to OpenAI for content expansion...");
@@ -2075,10 +2081,82 @@ INSTRUCTIONS:
       temperature: 0.7, // Slightly creative but still focused
     });
 
-    const expandedContent = response.choices[0].message.content || "Failed to expand content.";
-    console.log("Content expansion successful. Generated length:", expandedContent.length);
+    const expandedTextContent = response.choices[0].message.content || "Failed to expand content.";
+    console.log("Content expansion successful. Generated length:", expandedTextContent.length);
     
-    return expandedContent;
+    // If the original content was in Editor.js format, convert the expanded text to Editor.js format
+    if (isEditorContent) {
+      // Create a basic Editor.js structure with the expanded content
+      const editorJsContent: {
+        time: number,
+        blocks: Array<{
+          type: string,
+          data: Record<string, any>
+        }>,
+        version: string
+      } = {
+        time: Date.now(),
+        blocks: [],
+        version: "2.22.2"
+      };
+      
+      // Split the expanded content by double line breaks to create separate paragraphs
+      const paragraphs = expandedTextContent.split(/\n\n+/);
+      
+      // Add each paragraph as a block
+      paragraphs.forEach(paragraph => {
+        if (paragraph.trim()) {
+          // Check if it's a heading (starts with # or ##)
+          if (paragraph.trim().startsWith('# ')) {
+            editorJsContent.blocks.push({
+              type: "header",
+              data: {
+                text: paragraph.trim().substring(2),
+                level: 1
+              }
+            });
+          } else if (paragraph.trim().startsWith('## ')) {
+            editorJsContent.blocks.push({
+              type: "header",
+              data: {
+                text: paragraph.trim().substring(3),
+                level: 2
+              }
+            });
+          } else if (paragraph.trim().startsWith('### ')) {
+            editorJsContent.blocks.push({
+              type: "header",
+              data: {
+                text: paragraph.trim().substring(4),
+                level: 3
+              }
+            });
+          } else if (paragraph.trim().startsWith('- ')) {
+            // Create list from items starting with '-'
+            const items = paragraph.split('\n').map(item => item.trim().substring(2));
+            editorJsContent.blocks.push({
+              type: "list",
+              data: {
+                style: "unordered",
+                items: items
+              }
+            });
+          } else {
+            // Regular paragraph
+            editorJsContent.blocks.push({
+              type: "paragraph",
+              data: {
+                text: paragraph.trim()
+              }
+            });
+          }
+        }
+      });
+      
+      return JSON.stringify(editorJsContent);
+    }
+    
+    return expandedTextContent;
   } catch (error: any) {
     console.error("Error expanding content with OpenAI:", error);
     throw new Error(`Failed to expand content with AI: ${error?.message || "Unknown error"}`);

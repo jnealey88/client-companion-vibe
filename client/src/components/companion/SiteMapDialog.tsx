@@ -619,8 +619,9 @@ Your Web Professional`);
       
       try {
         const response = await apiRequest("POST", `/api/content/expand`, {
-          content: section.content,
-          context: contextData
+          content: contentToExpand,
+          context: contextData,
+          isEditorContent: isEditorContent
         });
         
         clearTimeout(requestTimeout);
@@ -633,7 +634,33 @@ Your Web Professional`);
         
         // First check for standard response format
         if (typeof response === 'object' && 'expandedContent' in response && typeof response.expandedContent === 'string') {
-          handleSectionUpdate(pageId, sectionId, response.expandedContent);
+          // Handle response based on whether it's Editor.js format or not
+          let expandedContent = response.expandedContent;
+          
+          // If using Editor.js and not already in Editor.js format, we need to convert it
+          if (isEditorContent && !expandedContent.includes('"blocks":')) {
+            try {
+              // Check if the server already formatted as Editor.js content (proper JSON)
+              JSON.parse(expandedContent);
+            } catch (e) {
+              // Not proper JSON, so it's probably plain text - create basic Editor.js format
+              console.log("Converting plain text to Editor.js format");
+              const paragraphs = expandedContent.split(/\n\n+/);
+              const editorJsContent = {
+                time: Date.now(),
+                blocks: paragraphs.map(p => ({
+                  type: "paragraph",
+                  data: {
+                    text: p.trim()
+                  }
+                })).filter(block => block.data.text.length > 0),
+                version: "2.22.2"
+              };
+              expandedContent = JSON.stringify(editorJsContent);
+            }
+          }
+          
+          handleSectionUpdate(pageId, sectionId, expandedContent);
           
           toast({
             title: "Production-Ready Content Created",
