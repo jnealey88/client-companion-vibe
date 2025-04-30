@@ -938,6 +938,16 @@ Your Web Professional`);
                                               className="min-h-[100px] resize-y"
                                               placeholder="Enter section content here..."
                                             />
+                                            <div className="mt-2 flex justify-end">
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => expandTextWithAI(page.id, section.id)}
+                                                className="text-xs"
+                                              >
+                                                <span className="mr-1">✨</span> Expand with AI
+                                              </Button>
+                                            </div>
                                           </div>
                                           
                                           {section.elements.length > 0 && (
@@ -954,6 +964,17 @@ Your Web Professional`);
                                           )}
                                         </div>
                                       ))}
+                                      
+                                      {/* Add New Section Button */}
+                                      <div className="mt-4 flex justify-center">
+                                        <Button
+                                          variant="outline"
+                                          onClick={() => handleAddSectionToPage(page.id)}
+                                          className="text-sm"
+                                        >
+                                          <span className="mr-2">+</span> Add New Section
+                                        </Button>
+                                      </div>
                                     </div>
                                   </div>
                                   
