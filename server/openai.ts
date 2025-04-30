@@ -1556,30 +1556,149 @@ The proposal should be delivered as an HTML document with proper section headers
   }
 }
 
-export async function generateContract(clientInfo: any): Promise<string> {
-  const prompt = `Create a professional web design/development services contract for ${clientInfo.name}.
-  The project is "${clientInfo.projectName}" with value approximately ${clientInfo.projectValue}.
-  
-  Client Information:
-  - Business Name: ${clientInfo.name}
-  - Website URL: ${clientInfo.websiteUrl || "No website URL provided"}
-  - Industry: ${clientInfo.industry || "Not specified"}
-  - Project Name: ${clientInfo.projectName}
-  
-  The contract should include:
-  - Parties involved (use placeholder for the agency name)
-  - Scope of work
-  - Timeline and deliverables
-  - Payment terms and schedule
-  - Intellectual property rights
-  - Termination clauses
-  - Standard legal protections
-  
-  Format as a formal legal document that could be used as a starting point for a real contract.`;
-
+/**
+ * Generates a detailed project scope document based on a client's proposal
+ * @param clientInfo Client information
+ * @param proposalContent The content of the proposal to extract scope details from
+ * @returns HTML formatted project scope document
+ */
+export async function generateProjectScope(clientInfo: any, proposalContent?: string): Promise<string> {
   try {
+    // Extract project scope section from proposal if available
+    let scopeSection = "";
+    if (proposalContent) {
+      // Try to extract the project scope section from the proposal
+      const scopeMatch = proposalContent.match(/<h2[^>]*>Project Scope[^<]*<\/h2>([\s\S]*?)(?=<h2|$)/i);
+      if (scopeMatch && scopeMatch[1]) {
+        scopeSection = scopeMatch[1].trim();
+      }
+    }
+    
+    const prompt = `Create a detailed project scope document for the web project "${clientInfo.projectName}" for ${clientInfo.name}.
+    
+    Client Information:
+    - Business Name: ${clientInfo.name}
+    - Website URL: ${clientInfo.websiteUrl || "No website URL provided"}
+    - Industry: ${clientInfo.industry || "Not specified"}
+    - Project Name: ${clientInfo.projectName}
+    - Project Description: ${clientInfo.projectDescription || "No description provided"}
+    
+    ${scopeSection ? `The proposal for this project included the following scope information:
+    ${scopeSection}` : ""}
+    
+    The scope document should include the following sections, formatted as a professional HTML document:
+    
+    1. **Project Overview**
+       - A concise summary of the project objectives and expected outcomes
+       - Key project parameters and constraints
+    
+    2. **Detailed Requirements**
+       - Functional requirements (features, capabilities, user interactions)
+       - Non-functional requirements (performance, security, accessibility, etc.)
+       - Technical specifications and platform requirements
+    
+    3. **Deliverables**
+       - Clearly defined list of all deliverables with descriptions
+       - Acceptance criteria for each deliverable
+    
+    4. **Exclusions**
+       - What is explicitly NOT included in this project scope
+    
+    5. **Project Phases and Timeline**
+       - Breakdown of the project into phases
+       - Estimated timeline for each phase
+       - Key milestones and deadlines
+    
+    6. **Roles and Responsibilities**
+       - Client responsibilities
+       - Agency/developer responsibilities
+    
+    7. **Change Management Process**
+       - How scope changes will be handled
+       - Impact assessment process
+    
+    Format the document professionally with proper HTML headings (<h1>, <h2>, <h3>), paragraphs, and bullet points/numbered lists where appropriate.`;
+
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 10000,
+    });
+
+    const content = response.choices[0].message.content || "Failed to generate project scope document.";
+    
+    // Clean up and format the content if needed
+    return content;
+  } catch (error) {
+    console.error("Error generating project scope document:", error);
+    throw new Error("Failed to generate project scope document");
+  }
+}
+
+/**
+ * Generates a contract based on client info and proposal content
+ * @param clientInfo Client information
+ * @param proposalContent The content of the proposal to extract contract details from
+ * @returns HTML formatted contract document
+ */
+export async function generateContract(clientInfo: any, proposalContent?: string): Promise<string> {
+  try {
+    // Extract pricing and timeline sections from proposal if available
+    let pricingSection = "";
+    let timelineSection = "";
+    let scopeSection = "";
+    
+    if (proposalContent) {
+      // Extract pricing section
+      const pricingMatch = proposalContent.match(/<h2[^>]*>Investment [^<]*<\/h2>([\s\S]*?)(?=<h2|$)/i);
+      if (pricingMatch && pricingMatch[1]) {
+        pricingSection = pricingMatch[1].trim();
+      }
+      
+      // Extract timeline section
+      const timelineMatch = proposalContent.match(/<h2[^>]*>Timeline[^<]*<\/h2>([\s\S]*?)(?=<h2|$)/i);
+      if (timelineMatch && timelineMatch[1]) {
+        timelineSection = timelineMatch[1].trim();
+      }
+      
+      // Extract scope section
+      const scopeMatch = proposalContent.match(/<h2[^>]*>Project Scope[^<]*<\/h2>([\s\S]*?)(?=<h2|$)/i);
+      if (scopeMatch && scopeMatch[1]) {
+        scopeSection = scopeMatch[1].trim();
+      }
+    }
+    
+    const prompt = `Create a professional web design/development services contract for ${clientInfo.name}.
+    The project is "${clientInfo.projectName}" with value approximately ${clientInfo.projectValue}.
+    
+    Client Information:
+    - Business Name: ${clientInfo.name}
+    - Website URL: ${clientInfo.websiteUrl || "No website URL provided"}
+    - Industry: ${clientInfo.industry || "Not specified"}
+    - Project Name: ${clientInfo.projectName}
+    
+    ${pricingSection ? `The proposal for this project included the following pricing information:
+    ${pricingSection}` : ""}
+    
+    ${timelineSection ? `The proposal for this project included the following timeline information:
+    ${timelineSection}` : ""}
+    
+    ${scopeSection ? `The proposal for this project included the following scope information:
+    ${scopeSection}` : ""}
+    
+    The contract should include:
+    - Parties involved (use placeholder for the agency name)
+    - Scope of work
+    - Timeline and deliverables
+    - Payment terms and schedule
+    - Intellectual property rights
+    - Termination clauses
+    - Standard legal protections
+    
+    Format as a formal legal document that could be used as a starting point for a real contract.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [{ role: "user", content: prompt }],
       max_tokens: 10000,
     });

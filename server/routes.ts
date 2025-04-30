@@ -13,6 +13,7 @@ import {
   generateCompanyAnalysis,
   generateProposal,
   generateContract,
+  generateProjectScope,
   generateSiteMap,
   generateStatusUpdate,
   generateScheduleDiscovery,
@@ -495,8 +496,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
               content = proposalResponse as string;
             }
             break;
+          case TaskType.DEFINE_SCOPE:
+            // Find a completed proposal to use for generating the scope document
+            const scopeProposalTasks = await storage.getCompanionTasks(clientId);
+            const scopeProposalTask = scopeProposalTasks
+              .find(t => t.type === TaskType.PROPOSAL && t.status === "completed");
+            
+            // Generate scope document using the proposal content if available
+            content = await generateProjectScope(client, scopeProposalTask?.content);
+            break;
+            
           case TaskType.CONTRACT:
-            content = await generateContract(client);
+            // Find a completed proposal to use for generating the contract
+            const contractProposalTasks = await storage.getCompanionTasks(clientId);
+            const contractProposalTask = contractProposalTasks
+              .find(t => t.type === TaskType.PROPOSAL && t.status === "completed");
+            
+            // Generate contract using the proposal content if available
+            content = await generateContract(client, contractProposalTask?.content);
             break;
           case TaskType.SITE_MAP:
             content = await generateSiteMap(client);
