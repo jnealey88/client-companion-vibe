@@ -1081,6 +1081,14 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                           // Open company analysis dialog only for existing tasks
                                           setCompanyAnalysisTask(task);
                                           setIsCompanyAnalysisDialogOpen(true);
+                                        } else if (type === 'define_scope' && task?.content) {
+                                          // Open project scope dialog for existing tasks
+                                          setProjectScopeTask(task);
+                                          setIsProjectScopeDialogOpen(true);
+                                        } else if (type === 'contract' && task?.content) {
+                                          // Open contract dialog for existing tasks
+                                          setContractTask(task);
+                                          setIsContractDialogOpen(true);
                                         } else if (task?.content) {
                                           // View any other type of content
                                           handleTaskSelect(task);
@@ -1103,6 +1111,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                           ? 'Edit Proposal'
                                         : type === 'company_analysis' && task?.content
                                           ? 'View Analysis'
+                                        : type === 'define_scope' && task?.content
+                                          ? 'Edit Scope'
+                                        : type === 'contract' && task?.content
+                                          ? 'Edit Contract'
                                         : task?.content 
                                           ? 'View Content' 
                                           : 'Generate'}
@@ -1199,6 +1211,12 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       } else if (type === 'company_analysis' && task) {
                                         setCompanyAnalysisTask(task);
                                         setIsCompanyAnalysisDialogOpen(true);
+                                      } else if (type === 'define_scope' && task) {
+                                        setProjectScopeTask(task);
+                                        setIsProjectScopeDialogOpen(true);
+                                      } else if (type === 'contract' && task) {
+                                        setContractTask(task);
+                                        setIsContractDialogOpen(true);
                                       } else if (task) {
                                         setSelectedTask(task);
                                       }
@@ -1210,7 +1228,11 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                         ? <><FileText className="h-3.5 w-3.5 mr-1" /> Edit Proposal</> 
                                         : type === 'company_analysis' 
                                           ? <><FileSearch className="h-3.5 w-3.5 mr-1" /> View Analysis</> 
-                                          : <><FileText className="h-3.5 w-3.5 mr-1" /> View</>}
+                                          : type === 'define_scope'
+                                            ? <><ListFilter className="h-3.5 w-3.5 mr-1" /> View Scope</>
+                                            : type === 'contract'
+                                              ? <><Scroll className="h-3.5 w-3.5 mr-1" /> View Contract</>
+                                              : <><FileText className="h-3.5 w-3.5 mr-1" /> View</>}
                                   </Button>
                                 </div>
                               </div>
