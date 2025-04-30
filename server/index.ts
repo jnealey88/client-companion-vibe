@@ -2,13 +2,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { seedDatabase } from "./seed";
-import crypto from "crypto";
-
-// Set a SESSION_SECRET if not already set
-if (!process.env.SESSION_SECRET) {
-  process.env.SESSION_SECRET = crypto.randomBytes(32).toString('hex');
-  console.log("Generated a random SESSION_SECRET");
-}
 
 const app = express();
 app.use(express.json({ limit: '50mb' }));

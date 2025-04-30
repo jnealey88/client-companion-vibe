@@ -1,35 +1,21 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, pgEnum, primaryKey, uniqueIndex, varchar, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, json, pgEnum, primaryKey, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// Session storage table for Replit Auth
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)],
-);
-
-// Users table for authentication with Replit Auth
+// Users table for authentication
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(),
-  username: varchar("username").unique().notNull(),
-  email: varchar("email").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  bio: text("bio"),
-  profileImageUrl: varchar("profile_image_url"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").notNull().default(new Date()),
 });
 
 // User-client relation
 export const userClients = pgTable("user_clients", {
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
 }, (t) => ({
   pk: primaryKey({ columns: [t.userId, t.clientId] }),
@@ -208,19 +194,21 @@ export const sortOptions = ["Sort by: Recent", "Name (A-Z)", "Name (Z-A)", "Valu
 
 // User Schemas
 export const insertUserSchema = createInsertSchema(users).omit({
-  updatedAt: true,
+  id: true,
+  createdAt: true,
 });
 
 export const userSchema = z.object({
-  id: z.string(),
+  id: z.number(),
   username: z.string(),
-  email: z.string().email().nullable(),
-  firstName: z.string().nullable(),
-  lastName: z.string().nullable(),
-  bio: z.string().nullable(),
-  profileImageUrl: z.string().nullable(),
-  createdAt: z.date().nullable(),
-  updatedAt: z.date().nullable(),
+  email: z.string().email(),
+  name: z.string(),
+  createdAt: z.date(),
+});
+
+export const loginUserSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 export const updateUserSchema = insertUserSchema.partial();
@@ -229,7 +217,7 @@ export const updateUserSchema = insertUserSchema.partial();
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type UpdateUser = z.infer<typeof updateUserSchema>;
 export type User = typeof users.$inferSelect;
-export type UpsertUser = typeof users.$inferInsert;
+export type LoginUser = z.infer<typeof loginUserSchema>;
 
 // UserClient Types
 export type UserClient = typeof userClients.$inferSelect;

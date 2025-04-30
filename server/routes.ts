@@ -21,23 +21,19 @@ import {
   TaskType
 } from "./openai";
 import { sendEmail, EmailParams } from "./sendgrid";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth } from "./auth";
+
+// Middleware to check if user is authenticated
+function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ error: "Unauthorized" });
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication routes and middleware
-  await setupAuth(app);
-  
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res: Response) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  setupAuth(app);
   
   const httpServer = createServer(app);
 
@@ -56,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Client not found" });
       }
       
-      const userId = (req.user as any).claims.sub;
+      const userId = (req.user as any).id;
       await storage.addClientToUser(userId, clientId);
       
       return res.status(201).json({ message: "Client associated with user" });
@@ -69,7 +65,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all clients for the authenticated user
   app.get("/api/user/clients", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const userId = (req.user as any).claims.sub;
+      const userId = (req.user as any).id;
       const clients = await storage.getUserClients(userId);
       return res.json(clients);
     } catch (error) {
@@ -84,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients", isAuthenticated, async (req: Request, res: Response) => {
     try {
       // Get the authenticated user's ID
-      const userId = (req.user as any).claims.sub;
+      const userId = (req.user as any).id;
       
       // Get clients associated with this user
       const userClients = await storage.getUserClients(userId);
@@ -180,7 +176,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verify that this client belongs to the authenticated user
-      const userId = (req.user as any).claims.sub;
+      const userId = (req.user as any).id;
       const userClients = await storage.getUserClients(userId);
       const clientBelongsToUser = userClients.some(c => c.id === client.id);
       
@@ -208,7 +204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Associate the client with the authenticated user
       try {
-        const userId = (req.user as any).claims.sub;
+        const userId = (req.user as any).id;
         await storage.addClientToUser(userId, newClient.id);
         console.log(`Client ${newClient.id} associated with user ${userId}`);
       } catch (associationError) {
