@@ -612,6 +612,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(500).json({ message: "An error occurred while sending email" });
     }
   });
+  
+  // Content expansion endpoint for AI-powered text enhancement
+  app.post("/api/content/expand", async (req: Request, res: Response) => {
+    try {
+      const { content, context } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ message: "Content is required" });
+      }
+      
+      // Expand the content using OpenAI
+      const expandedContent = await expandSectionContent(content, context || {});
+      
+      return res.json({ 
+        originalContent: content,
+        expandedContent: expandedContent,
+        success: true
+      });
+    } catch (error) {
+      console.error("Error expanding content:", error);
+      return res.status(500).json({ message: "Failed to expand content" });
+    }
+  });
 
   return httpServer;
 }

@@ -40,6 +40,13 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// Define response interface for content expansion API
+interface ContentExpansionResponse {
+  originalContent: string;
+  expandedContent: string;
+  success: boolean;
+}
+
 // Define interfaces for the structured site map data
 interface SiteSection {
   id: string;
@@ -418,7 +425,7 @@ Your Web Professional`);
     
     try {
       // Use the OpenAI API via our existing endpoint
-      const response = await apiRequest("POST", `/api/content/expand`, {
+      const response = await apiRequest<ContentExpansionResponse>("POST", `/api/content/expand`, {
         content: section.content,
         context: {
           pageTitle: page.title,
