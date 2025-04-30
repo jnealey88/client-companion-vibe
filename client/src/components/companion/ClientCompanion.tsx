@@ -1056,8 +1056,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   </div>
                                 </div>
                               </CardHeader>
-                              <CardContent className={`p-4 pt-0 ${task?.content ? "pt-0 pb-2 bg-gray-50" : ""}`}>
-                                <div className="flex flex-col gap-2 mt-3">
+                              <CardContent className={`p-4 ${task?.content ? "pt-0 pb-2 bg-gray-50" : "pt-0"}`}>
+                                <div className={`flex flex-col gap-2 ${task?.content ? "mt-0" : "mt-3"}`}>
                                   {/* Loading state with progress */}
                                   {generatingTasks[type] && (
                                     <div className="space-y-2 p-3 border rounded-md bg-white">
