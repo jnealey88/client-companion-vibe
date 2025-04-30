@@ -248,7 +248,7 @@ export default function GoDaddyProductsManager({ client }: GoDaddyProductsManage
           <TabsContent value={activeTab} className="pt-2">
             {activeTab === "all" ? (
               <div className="divide-y">
-                <Accordion type="multiple" defaultValue={["domain", "hosting", "email", "security", "marketing"]} className="w-full">
+                <Accordion type="multiple" defaultValue={[]} className="w-full">
                   {Object.entries(groupedProducts).map(([type, items]) => (
                     <AccordionItem value={type} key={type} className="border-b border-gray-200 last:border-0 px-4">
                       <AccordionTrigger className="py-3 hover:no-underline">
