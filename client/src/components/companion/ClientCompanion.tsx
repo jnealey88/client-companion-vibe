@@ -1020,15 +1020,15 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                               key={type} 
                               className={`overflow-hidden shadow-sm transition-all duration-300 ease-in-out
                                 ${task?.content 
-                                  ? "border-green-200 ring-1 ring-green-100 hover:shadow-md hover:shadow-green-50/50" 
+                                  ? "border-gray-200 hover:shadow-sm" 
                                   : "border-gray-200 hover:border-gray-300 hover:shadow-md hover:transform hover:-translate-y-1"}`}
                             >
-                              <CardHeader className={`p-4 pb-2 ${task?.content ? "bg-green-50" : ""}`}>
+                              <CardHeader className={`p-4 ${task?.content ? "pb-2" : "pb-2"}`}>
                                 <div className="flex items-start">
-                                  <div className={`p-2.5 rounded-md ${task?.content ? "bg-green-100 text-green-700" : taskInfo.iconColor} mr-3 relative`}>
+                                  <div className={`p-2.5 rounded-md ${task?.content ? "bg-gray-100 text-gray-700" : taskInfo.iconColor} mr-3 relative`}>
                                     {taskInfo.icon}
                                     {task?.content && (
-                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
+                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-gray-500 rounded-full flex items-center justify-center shadow-sm">
                                         <Check className="h-3 w-3 text-white" />
                                       </div>
                                     )}
@@ -1038,23 +1038,25 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       <CardTitle className="text-base flex items-center gap-2">
                                         {taskInfo.label}
                                         {task?.content && (
-                                          <span className="text-xs text-green-600 font-medium bg-green-50 px-1.5 py-0.5 rounded-sm">Completed</span>
+                                          <span className="text-xs text-gray-600 font-medium bg-gray-50 px-1.5 py-0.5 rounded-sm">Completed</span>
                                         )}
                                       </CardTitle>
                                       {task?.content && (
-                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium flex items-center gap-1">
+                                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 font-medium flex items-center gap-1">
                                           <Clock className="h-3 w-3" />
                                           {formatTimeSaved(taskInfo.timeSaved)} saved
                                         </Badge>
                                       )}
                                     </div>
-                                    <CardDescription className="text-xs line-clamp-2 mt-1 text-gray-600">
-                                      {taskInfo.description}
-                                    </CardDescription>
+                                    {!task?.content && (
+                                      <CardDescription className="text-xs line-clamp-2 mt-1 text-gray-600">
+                                        {taskInfo.description}
+                                      </CardDescription>
+                                    )}
                                   </div>
                                 </div>
                               </CardHeader>
-                              <CardContent className="p-4 pt-0">
+                              <CardContent className={`p-4 pt-0 ${task?.content ? "pt-0 pb-2" : ""}`}>
                                 <div className="flex flex-col gap-2 mt-3">
                                   {/* Loading state with progress */}
                                   {generatingTasks[type] && (
@@ -1094,10 +1096,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     <Button 
                                       className={`w-full shadow-sm transition-all duration-300 ${
                                         task?.content 
-                                          ? "bg-green-600 hover:bg-green-700 hover:shadow" 
+                                          ? "bg-gray-200 hover:bg-gray-300 text-gray-800 hover:shadow" 
                                           : "hover:border-gray-400 hover:shadow"
                                       }`}
-                                      variant={task?.content ? "default" : "outline"}
+                                      variant={task?.content ? "secondary" : "outline"}
                                       onClick={() => {
                                         if (type === 'schedule_discovery') {
                                           setIsDiscoveryDialogOpen(true);
@@ -1140,7 +1142,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       disabled={Object.keys(generatingTasks).length > 0}
                                     >
                                       {task?.content && (
-                                        <CheckCircle className="h-4 w-4 mr-2 text-white" />
+                                        <CheckCircle className="h-4 w-4 mr-2 text-gray-700" />
                                       )}
                                       {/* Follow the Generate → Review → Edit → View pattern */}
                                       {!task?.content
@@ -1211,14 +1213,14 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                 <div className="flex items-center gap-3">
                                   <div className={`p-2.5 rounded-md ${taskInfo?.iconColor} relative`}>
                                     {taskInfo?.icon}
-                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
+                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-gray-500 rounded-full flex items-center justify-center shadow-sm">
                                       <Check className="h-3 w-3 text-white" />
                                     </div>
                                   </div>
                                   <div>
                                     <CardTitle className="text-base flex items-center gap-2">
                                       {taskInfo?.label}
-                                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium text-xs">
+                                      <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 font-medium text-xs">
                                         Completed
                                       </Badge>
                                     </CardTitle>
@@ -1239,9 +1241,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   </Button>
                                   
                                   <Button 
-                                    variant="default"
+                                    variant="secondary"
                                     size="sm"
-                                    className="bg-green-600 hover:bg-green-700 shadow-sm transition-all duration-300 hover:shadow"
+                                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 shadow-sm transition-all duration-300 hover:shadow"
                                     onClick={() => {
                                       if (type === 'schedule_discovery') {
                                         setIsDiscoveryDialogOpen(true);
