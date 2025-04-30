@@ -1059,8 +1059,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   </div>
                                 </div>
                               </CardHeader>
-                              <CardContent className={`p-4 ${task?.content ? "pt-0 pb-2 bg-gray-50" : "pt-0"}`}>
-                                <div className={`flex flex-col gap-2 ${task?.content ? "mt-0" : "mt-3"}`}>
+                              <CardContent className={`p-4 ${task?.content ? "pt-0 pb-4 bg-gray-50" : "pt-0"}`}>
+                                <div className="flex flex-col gap-2 mt-3">
                                   {/* Loading state with progress */}
                                   {generatingTasks[type] && (
                                     <div className="space-y-2 p-3 border rounded-md bg-white">
@@ -1099,8 +1099,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     <Button 
                                       className={`w-full shadow-sm transition-all duration-300 ${
                                         task?.content 
-                                          ? "bg-gray-200 hover:bg-gray-300 text-gray-800 hover:shadow" 
-                                          : "hover:border-gray-400 hover:shadow"
+                                          ? "bg-gray-200 hover:bg-gray-300 text-gray-800 hover:shadow h-10" 
+                                          : "hover:border-gray-400 hover:shadow h-10"
                                       }`}
                                       variant={task?.content ? "secondary" : "outline"}
                                       onClick={() => {
@@ -1151,18 +1151,18 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       {!task?.content
                                         ? 'Generate'
                                         : type === 'schedule_discovery' 
-                                          ? 'Review Schedule'
+                                          ? 'Review'
                                         : type === 'proposal' && task?.content
-                                          ? 'Edit Proposal'
+                                          ? 'Edit'
                                         : type === 'company_analysis' && task?.content
-                                          ? 'Review Analysis'
+                                          ? 'Review'
                                         : type === 'define_scope' && task?.content
-                                          ? 'Edit Scope'
+                                          ? 'Edit'
                                         : type === 'contract' && task?.content
-                                          ? 'Edit Contract'
+                                          ? 'Edit'
                                         : type === 'site_map' && task?.content
-                                          ? 'Review Site Map'
-                                        : 'View Content'}
+                                          ? 'Review'
+                                        : 'View'}
                                       <ArrowRight className="h-4 w-4 ml-1" />
                                     </Button>
                                   )}
@@ -1272,18 +1272,18 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   >
                                     {/* Follow the Generate → Review → Edit → View pattern */}
                                     {type === 'schedule_discovery' 
-                                      ? <><Calendar className="h-3.5 w-3.5 mr-1" /> Review Schedule</> 
+                                      ? <><Calendar className="h-3.5 w-3.5 mr-1" /> Review</> 
                                       : type === 'proposal' 
-                                        ? <><FileText className="h-3.5 w-3.5 mr-1" /> Edit Proposal</> 
+                                        ? <><FileText className="h-3.5 w-3.5 mr-1" /> Edit</> 
                                         : type === 'company_analysis' 
-                                          ? <><FileSearch className="h-3.5 w-3.5 mr-1" /> Review Analysis</> 
+                                          ? <><FileSearch className="h-3.5 w-3.5 mr-1" /> Review</> 
                                           : type === 'define_scope'
-                                            ? <><ListFilter className="h-3.5 w-3.5 mr-1" /> Edit Scope</>
+                                            ? <><ListFilter className="h-3.5 w-3.5 mr-1" /> Edit</>
                                             : type === 'contract'
-                                              ? <><Scroll className="h-3.5 w-3.5 mr-1" /> Edit Contract</>
+                                              ? <><Scroll className="h-3.5 w-3.5 mr-1" /> Edit</>
                                               : type === 'site_map'
-                                                ? <><FolderTree className="h-3.5 w-3.5 mr-1" /> Review Site Map</>
-                                                : <><FileText className="h-3.5 w-3.5 mr-1" /> View Content</>}
+                                                ? <><FolderTree className="h-3.5 w-3.5 mr-1" /> Review</>
+                                                : <><FileText className="h-3.5 w-3.5 mr-1" /> View</>}
                                   </Button>
                                 </div>
                               </div>
