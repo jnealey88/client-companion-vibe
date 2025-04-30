@@ -18,27 +18,111 @@ export function EditorJs({
   readOnly = false,
   placeholder = 'Start writing...'
 }: EditorJsProps) {
-  // State for tracking if the dynamic imports are loaded
-  const [isLoaded, setIsLoaded] = useState(false);
-  // State for editor components
-  const [EditorComponent, setEditorComponent] = useState<any>(null);
-  const [editorTools, setEditorTools] = useState<any>(null);
-  
-  // Reference to the editor instance
+  // Essential state
   const editorCore = useRef(null);
-  // State for editor data
   const [editorData, setEditorData] = useState<OutputData | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [editorTools, setEditorTools] = useState<any>(null);
+  
+  // Create references to store the dynamically loaded components
+  const editorComponentRef = useRef<any>(null);
+  
+  // Define callbacks before any other effects or conditionals
+  const handleInitialize = React.useCallback((instance: any) => {
+    editorCore.current = instance;
+    setIsReady(true);
+  }, []);
+
+  const handleChange = React.useCallback(async () => {
+    if (editorCore.current) {
+      const savedData = await (editorCore.current as any).save();
+      setEditorData(savedData);
+      
+      // Convert the saved data back to HTML for compatibility with existing components
+      let htmlContent = '';
+      savedData.blocks.forEach((block: any) => {
+        switch (block.type) {
+          case 'header':
+            htmlContent += `<h${block.data.level}>${block.data.text}</h${block.data.level}>`;
+            break;
+          case 'paragraph':
+            htmlContent += `<p>${block.data.text}</p>`;
+            break;
+          case 'list':
+            const listTag = block.data.style === 'ordered' ? 'ol' : 'ul';
+            htmlContent += `<${listTag}>`;
+            block.data.items.forEach((item: any) => {
+              htmlContent += `<li>${item}</li>`;
+            });
+            htmlContent += `</${listTag}>`;
+            break;
+          case 'quote':
+            htmlContent += `<blockquote>${block.data.text}</blockquote>`;
+            break;
+          case 'checklist':
+            htmlContent += '<ul class="checklist">';
+            block.data.items.forEach((item: any) => {
+              htmlContent += `<li class="${item.checked ? 'checked' : ''}">${item.text}</li>`;
+            });
+            htmlContent += '</ul>';
+            break;
+          case 'table':
+            htmlContent += '<table><tbody>';
+            block.data.content.forEach((row: any) => {
+              htmlContent += '<tr>';
+              row.forEach((cell: any) => {
+                htmlContent += `<td>${cell}</td>`;
+              });
+              htmlContent += '</tr>';
+            });
+            htmlContent += '</tbody></table>';
+            break;
+          case 'code':
+            htmlContent += `<pre><code class="language-${block.data.language}">${block.data.code}</code></pre>`;
+            break;
+          case 'embed':
+            htmlContent += `<div class="embed">${block.data.embed}</div>`;
+            break;
+          case 'delimiter':
+            htmlContent += '<hr class="ce-delimiter" />';
+            break;
+          case 'warning':
+            htmlContent += `<div class="cdx-warning">
+              <div class="cdx-warning__title">${block.data.title}</div>
+              <div class="cdx-warning__message">${block.data.message}</div>
+            </div>`;
+            break;
+          case 'image':
+            const caption = block.data.caption ? `<figcaption>${block.data.caption}</figcaption>` : '';
+            htmlContent += `<figure class="image-tool">
+              <img src="${block.data.file.url}" alt="${block.data.caption || 'Image'}" />
+              ${caption}
+            </figure>`;
+            break;
+          default:
+            // Try to handle text-based blocks generically
+            if (block.data && block.data.text) {
+              htmlContent += block.data.text;
+            }
+        }
+      });
+      
+      onChange(htmlContent);
+    }
+  }, [onChange]);
 
   // First load all the necessary libraries dynamically
   useEffect(() => {
-    // Define an async function to load the editor and tools
     const loadEditor = async () => {
       try {
         // Dynamically import the editor
         const reactEditorJS = await import('react-editor-js');
         const { createReactEditorJS } = reactEditorJS;
         const ReactEditorJS = createReactEditorJS();
+        
+        // Store the editor component in the ref
+        editorComponentRef.current = ReactEditorJS;
         
         // Dynamically import all tools
         const [
@@ -158,8 +242,7 @@ export function EditorJs({
           }
         };
 
-        // Set the editor component and tools
-        setEditorComponent(ReactEditorJS);
+        // Set the editor tools
         setEditorTools(tools);
         setIsLoaded(true);
       } catch (error) {
@@ -168,7 +251,7 @@ export function EditorJs({
     };
 
     loadEditor();
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
   // Initialize editor data from HTML content
   useEffect(() => {
@@ -403,91 +486,6 @@ export function EditorJs({
     return blocks;
   };
 
-  // Handle editor initialization
-  const handleInitialize = React.useCallback((instance: any) => {
-    editorCore.current = instance;
-    setIsReady(true);
-  }, []);
-
-  // Handle changes to the editor content
-  const handleChange = React.useCallback(async () => {
-    if (editorCore.current) {
-      const savedData = await (editorCore.current as any).save();
-      setEditorData(savedData);
-      
-      // Convert the saved data back to HTML for compatibility with existing components
-      let htmlContent = '';
-      savedData.blocks.forEach((block: any) => {
-        switch (block.type) {
-          case 'header':
-            htmlContent += `<h${block.data.level}>${block.data.text}</h${block.data.level}>`;
-            break;
-          case 'paragraph':
-            htmlContent += `<p>${block.data.text}</p>`;
-            break;
-          case 'list':
-            const listTag = block.data.style === 'ordered' ? 'ol' : 'ul';
-            htmlContent += `<${listTag}>`;
-            block.data.items.forEach((item: any) => {
-              htmlContent += `<li>${item}</li>`;
-            });
-            htmlContent += `</${listTag}>`;
-            break;
-          case 'quote':
-            htmlContent += `<blockquote>${block.data.text}</blockquote>`;
-            break;
-          case 'checklist':
-            htmlContent += '<ul class="checklist">';
-            block.data.items.forEach((item: any) => {
-              htmlContent += `<li class="${item.checked ? 'checked' : ''}">${item.text}</li>`;
-            });
-            htmlContent += '</ul>';
-            break;
-          case 'table':
-            htmlContent += '<table><tbody>';
-            block.data.content.forEach((row: any) => {
-              htmlContent += '<tr>';
-              row.forEach((cell: any) => {
-                htmlContent += `<td>${cell}</td>`;
-              });
-              htmlContent += '</tr>';
-            });
-            htmlContent += '</tbody></table>';
-            break;
-          case 'code':
-            htmlContent += `<pre><code class="language-${block.data.language}">${block.data.code}</code></pre>`;
-            break;
-          case 'embed':
-            htmlContent += `<div class="embed">${block.data.embed}</div>`;
-            break;
-          case 'delimiter':
-            htmlContent += '<hr class="ce-delimiter" />';
-            break;
-          case 'warning':
-            htmlContent += `<div class="cdx-warning">
-              <div class="cdx-warning__title">${block.data.title}</div>
-              <div class="cdx-warning__message">${block.data.message}</div>
-            </div>`;
-            break;
-          case 'image':
-            const caption = block.data.caption ? `<figcaption>${block.data.caption}</figcaption>` : '';
-            htmlContent += `<figure class="image-tool">
-              <img src="${block.data.file.url}" alt="${block.data.caption || 'Image'}" />
-              ${caption}
-            </figure>`;
-            break;
-          default:
-            // Try to handle text-based blocks generically
-            if (block.data && block.data.text) {
-              htmlContent += block.data.text;
-            }
-        }
-      });
-      
-      onChange(htmlContent);
-    }
-  }, [onChange]);
-
   // Add some styling for better visual representation of blocks
   useEffect(() => {
     // Add CSS to properly style the editor blocks
@@ -629,7 +627,7 @@ export function EditorJs({
     };
   }, []);
   
-  // Editor component with loading state
+  // Render editor with loading state
   return (
     <div className={`editor-js-wrapper ${className}`}>
       {!isLoaded && (
@@ -646,16 +644,16 @@ export function EditorJs({
         </div>
       )}
       
-      {isLoaded && EditorComponent && editorTools && editorData && (
+      {isLoaded && editorComponentRef.current && editorTools && editorData && (
         <Suspense fallback={<div>Loading editor...</div>}>
-          <EditorComponent
-            onInitialize={handleInitialize}
-            onChange={handleChange}
-            tools={editorTools}
-            defaultValue={editorData}
-            readOnly={readOnly}
-            placeholder={placeholder}
-          />
+          {React.createElement(editorComponentRef.current, {
+            onInitialize: handleInitialize,
+            onChange: handleChange,
+            tools: editorTools,
+            defaultValue: editorData,
+            readOnly: readOnly,
+            placeholder: placeholder
+          })}
         </Suspense>
       )}
     </div>
