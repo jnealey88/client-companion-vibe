@@ -24,16 +24,13 @@ import {
   Link,
   Trash2,
   Clock,
-  Timer,
-  FileCheck,
-  FileX
+  Timer
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Client, CompanionTask, statusOptions } from "@shared/schema";
 import CompanionTaskCard from "./CompanionTaskCard";
@@ -215,7 +212,6 @@ interface ClientCompanionProps {
 export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [selectedTask, setSelectedTask] = useState<CompanionTask | null>(null);
   const [selectedPhase, setSelectedPhase] = useState<string | null>(null);
-  const [selectedView, setSelectedView] = useState<'all' | 'pending' | 'completed'>('all');
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
   const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
   const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
@@ -318,7 +314,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       "Finalizing results..."
     ]
   };
-  
+
   // Create mutation for generating content
   const generateMutation = useMutation<CompanionTask, Error, { clientId: number, taskType: string, [key: string]: any }>({
     mutationFn: async ({ clientId, taskType, ...options }: { clientId: number, taskType: string, [key: string]: any }) => {
@@ -523,112 +519,103 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       setIsDiscoveryDialogOpen(false);
     }
     
-    // Open the confirmation dialog
+    // Open the delete confirmation dialog
     setDeleteDialogOpen(true);
   };
   
-  // Confirm deletion
+  // Handle confirmed deletion
   const confirmDelete = () => {
-    if (taskToDelete?.id) {
-      // Call the delete mutation to remove the task
-      deleteMutation.mutate(taskToDelete.id);
-      
-      // If we're deleting the currently selected task, deselect it
-      if (selectedTask?.id === taskToDelete.id) {
-        setSelectedTask(null);
-      }
-      
-      // If this was the company analysis task, we should clean up its state
-      // and close any open dialogs
-      if (taskToDelete.type === 'company_analysis' && companyAnalysisTask?.id === taskToDelete.id) {
-        setCompanyAnalysisTask(undefined);
-        setIsCompanyAnalysisDialogOpen(false);
-      }
-      
-      // If this was a proposal task, make sure to reset the proposal task state
-      // and close any open dialogs
-      if (taskToDelete.type === 'proposal' && proposalTask?.id === taskToDelete.id) {
-        setProposalTask(undefined);
-        setIsProposalDialogOpen(false);
-      }
-      
-      // Close the dialog
-      setDeleteDialogOpen(false);
-      setTaskToDelete(null);
+    if (!taskToDelete) return;
+    
+    deleteMutation.mutate(taskToDelete.id);
+    
+    // If this was a proposal task, make sure to reset the proposal task state
+    // and close any open dialogs
+    if (taskToDelete.type === 'proposal' && proposalTask?.id === taskToDelete.id) {
+      setProposalTask(undefined);
+      setIsProposalDialogOpen(false);
+    } else if (taskToDelete.type === 'company_analysis' && companyAnalysisTask?.id === taskToDelete.id) {
+      setCompanyAnalysisTask(undefined);
+      setIsCompanyAnalysisDialogOpen(false);
+    } else if (taskToDelete.type === 'schedule_discovery') {
+      setIsDiscoveryDialogOpen(false);
     }
+    
+    // Close dialog and reset taskToDelete
+    setDeleteDialogOpen(false);
+    setTaskToDelete(null);
   };
   
-  // Group tasks by their project phase
-  const tasksByPhase: Record<string, { type: string, task?: CompanionTask }[]> = {};
-  
+  // Group tasks by type for easier display
+  const tasksByType: Record<string, CompanionTask | undefined> = {};
   if (tasks) {
-    // Initialize all phases with empty arrays
-    projectPhases.forEach(phase => {
-      tasksByPhase[phase] = [];
-    });
-    
-    // First, add all the existing tasks
+    // Get the latest task of each type
     tasks.forEach(task => {
-      const taskType = task.type as keyof typeof taskTypes;
-      const phase = taskTypes[taskType]?.phase;
-      
-      if (phase && tasksByPhase[phase]) {
-        // Find if this type already exists in the phase
-        const existingTaskIndex = tasksByPhase[phase].findIndex(t => t.type === task.type);
-        
-        if (existingTaskIndex >= 0) {
-          // Update existing entry
-          tasksByPhase[phase][existingTaskIndex].task = task;
-        } else {
-          // Add new entry
-          tasksByPhase[phase].push({ type: task.type, task });
-        }
+      if (!tasksByType[task.type] || new Date(task.createdAt) > new Date(tasksByType[task.type]!.createdAt)) {
+        tasksByType[task.type] = task;
       }
-    });
-    
-    // Then, add task types that don't have tasks yet (for all available tools)
-    Object.entries(taskTypes).forEach(([type, info]) => {
-      const phase = info.phase;
-      
-      if (phase && tasksByPhase[phase]) {
-        // Check if this type already exists in the phase
-        const exists = tasksByPhase[phase].some(task => task.type === type);
-        
-        if (!exists) {
-          // Add a placeholder entry without a task
-          tasksByPhase[phase].push({ type, task: undefined });
-        }
-      }
-    });
-    
-    // Sort tasks within each phase based on a logical order (discovery tasks first, etc.)
-    // This is just a simple example - you'd want a more comprehensive sorting strategy
-    // for a production application
-    Object.keys(tasksByPhase).forEach(phase => {
-      tasksByPhase[phase].sort((a, b) => {
-        const aTypeOrder = Object.keys(taskTypes).indexOf(a.type);
-        const bTypeOrder = Object.keys(taskTypes).indexOf(b.type);
-        return aTypeOrder - bTypeOrder;
-      });
     });
   }
   
+  // Group tasks by project phase
+  const tasksByPhase: Record<string, { type: string, task: CompanionTask | undefined }[]> = {};
+  
+  // Initialize all phases
+  projectPhases.forEach(phase => {
+    tasksByPhase[phase] = [];
+  });
+  
+  // Group tasks by their respective phases
+  Object.entries(taskTypes).forEach(([type, info]) => {
+    const phase = info.phase;
+    if (phase && tasksByPhase[phase]) {
+      tasksByPhase[phase].push({
+        type,
+        task: tasksByType[type]
+      });
+    }
+  });
+  
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Client Companion</CardTitle>
+          <CardDescription>Loading tasks...</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+  
   return (
-    <Card className="border shadow-sm">
+    <Card className="h-full">
       {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Are you sure you want to delete this content?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this content. This action cannot be undone.
+              This action cannot be undone. The content will be permanently deleted.
+              {taskToDelete ? (
+                <div className="mt-2 p-2 bg-gray-50 rounded border">
+                  <div className="font-medium">
+                    {taskTypes[taskToDelete.type as keyof typeof taskTypes]?.label}
+                  </div>
+                  <div className="text-sm text-gray-500 mt-1">
+                    Generated on {new Date(taskToDelete.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              ) : null}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
             >
               Delete
             </AlertDialogAction>
@@ -650,13 +637,8 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
         client={client}
         existingTask={proposalTask}
         onTaskGenerated={(task) => {
-          // Check if this is a request to schedule a discovery call
-          if (task.type === 'schedule_discovery') {
-            // Open the discovery dialog
-            setIsDiscoveryDialogOpen(true);
-          }
           // Check if this is a new task request (dummy task with no content)
-          else if (!task.content && task.type === 'proposal') {
+          if (!task.content && task.type === 'proposal') {
             // Check if there are discovery notes in the metadata
             if (task.metadata) {
               try {
@@ -811,356 +793,332 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
             ></div>
           </div>
         ) : (
-          <div className="w-full space-y-6">
-            {/* Filter controls */}
-            <div className="bg-white rounded-lg border p-4 mb-4">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
-                <h3 className="text-lg font-medium">Client Companion Tools</h3>
-                
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={selectedView}
-                    onValueChange={(value) => setSelectedView(value as 'all' | 'pending' | 'completed')}
+          <Tabs defaultValue="tasks" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
+              <TabsTrigger value="tasks" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                Tasks by Phase
+              </TabsTrigger>
+              <TabsTrigger value="content" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                Generated Content
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="tasks" className="mt-4">
+              <div className="space-y-6">
+                {/* Phase filter pills */}
+                <div className="flex flex-wrap gap-2 pb-2 border-b mb-6">
+                  <Button 
+                    variant={selectedPhase === null ? "default" : "outline"}
+                    size="sm"
+                    className="rounded-full"
+                    onClick={() => setSelectedPhase(null)}
                   >
-                    <SelectTrigger className="w-[180px] h-8 text-sm">
-                      <SelectValue placeholder="Filter by status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Tools</SelectItem>
-                      <SelectItem value="pending">To Generate</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    All Tools
+                  </Button>
                   
-                  <Select
-                    value={selectedPhase || 'all'}
-                    onValueChange={(value) => setSelectedPhase(value === 'all' ? null : value)}
-                  >
-                    <SelectTrigger className="w-[180px] h-8 text-sm">
-                      <SelectValue placeholder="Filter by phase" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Phases</SelectItem>
-                      {projectPhases.map(phase => (
-                        <SelectItem key={phase} value={phase}>{phase}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {projectPhases.map(phase => {
+                    const isCurrentPhase = client.status === phase;
+                    const isSelected = selectedPhase === phase;
+                    
+                    return (
+                      <Button 
+                        key={phase}
+                        variant={isSelected ? "default" : "outline"}
+                        size="sm"
+                        className={`rounded-full ${isCurrentPhase ? "border-green-200" : ""}`}
+                        onClick={() => setSelectedPhase(phase)}
+                      >
+                        {phase}
+                        {isCurrentPhase && <div className="ml-1 w-2 h-2 rounded-full bg-green-500" />}
+                      </Button>
+                    );
+                  })}
                 </div>
-              </div>
-              
-              <div className="flex gap-2 flex-wrap">
-                {projectPhases.map(phase => {
-                  const isCurrentPhase = client.status === phase;
+                
+                {/* Display tasks from selected phase or all phases */}
+                {(selectedPhase ? [selectedPhase] : projectPhases).map(phase => {
                   const phaseTasks = tasksByPhase[phase] || [];
-                  const completedCount = phaseTasks.filter(({task}) => task?.content).length;
-                  const totalCount = phaseTasks.length;
+                  
+                  if (phaseTasks.length === 0) return null;
+                  
+                  const isCurrentPhase = client.status === phase;
                   
                   return (
-                    <div 
-                      key={phase} 
-                      className={`bg-white border rounded-md px-3 py-2 shadow-sm flex-1 min-w-[200px] 
-                        ${isCurrentPhase ? "border-green-300 ring-1 ring-green-100" : ""}`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium">{phase}</span>
-                        {isCurrentPhase && (
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs py-0 px-2">
-                            Current
-                          </Badge>
-                        )}
+                    <div key={phase} className="mb-8">
+                      <div className="flex items-center mb-4">
+                        <h3 className="text-xl font-medium flex items-center gap-2">
+                          {phase}
+                          {isCurrentPhase && (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              Current Phase
+                            </Badge>
+                          )}
+                        </h3>
+                        <div className="ml-auto h-2 w-24 bg-gray-100 rounded-full">
+                          <div 
+                            className="h-2 bg-blue-500 rounded-full" 
+                            style={{ width: `${Math.min(100, Math.max(0, phaseTasks.filter(({task}) => task?.content).length / phaseTasks.length * 100))}%` }} 
+                          />
+                        </div>
+                        <span className="text-xs text-gray-500 ml-2">
+                          {phaseTasks.filter(({task}) => task?.content).length}/{phaseTasks.length} Complete
+                        </span>
                       </div>
-                      <div className="w-full bg-gray-100 rounded-full h-1.5 mb-1">
-                        <div 
-                          className="h-1.5 bg-blue-500 rounded-full" 
-                          style={{ width: `${totalCount ? (completedCount / totalCount) * 100 : 0}%` }} 
-                        />
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {completedCount}/{totalCount} Complete
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {phaseTasks.map(({ type, task }) => {
+                          const taskInfo = taskTypes[type as keyof typeof taskTypes];
+                          return (
+                            <Card 
+                              key={type} 
+                              className={`overflow-hidden shadow-sm transition-all hover:shadow-md 
+                                ${task?.content ? "border-green-200 ring-1 ring-green-100" : "border-gray-200 hover:border-gray-300"}`}
+                            >
+                              <CardHeader className={`p-4 pb-2 ${task?.content ? "bg-green-50" : ""}`}>
+                                <div className="flex items-start">
+                                  <div className={`p-2.5 rounded-md ${task?.content ? "bg-green-100 text-green-700" : taskInfo.iconColor} mr-3 relative`}>
+                                    {taskInfo.icon}
+                                    {task?.content && (
+                                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
+                                        <Check className="h-3 w-3 text-white" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex justify-between items-start w-full">
+                                      <CardTitle className="text-base flex items-center gap-2">
+                                        {taskInfo.label}
+                                        {task?.content && (
+                                          <span className="text-xs text-green-600 font-medium bg-green-50 px-1.5 py-0.5 rounded-sm">Completed</span>
+                                        )}
+                                      </CardTitle>
+                                      {task?.content && (
+                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium flex items-center gap-1">
+                                          <Clock className="h-3 w-3" />
+                                          {formatTimeSaved(taskInfo.timeSaved)} saved
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <CardDescription className="text-xs line-clamp-2 mt-1 text-gray-600">
+                                      {taskInfo.description}
+                                    </CardDescription>
+                                  </div>
+                                </div>
+                              </CardHeader>
+                              <CardContent className="p-4 pt-0">
+                                <div className="flex flex-col gap-2 mt-3">
+                                  {/* Loading state with progress */}
+                                  {generatingTasks[type] && (
+                                    <div className="space-y-2 p-3 border rounded-md bg-white">
+                                      <div className="text-sm font-medium text-center text-primary">
+                                        {generationStage[type] || "Generating..."}
+                                      </div>
+                                      
+                                      <div className="w-full bg-gray-100 rounded-full h-2">
+                                        <div 
+                                          className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out" 
+                                          style={{ 
+                                            width: `${generationProgress[type] || 0}%` 
+                                          }}
+                                        />
+                                      </div>
+                                      
+                                      <div className="flex justify-between text-xs text-gray-500">
+                                        <span>Research</span>
+                                        <span>Analysis</span>
+                                        <span>Completion</span>
+                                      </div>
+                                      
+                                      <p className="text-xs text-center text-gray-600 mt-1">
+                                        {/* Type-specific loading messages */}
+                                        {type === 'company_analysis' 
+                                          ? "Analyzing business data and website performance..."
+                                          : type === 'proposal'
+                                            ? "Creating proposal with pricing recommendations..."
+                                            : "Generating content, please wait..."}
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Button - only show if not currently generating */}
+                                  {!generatingTasks[type] && (
+                                    <Button 
+                                      className={`w-full ${task?.content ? "bg-green-600 hover:bg-green-700" : ""}`}
+                                      variant={task?.content ? "default" : "outline"}
+                                      onClick={() => {
+                                        if (type === 'schedule_discovery') {
+                                          setIsDiscoveryDialogOpen(true);
+                                        } else if (type === 'proposal') {
+                                          if (task?.content) {
+                                            // Open existing proposal in the dialog
+                                            setProposalTask(task);
+                                            setIsProposalDialogOpen(true);
+                                          } else {
+                                            // For new proposals, always show the dialog to collect notes first
+                                            setIsProposalDialogOpen(true);
+                                          }
+                                        } else if (type === 'company_analysis' && task?.content) {
+                                          // Open company analysis dialog only for existing tasks
+                                          setCompanyAnalysisTask(task);
+                                          setIsCompanyAnalysisDialogOpen(true);
+                                        } else if (task?.content) {
+                                          // View any other type of content
+                                          handleTaskSelect(task);
+                                        } else if (type === 'company_analysis') {
+                                          // Generate company analysis with in-card loading
+                                          handleGenerate(type);
+                                        } else {
+                                          // Generate other content types with in-card loading
+                                          handleGenerate(type);
+                                        }
+                                      }}
+                                      disabled={Object.keys(generatingTasks).length > 0}
+                                    >
+                                      {task?.content && (
+                                        <CheckCircle className="h-4 w-4 mr-2 text-white" />
+                                      )}
+                                      {type === 'schedule_discovery' 
+                                        ? 'Schedule Call'
+                                        : type === 'proposal' && task?.content
+                                          ? 'Edit Proposal'
+                                        : type === 'company_analysis' && task?.content
+                                          ? 'View Analysis'
+                                        : task?.content 
+                                          ? 'View Content' 
+                                          : 'Generate'}
+                                      <ArrowRight className="h-4 w-4 ml-1" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
                       </div>
                     </div>
                   );
                 })}
+                
+                {selectedPhase && tasksByPhase[selectedPhase]?.length === 0 && (
+                  <div className="py-8 text-center">
+                    <div className="bg-gray-50 rounded-md p-6 flex flex-col items-center">
+                      <AlertCircle className="h-10 w-10 text-gray-400 mb-3" />
+                      <h3 className="text-lg font-medium text-gray-700">No tasks in this phase</h3>
+                      <p className="text-gray-500 mt-2 max-w-md">
+                        There are no tasks available for the {selectedPhase} phase.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            </TabsContent>
             
-            {/* Generated content section - only show if there is any content */}
-            {tasks && tasks.filter(task => task.content).length > 0 && (
-              <div className="bg-white rounded-lg border p-4 mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium flex items-center gap-2">
-                    <FileCheck className="h-5 w-5 text-green-600" />
-                    Recently Generated Content
-                  </h3>
-                  {tasks.filter(task => task.content).length > 3 && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-sm"
-                      onClick={() => setSelectedView('completed')}
-                    >
-                      View All <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                    </Button>
-                  )}
+            <TabsContent value="content" className="mt-4">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Generated Content Library</h3>
+                  <Badge variant="outline" className="bg-transparent">
+                    {tasks?.filter(task => task.content).length || 0} items
+                  </Badge>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {tasks
-                    .filter(task => task.content)
-                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                    .slice(0, 3)
-                    .map(task => {
-                      const taskType = task.type as keyof typeof taskTypes;
-                      const taskInfo = taskTypes[taskType];
-                      const taskHtml = task.content || "";
-                      
-                      // Extract first paragraph or heading for preview
-                      const previewText = taskHtml.replace(/<[^>]*>/g, " ").slice(0, 100) + "...";
-                      
-                      return (
-                        <Card key={task.id} className="overflow-hidden border border-gray-200 shadow-sm">
-                          <CardHeader className="p-3 border-b bg-gray-50 flex flex-row items-center">
-                            <div className={`p-1.5 rounded-md ${taskInfo.iconColor} mr-2`}>
-                              {taskInfo.icon}
-                            </div>
-                            <div>
-                              <CardTitle className="text-sm">{taskInfo.label}</CardTitle>
-                              <CardDescription className="text-xs">
-                                {new Date(task.createdAt).toLocaleDateString()}
-                              </CardDescription>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="p-3">
-                            <div className="text-xs line-clamp-3 text-gray-600 mb-3 h-12">
-                              {previewText}
-                            </div>
-                            <Button 
-                              variant="outline"
-                              size="sm"
-                              className="w-full text-xs h-8" 
-                              onClick={() => handleTaskSelect(task)}
-                            >
-                              View Content
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                </div>
-              </div>
-            )}
-            
-            {/* Main tasks display */}
-            {(selectedPhase ? [selectedPhase] : projectPhases).map(phase => {
-              // Get all tasks for this phase
-              let phaseTasks = tasksByPhase[phase] || [];
-              
-              // Apply additional filtering based on selectedView
-              if (selectedView === 'pending') {
-                phaseTasks = phaseTasks.filter(({task}) => !task?.content);
-              } else if (selectedView === 'completed') {
-                phaseTasks = phaseTasks.filter(({task}) => task?.content);
-              }
-              
-              // Skip empty phases
-              if (phaseTasks.length === 0) return null;
-              
-              const isCurrentPhase = client.status === phase;
-              
-              return (
-                <div key={phase} className="mb-8">
-                  <div className="flex items-center mb-4">
-                    <h3 className="text-xl font-medium flex items-center gap-2">
-                      {phase}
-                      {isCurrentPhase && (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          Current Phase
-                        </Badge>
-                      )}
-                    </h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {phaseTasks.map(({ type, task }) => {
-                      const taskInfo = taskTypes[type as keyof typeof taskTypes];
-                      
-                      // For completed tasks, extract a preview if content exists
-                      let previewText = '';
-                      if (task?.content) {
-                        previewText = task.content.replace(/<[^>]*>/g, " ").slice(0, 80) + "...";
-                      }
-                      
-                      return (
-                        <Card 
-                          key={type} 
-                          className={`overflow-hidden shadow-sm transition-all hover:shadow-md 
-                            ${task?.content ? "border-green-200 ring-1 ring-green-100" : "border-gray-200 hover:border-gray-300"}`}
-                        >
-                          <CardHeader className={`p-4 pb-2 ${task?.content ? "bg-green-50" : ""}`}>
-                            <div className="flex items-start">
-                              <div className={`p-2.5 rounded-md ${task?.content ? "bg-green-100 text-green-700" : taskInfo.iconColor} mr-3 relative`}>
-                                {taskInfo.icon}
-                                {task?.content && (
-                                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
-                                    <Check className="h-3 w-3 text-white" />
+                {tasks && tasks.filter(task => task.content).length > 0 ? (
+                  <div className="space-y-6">
+                    {Object.entries(tasksByType)
+                      .filter(([_, task]) => task?.content)
+                      .map(([type, task]) => {
+                        const taskInfo = taskTypes[type as keyof typeof taskTypes];
+                        
+                        return (
+                          <Card key={type} className="overflow-hidden">
+                            <CardHeader className="bg-gray-50 p-4">
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                  <div className={`p-2 rounded-md ${taskInfo?.iconColor}`}>
+                                    {taskInfo?.icon}
                                   </div>
-                                )}
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex justify-between items-start w-full">
-                                  <CardTitle className="text-base flex items-center gap-2">
-                                    {taskInfo.label}
-                                    {task?.content && (
-                                      <span className="text-xs text-green-600 font-medium bg-green-50 px-1.5 py-0.5 rounded-sm">Completed</span>
-                                    )}
-                                  </CardTitle>
-                                  {task?.content && (
-                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium flex items-center gap-1">
-                                      <Clock className="h-3 w-3" />
-                                      {formatTimeSaved(taskInfo.timeSaved)} saved
-                                    </Badge>
-                                  )}
+                                  <div>
+                                    <CardTitle className="text-base">{taskInfo?.label}</CardTitle>
+                                    <CardDescription className="text-xs">
+                                      Phase: {taskInfo?.phase} • Generated: {new Date(task!.createdAt).toLocaleDateString()}
+                                    </CardDescription>
+                                  </div>
                                 </div>
-                                <CardDescription className="text-xs line-clamp-2 mt-1 text-gray-600">
-                                  {taskInfo.description}
-                                </CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="p-4 pt-0">
-                            {/* Preview for completed tasks */}
-                            {task?.content && previewText && (
-                              <div className="mt-3 mb-3 p-2 bg-white border border-gray-100 rounded-sm text-xs text-gray-700 line-clamp-2">
-                                {previewText}
-                              </div>
-                            )}
-                            
-                            <div className="flex flex-col gap-2 mt-3">
-                              {/* Loading state with progress */}
-                              {generatingTasks[type] && (
-                                <div className="space-y-2 p-3 border rounded-md bg-white">
-                                  <div className="text-sm font-medium text-center text-primary">
-                                    {generationStage[type] || "Generating..."}
-                                  </div>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="text-destructive hover:bg-destructive/10"
+                                    onClick={() => task && handleDelete(task)}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                    Delete
+                                  </Button>
                                   
-                                  <div className="w-full bg-gray-100 rounded-full h-2">
-                                    <div 
-                                      className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-in-out" 
-                                      style={{ 
-                                        width: `${generationProgress[type] || 0}%` 
-                                      }}
-                                    />
-                                  </div>
-                                  
-                                  <div className="flex justify-between text-xs text-gray-500">
-                                    <span>Research</span>
-                                    <span>Analysis</span>
-                                    <span>Completion</span>
-                                  </div>
-                                  
-                                  <p className="text-xs text-center text-gray-600 mt-1">
-                                    {/* Type-specific loading messages */}
-                                    {type === 'company_analysis' 
-                                      ? "Analyzing business data and website performance..."
-                                      : type === 'proposal'
-                                        ? "Creating proposal with pricing recommendations..."
-                                        : "Generating content, please wait..."}
-                                  </p>
-                                </div>
-                              )}
-                              
-                              {/* Button - only show if not currently generating */}
-                              {!generatingTasks[type] && (
-                                <Button 
-                                  className={`w-full ${task?.content ? "bg-green-600 hover:bg-green-700" : ""}`}
-                                  variant={task?.content ? "default" : "outline"}
-                                  onClick={() => {
-                                    if (type === 'schedule_discovery') {
-                                      setIsDiscoveryDialogOpen(true);
-                                    } else if (type === 'proposal') {
-                                      if (task?.content) {
-                                        // Open existing proposal in the dialog
+
+                                  <Button 
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (type === 'schedule_discovery') {
+                                        setIsDiscoveryDialogOpen(true);
+                                      } else if (type === 'proposal' && task) {
                                         setProposalTask(task);
                                         setIsProposalDialogOpen(true);
-                                      } else {
-                                        // For new proposals, always show the dialog to collect notes first
-                                        setIsProposalDialogOpen(true);
+                                      } else if (type === 'company_analysis' && task) {
+                                        setCompanyAnalysisTask(task);
+                                        setIsCompanyAnalysisDialogOpen(true);
+                                      } else if (task) {
+                                        setSelectedTask(task);
                                       }
-                                    } else if (type === 'company_analysis' && task?.content) {
-                                      // Open company analysis dialog only for existing tasks
-                                      setCompanyAnalysisTask(task);
-                                      setIsCompanyAnalysisDialogOpen(true);
-                                    } else if (task?.content) {
-                                      // View any other type of content
-                                      handleTaskSelect(task);
-                                    } else if (type === 'company_analysis') {
-                                      // Generate company analysis with in-card loading
-                                      handleGenerate(type);
-                                    } else {
-                                      // Generate other content types with in-card loading
-                                      handleGenerate(type);
-                                    }
-                                  }}
-                                  disabled={Object.keys(generatingTasks).length > 0}
-                                >
-                                  {task?.content && (
-                                    <CheckCircle className="h-4 w-4 mr-2 text-white" />
-                                  )}
-                                  {type === 'schedule_discovery' 
-                                    ? 'Schedule Call'
-                                    : type === 'proposal' && task?.content
-                                      ? 'Edit Proposal'
-                                    : type === 'company_analysis' && task?.content
-                                      ? 'View Analysis'
-                                    : task?.content 
-                                      ? 'View Content' 
-                                      : 'Generate'}
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                                    }}
+                                  >
+                                    {type === 'schedule_discovery' 
+                                      ? 'Schedule' 
+                                      : type === 'proposal' 
+                                        ? 'Edit Proposal' 
+                                        : type === 'company_analysis' 
+                                          ? 'View Analysis' 
+                                          : 'View'}
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            
+
+                          </Card>
+                        );
+                      })}
                   </div>
-                </div>
-              );
-            })}
-            
-            {/* Empty state when filtered view shows no results */}
-            {projectPhases.every(phase => {
-              const phaseTasks = tasksByPhase[phase] || [];
-              if (selectedView === 'pending') {
-                return phaseTasks.filter(({task}) => !task?.content).length === 0;
-              } else if (selectedView === 'completed') {
-                return phaseTasks.filter(({task}) => task?.content).length === 0;
-              }
-              return phaseTasks.length === 0;
-            }) && (
-              <div className="text-center p-8 border rounded-lg bg-white">
-                <FileX className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                <h3 className="text-lg font-medium text-gray-700 mb-1">
-                  {selectedView === 'pending' ? 'No Tasks To Generate' : 
-                   selectedView === 'completed' ? 'No Completed Tasks Yet' : 
-                   'No Tasks Found'}
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {selectedView === 'pending' ? 'All available tasks have been completed for this client.' : 
-                   selectedView === 'completed' ? 'Use the tools to generate content for this client.' : 
-                   'Try selecting a different filter option.'}
-                </p>
-                <Button 
-                  variant="outline"
-                  onClick={() => setSelectedView('all')}
-                >
-                  Show All Tools
-                </Button>
+                ) : (
+                  <div className="py-12 text-center">
+                    <div className="bg-gray-50 rounded-md p-8 flex flex-col items-center">
+                      <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
+                      <h3 className="text-lg font-medium text-gray-700">No content generated yet</h3>
+                      <p className="text-gray-500 mt-2 max-w-md">
+                        Generate content using the tasks in the Tasks tab to build your content library.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </TabsContent>
+          </Tabs>
         )}
       </CardContent>
+      
+      <CardFooter className="border-t pt-4 flex justify-between">
+        <div className="text-sm text-gray-500">
+          Powered by AI to save time and help you focus on building great sites
+        </div>
+        
+        <div className="flex gap-2">
+          <Badge variant="outline" className="bg-transparent">
+            <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+            Tasks saved automatically
+          </Badge>
+        </div>
+      </CardFooter>
     </Card>
   );
 }
