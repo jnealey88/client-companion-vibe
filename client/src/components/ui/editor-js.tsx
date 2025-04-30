@@ -492,16 +492,23 @@ export function EditorJs({
     const css = `
       .editor-js-wrapper {
         position: relative;
-        max-height: 100%;
+        min-height: 200px;
+        height: auto !important;
       }
       
       .editor-js-wrapper .codex-editor {
         position: static;
-        max-height: 100%;
+        height: auto !important;
+        min-height: 400px;
       }
       
       .editor-js-wrapper .codex-editor__redactor {
         padding-bottom: 100px !important;
+        overflow: visible !important;
+      }
+      
+      .editor-js-wrapper .ce-block {
+        max-width: 100% !important;
       }
       
       .editor-js-wrapper h1 {

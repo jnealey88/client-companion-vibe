@@ -91,6 +91,13 @@
     @apply text-gray-400 hover:text-accent;
   }
   
+  /* Editor.js overrides */
+  .editor-js-container {
+    min-height: 500px;
+    height: auto !important;
+    padding-bottom: 30px;
+  }
+  
   /* Proposal Preview Styles */
   .proposal-preview h1 {
     font-size: 2.5rem;

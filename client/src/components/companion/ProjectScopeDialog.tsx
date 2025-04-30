@@ -364,7 +364,7 @@ export default function ProjectScopeDialog({
             
             <Separator />
             
-            <div className="min-h-[300px]">
+            <div className="editor-js-container">
               <EditorJs
                 content={scopeContent}
                 onChange={handleEditorUpdate}

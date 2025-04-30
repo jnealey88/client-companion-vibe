@@ -278,7 +278,7 @@ export default function ContractDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Scroll className="h-5 w-5" />
@@ -362,11 +362,12 @@ export default function ContractDialog({
             
             <Separator />
             
-            <div className="flex-1 overflow-auto">
+            <div className="editor-js-container">
               <EditorJs
                 content={contractContent}
                 onChange={handleEditorUpdate}
                 readOnly={false}
+                className="prose max-w-none"
               />
             </div>
           </div>
