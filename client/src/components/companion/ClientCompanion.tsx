@@ -1023,7 +1023,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   ? "border-gray-200 hover:shadow-sm" 
                                   : "border-gray-200 hover:border-gray-300 hover:shadow-md hover:transform hover:-translate-y-1"}`}
                             >
-                              <CardHeader className={`p-4 ${task?.content ? "pb-2" : "pb-2"}`}>
+                              <CardHeader className={`p-4 ${task?.content ? "pb-2 bg-gray-50" : "pb-2"}`}>
                                 <div className="flex items-start">
                                   <div className={`p-2.5 rounded-md ${task?.content ? "bg-gray-100 text-gray-700" : taskInfo.iconColor} mr-3 relative`}>
                                     {taskInfo.icon}
@@ -1056,7 +1056,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                   </div>
                                 </div>
                               </CardHeader>
-                              <CardContent className={`p-4 pt-0 ${task?.content ? "pt-0 pb-2" : ""}`}>
+                              <CardContent className={`p-4 pt-0 ${task?.content ? "pt-0 pb-2 bg-gray-50" : ""}`}>
                                 <div className="flex flex-col gap-2 mt-3">
                                   {/* Loading state with progress */}
                                   {generatingTasks[type] && (
@@ -1096,10 +1096,10 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                     <Button 
                                       className={`w-full shadow-sm transition-all duration-300 ${
                                         task?.content 
-                                          ? "bg-[#111111] hover:bg-[#333333] text-white hover:shadow" 
+                                          ? "bg-gray-200 hover:bg-gray-300 text-gray-800 hover:shadow" 
                                           : "hover:border-gray-400 hover:shadow"
                                       }`}
-                                      variant={task?.content ? "default" : "outline"}
+                                      variant={task?.content ? "secondary" : "outline"}
                                       onClick={() => {
                                         if (type === 'schedule_discovery') {
                                           setIsDiscoveryDialogOpen(true);
@@ -1142,7 +1142,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       disabled={Object.keys(generatingTasks).length > 0}
                                     >
                                       {task?.content && (
-                                        <CheckCircle className="h-4 w-4 mr-2 text-white" />
+                                        <CheckCircle className="h-4 w-4 mr-2 text-gray-700" />
                                       )}
                                       {/* Follow the Generate → Review → Edit → View pattern */}
                                       {!task?.content
