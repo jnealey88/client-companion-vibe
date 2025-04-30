@@ -503,7 +503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .find(t => t.type === TaskType.PROPOSAL && t.status === "completed");
             
             // Generate scope document using the proposal content if available
-            content = await generateProjectScope(client, scopeProposalTask?.content);
+            content = await generateProjectScope(client, scopeProposalTask?.content || undefined);
             break;
             
           case TaskType.CONTRACT:
@@ -513,7 +513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .find(t => t.type === TaskType.PROPOSAL && t.status === "completed");
             
             // Generate contract using the proposal content if available
-            content = await generateContract(client, contractProposalTask?.content);
+            content = await generateContract(client, contractProposalTask?.content || undefined);
             break;
           case TaskType.SITE_MAP:
             // Find a completed proposal to use for generating the site map
@@ -522,7 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               .find(t => t.type === TaskType.PROPOSAL && t.status === "completed");
             
             // Generate site map using the proposal content if available
-            content = await generateSiteMap(client, siteMapProposalTask?.content);
+            content = await generateSiteMap(client, siteMapProposalTask?.content || undefined);
             break;
           case TaskType.SCHEDULE_DISCOVERY:
             // Get the company analysis ID to reference in the email

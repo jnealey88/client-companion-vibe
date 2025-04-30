@@ -40,6 +40,7 @@ import ProposalDialog from "./ProposalDialog";
 import CompanyAnalysisDialog from "./CompanyAnalysisDialog";
 import ProjectScopeDialog from "./ProjectScopeDialog";
 import ContractDialog from "./ContractDialog";
+import SiteMapDialog from "./SiteMapDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -221,10 +222,12 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   const [isCompanyAnalysisDialogOpen, setIsCompanyAnalysisDialogOpen] = useState(false);
   const [isProjectScopeDialogOpen, setIsProjectScopeDialogOpen] = useState(false);
   const [isContractDialogOpen, setIsContractDialogOpen] = useState(false);
+  const [isSiteMapDialogOpen, setIsSiteMapDialogOpen] = useState(false);
   const [proposalTask, setProposalTask] = useState<CompanionTask | undefined>(undefined);
   const [companyAnalysisTask, setCompanyAnalysisTask] = useState<CompanionTask | undefined>(undefined);
   const [projectScopeTask, setProjectScopeTask] = useState<CompanionTask | undefined>(undefined);
   const [contractTask, setContractTask] = useState<CompanionTask | undefined>(undefined);
+  const [siteMapTask, setSiteMapTask] = useState<CompanionTask | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<CompanionTask | null>(null);
   const [generationLocks, setGenerationLocks] = useState<Record<string, boolean>>({});
@@ -501,6 +504,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
               } else if (taskType === 'contract') {
                 setContractTask(taskData);
                 setIsContractDialogOpen(true);
+              } else if (taskType === 'site_map') {
+                setSiteMapTask(taskData);
+                setIsSiteMapDialogOpen(true);
               } else if (taskData.content) {
                 setSelectedTask(taskData);
               }
