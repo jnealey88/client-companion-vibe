@@ -1,0 +1,248 @@
+{
+  "siteOverview": {
+    "title": "Site Map for Fractured Choices",
+    "description": "Detailed overview of the site structure and purpose for Fractured Choices' website redesign project, focusing on enhancing digital presence and community engagement in the technology industry.",
+    "primaryNavigation": [
+      "Home",
+      "About Us",
+      "Game Features",
+      "Community",
+      "Blog",
+      "Support"
+    ],
+    "secondaryNavigation": [
+      "Login",
+      "Contact Us",
+      "FAQs"
+    ]
+  },
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home Page",
+      "url": "/",
+      "metaDescription": "Discover Fractured Choices: an immersive AI-based RPG experience. Engage with our vibrant community and explore innovative game features.",
+      "isParent": true,
+      "children": [
+        "game-features",
+        "community",
+        "blog"
+      ],
+      "sections": [
+        {
+          "id": "hero",
+          "title": "Hero Section",
+          "content": "Welcome to Fractured Choices: Your gateway to an extraordinary AI-powered RPG adventure. Immerse yourself in a world where your choices shape the narrative. Join our vibrant community and embark on a journey unlike any other. <strong>Start your adventure today!</strong>",
+          "wordCount": 150,
+          "elements": [
+            "hero image",
+            "call to action button"
+          ]
+        },
+        {
+          "id": "features-overview",
+          "title": "Features Overview Section",
+          "content": "Experience cutting-edge features designed to elevate your gameplay. Our AI-driven narrative unfolds based on your decisions. With a dynamic world that reacts to player choices, every journey through Fractured Choices is unique. Engage in captivating storylines and unexpected outcomes.",
+          "wordCount": 250,
+          "elements": [
+            "feature images",
+            "icon set"
+          ]
+        }
+      ],
+      "technicalFeatures": [
+        "Slider",
+        "Animation"
+      ]
+    },
+    {
+      "id": "about-us",
+      "title": "About Us Page",
+      "url": "/about-us",
+      "metaDescription": "Learn about Fractured Choices, our mission, vision, and the passionate team behind the game.",
+      "isParent": false,
+      "children": [],
+      "sections": [
+        {
+          "id": "mission",
+          "title": "Our Mission Section",
+          "content": "At Fractured Choices, our mission is to create deeply engaging and interactive gaming experiences. We are committed to innovation, pushing the boundaries of AI to deliver unique, player-driven narratives.",
+          "wordCount": 150,
+          "elements": [
+            "mission statement image"
+          ]
+        },
+        {
+          "id": "team",
+          "title": "Our Team Section",
+          "content": "Meet the creative minds powering Fractured Choices. Our team of seasoned developers, writers, and designers shares a passion for storytelling and technology. Collectively, we bring immersive digital worlds to life.",
+          "wordCount": 200,
+          "elements": [
+            "team photos",
+            "team bio links"
+          ]
+        }
+      ],
+      "technicalFeatures": [
+        "Team carousel",
+        "Parallax scrolling"
+      ]
+    },
+    {
+      "id": "game-features",
+      "title": "Game Features Page",
+      "url": "/game-features",
+      "metaDescription": "Explore the unique game features of Fractured Choices, including AI-driven narratives and player decision-making.",
+      "isParent": true,
+      "children": [
+        "feature1",
+        "feature2"
+      ],
+      "sections": [
+        {
+          "id": "narrative",
+          "title": "Narrative Engine Section",
+          "content": "Our advanced AI narrative engine crafts stories that evolve with player decisions. This technology ensures no two adventures are the same, providing unlimited replayability and rich storytelling.",
+          "wordCount": 180,
+          "elements": [
+            "narrative graphic",
+            "demo video"
+          ]
+        },
+        {
+          "id": "player-choice",
+          "title": "Player Choice Section",
+          "content": "Player choices are the cornerstone of Fractured Choices. Each decision you make not only affects the storyline but also influences the environment and character relationships, ensuring a personalized gaming experience.",
+          "wordCount": 180,
+          "elements": [
+            "choice icons",
+            "interactive element"
+          ]
+        }
+      ],
+      "technicalFeatures": [
+        "Dynamic charts",
+        "Interactive demos"
+      ]
+    },
+    {
+      "id": "community",
+      "title": "Community Page",
+      "url": "/community",
+      "metaDescription": "Join the Fractured Choices community to engage with fellow players, share experiences, and participate in forums.",
+      "isParent": false,
+      "children": [],
+      "sections": [
+        {
+          "id": "forums",
+          "title": "Forums Section",
+          "content": "Connect with other adventurers in our community forums. Discuss strategies, share stories, and engage in exciting conversations about your experiences within Fractured Choices.",
+          "wordCount": 150,
+          "elements": [
+            "forum link",
+            "discussion board"
+          ]
+        },
+        {
+          "id": "feedback",
+          "title": "Feedback Section",
+          "content": "We value player feedback at Fractured Choices. Share your thoughts and help us improve the game for everyone. Your insights drive our innovations and enhancements.",
+          "wordCount": 150,
+          "elements": [
+            "feedback form"
+          ]
+        }
+      ],
+      "technicalFeatures": [
+        "Discussion boards",
+        "Social media integrations"
+      ]
+    },
+    {
+      "id": "blog",
+      "title": "Blog Page",
+      "url": "/blog",
+      "metaDescription": "Stay updated with the latest news, updates, and insights from the world of Fractured Choices.",
+      "isParent": false,
+      "children": [],
+      "sections": [
+        {
+          "id": "latest-posts",
+          "title": "Latest Posts Section",
+          "content": "Catch up on the newest blog articles for tips, behind-the-scenes insights, and community stories from Fractured Choices. Stay informed and enhance your gaming journey.",
+          "wordCount": 150,
+          "elements": [
+            "post thumbnails",
+            "tag cloud"
+          ]
+        },
+        {
+          "id": "subscribe",
+          "title": "Subscribe Section",
+          "content": "Don't miss any updates! Subscribe to our newsletter for the latest news, exclusive content, and community highlights. Join our mailing list today and stay connected with Fractured Choices.",
+          "wordCount": 120,
+          "elements": [
+            "subscription form"
+          ]
+        }
+      ],
+      "technicalFeatures": [
+        "Newsletter integration",
+        "RSS feed"
+      ]
+    },
+    {
+      "id": "support",
+      "title": "Support Page",
+      "url": "/support",
+      "metaDescription": "Find support with FAQs, contact forms, and detailed guides to help you with Fractured Choices.",
+      "isParent": false,
+      "children": [],
+      "sections": [
+        {
+          "id": "faqs",
+          "title": "FAQs Section",
+          "content": "Have questions? We have answers. Explore our comprehensive Frequently Asked Questions section to find solutions and advice to enhance your gameplay experience.",
+          "wordCount": 150,
+          "elements": [
+            "FAQ accordion",
+            "search bar"
+          ]
+        },
+        {
+          "id": "contact",
+          "title": "Contact Us Section",
+          "content": "Need further assistance? Contact our support team for any queries, feedback, or technical support. We're here to help you make the most of Fractured Choices.",
+          "wordCount": 150,
+          "elements": [
+            "contact form",
+            "contact details"
+          ]
+        }
+      ],
+      "technicalFeatures": [
+        "Contact forms",
+        "Live chat integration"
+      ]
+    }
+  ],
+  "contentGuidelines": {
+    "tone": "The content should be engaging, informative, and community-focused. Write with a tone that combines professional clarity with the excitement of adventure and gaming immersion. Use examples that show an understanding of the gaming audience's passion and interest in futuristic, choice-based games.",
+    "callToAction": "Use action-oriented language like \"Join Now,\" \"Start Your Adventure,\" \"Explore More,\" and \"Engage with Our Community.\" Style guidelines should prioritize clear, strong CTAs positioned prominently within interactive elements.",
+    "keyMessages": [
+      "Fractured Choices offers a unique AI-driven RPG experience where player choices dictate narrative outcomes.",
+      "Join our community of gamers and explore an ever-evolving story.",
+      "Engage with compelling storylines and immersive environments, powered by AI technology."
+    ]
+  },
+  "technicalRequirements": {
+    "interactiveElements": [
+      "Dynamic character customization tool that allows users to build and modify their avatars within the game environment.",
+      "An interactive storyline map that displays branching narrative paths based on player decisions, offering a visual representation of potential choices."
+    ],
+    "integrations": [
+      "Social Media Integration: Allow users to share achievements and game updates directly to platforms like Facebook, Twitter, and Discord to enhance community engagement.",
+      "Payment Gateway Integration: Implement a secure and efficient payment process for in-game purchases and memberships utilizing platforms like PayPal or Stripe with detailed documentation for developers."
+    ]
+  }
+}

@@ -115,6 +115,66 @@ interface SiteMapDialogProps {
   onTaskGenerated?: (task: CompanionTask) => void;
 }
 
+// Function to extract clean section content from nested sitemap JSON
+function extractSectionContentForEditor(content: string | undefined): string {
+  if (!content) return '';
+  
+  console.log("EXTRACT SECTION - Examining content:", 
+    typeof content === 'string' ? content.substring(0, 50) + "..." : "Not a string");
+  
+  // If the content is a plain string without JSON markers, return it directly
+  if (typeof content === 'string' && !content.startsWith('{')) {
+    console.log("EXTRACT SECTION - Content is plain text, returning as is");
+    return content;
+  }
+  
+  // If content is already in Editor.js format, return it as is
+  if (typeof content === 'string' && 
+      content.startsWith('{') && 
+      (content.includes('"blocks"') || content.includes('"time"'))) {
+    console.log("EXTRACT SECTION - Content is already in Editor.js format");
+    return content;
+  }
+  
+  // If we're dealing with what looks like a full sitemap JSON, process accordingly
+  if (typeof content === 'string' && 
+      content.startsWith('{') && 
+      (content.includes('"siteOverview"') || content.includes('"pages"'))) {
+    
+    console.log("EXTRACT SECTION - Detected full sitemap JSON, extracting section content");
+    
+    try {
+      // Create an Editor.js compatible object with a simple paragraph
+      const editorJsContent = {
+        time: Date.now(),
+        blocks: [
+          {
+            type: "paragraph",
+            data: {
+              text: content.includes('"content": "') ? 
+                // Try to extract just the content from the JSON
+                content.split('"content": "')[1]?.split('",')[0]?.replace(/\\"/g, '"') || content : 
+                content
+            }
+          }
+        ],
+        version: "2.22.2"
+      };
+      
+      console.log("EXTRACT SECTION - Created Editor.js compatible content:", 
+        JSON.stringify(editorJsContent).substring(0, 100) + "...");
+      
+      return JSON.stringify(editorJsContent);
+    } catch (e) {
+      console.error("EXTRACT SECTION - Error processing content:", e);
+      return content;
+    }
+  }
+  
+  // Fallback to returning the original content
+  return content;
+}
+
 export default function SiteMapDialog({
   open,
   onOpenChange,
@@ -1315,7 +1375,7 @@ Your Web Professional`);
                                             <div className="section-editor-container border rounded p-1 bg-white">
                                               {/* Using Editor.js for rich content editing */}
                                               <EditorJs
-                                                content={section.content}
+                                                content={extractSectionContentForEditor(section.content)}
                                                 onChange={(content) => handleSectionUpdate(page.id, section.id, content)}
                                                 readOnly={false}
                                                 className="prose max-w-none min-h-[200px] rich-editor-container"
