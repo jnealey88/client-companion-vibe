@@ -257,53 +257,13 @@ export default function ClientDetail() {
             <FocusCard 
               clientStatus={client.status} 
               tasks={tasks}
-              clientId={client.id}
-              onCompanyAnalysis={() => {
-                if (clientId) {
-                  // Get the ClientCompanion's handleGenerate method to generate a new company analysis
-                  // We'll use a custom event to communicate with the ClientCompanion component
-                  const compAnalysisEvent = new CustomEvent('generate-company-analysis', { 
-                    detail: { clientId } 
-                  });
-                  document.dispatchEvent(compAnalysisEvent);
-                  
-                  // Also scroll to the section
-                  document.getElementById('client-companion-section')?.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                  });
-                }
-              }}
-              onProposal={() => {
-                if (clientId) {
-                  // Get the ClientCompanion's handleGenerate method to generate a new proposal
-                  const proposalEvent = new CustomEvent('generate-proposal', { 
-                    detail: { clientId } 
-                  });
-                  document.dispatchEvent(proposalEvent);
-                  
-                  // Also scroll to the section
-                  document.getElementById('client-companion-section')?.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                  });
-                }
-              }}
-              onSiteMap={() => {
-                if (clientId) {
-                  // Get the ClientCompanion's handleGenerate method to generate a new site map
-                  const siteMapEvent = new CustomEvent('generate-site-map', { 
-                    detail: { clientId } 
-                  });
-                  document.dispatchEvent(siteMapEvent);
-                  
-                  // Also scroll to the section
-                  document.getElementById('client-companion-section')?.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                  });
-                }
-              }}
+              onAction={() => {
+                // Scroll to the client companion section
+                document.getElementById('client-companion-section')?.scrollIntoView({ 
+                  behavior: 'smooth',
+                  block: 'start'
+                });
+              }} 
             />
             
             {/* Two-column layout for Client Companion (2/3) and GoDaddy Products (1/3) */}

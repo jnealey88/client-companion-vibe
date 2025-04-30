@@ -2,26 +2,16 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Info, ArrowRight, CheckCircle, FileSearch, FileText, FolderTree } from "lucide-react";
+import { X, Info, ArrowRight, CheckCircle } from "lucide-react";
 import { CompanionTask } from "@shared/schema";
 
 interface FocusCardProps {
   clientStatus: string;
   tasks: CompanionTask[] | undefined;
-  clientId: number;
-  onCompanyAnalysis: () => void;
-  onProposal: () => void;
-  onSiteMap: () => void;
+  onAction?: () => void;
 }
 
-export default function FocusCard({ 
-  clientStatus, 
-  tasks, 
-  clientId,
-  onCompanyAnalysis,
-  onProposal,
-  onSiteMap
-}: FocusCardProps) {
+export default function FocusCard({ clientStatus, tasks, onAction }: FocusCardProps) {
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) {
@@ -36,14 +26,13 @@ export default function FocusCard({
         title: "Start with Company Analysis",
         description: "Begin by analyzing the company to understand their business needs and challenges.",
         action: "Run Company Analysis",
-        actionFn: onCompanyAnalysis,
-        badge: "Recommended First Step",
-        icon: <FileSearch className="h-4 w-4 mr-2" />
+        badge: "Recommended First Step"
       };
     }
 
     // Find completed tasks
-    const completedTasks = tasks.filter(task => task.status === "completed" && task.content);
+    const completedTasks = tasks.filter(task => task.status === "completed");
+    const pendingTasks = tasks.filter(task => task.status === "pending");
     
     // Check if we have a completed company analysis but no proposal
     const hasCompanyAnalysis = completedTasks.some(task => task.type === "company_analysis");
@@ -55,9 +44,7 @@ export default function FocusCard({
         title: "Create a Proposal",
         description: "Use the company analysis to create a compelling proposal for the client.",
         action: "Generate Proposal",
-        actionFn: onProposal,
-        badge: "Next Step",
-        icon: <FileText className="h-4 w-4 mr-2" />
+        badge: "Next Step"
       };
     } 
     
@@ -66,38 +53,16 @@ export default function FocusCard({
         title: "Create a Site Map",
         description: "Design the website structure based on the approved proposal.",
         action: "Generate Site Map",
-        actionFn: onSiteMap,
-        badge: "Next Step",
-        icon: <FolderTree className="h-4 w-4 mr-2" />
+        badge: "Next Step"
       };
     }
 
-    // Default to company analysis if none exists (this ensures company analysis is always recommended first if nothing has been generated)
-    if (!hasCompanyAnalysis) {
-      return {
-        title: "Start with Company Analysis",
-        description: "Begin by analyzing the company to understand their business needs and challenges.",
-        action: "Run Company Analysis",
-        actionFn: onCompanyAnalysis,
-        badge: "Recommended First Step",
-        icon: <FileSearch className="h-4 w-4 mr-2" />
-      };
-    }
-
-    // Default recommendation if we can't determine a specific next step
+    // Default recommendation
     return {
       title: "Review Client Status",
       description: "Check the current project phase and determine next actions needed.",
       action: "Explore Tasks",
-      actionFn: () => {
-        // Focus on the client companion section
-        document.getElementById('client-companion-section')?.scrollIntoView({ 
-          behavior: 'smooth',
-          block: 'start'
-        });
-      },
-      badge: "Recommended",
-      icon: <ArrowRight className="h-4 w-4 mr-2" />
+      badge: "Recommended"
     };
   };
 
@@ -124,10 +89,10 @@ export default function FocusCard({
               <Button 
                 className="mt-3 gap-1" 
                 size="sm"
-                onClick={recommendation.actionFn}
+                onClick={onAction}
               >
-                {recommendation.icon}
                 {recommendation.action}
+                <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
           </div>
