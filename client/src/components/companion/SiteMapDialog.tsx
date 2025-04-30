@@ -456,8 +456,8 @@ Your Web Professional`);
           // Try to find any property that might contain the expanded content
           const contentKeys = ['content', 'text', 'result', 'data', 'expandedContent', 'expanded'];
           for (const key of contentKeys) {
-            if (key in response && typeof response[key] === 'string') {
-              expandedContent = response[key];
+            if (key in response && typeof (response as Record<string, unknown>)[key] === 'string') {
+              expandedContent = (response as Record<string, unknown>)[key] as string;
               break;
             }
           }

@@ -1250,6 +1250,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                       } else if (type === 'contract' && task) {
                                         setContractTask(task);
                                         setIsContractDialogOpen(true);
+                                      } else if (type === 'site_map' && task) {
+                                        setSiteMapTask(task);
+                                        setIsSiteMapDialogOpen(true);
                                       } else if (task) {
                                         setSelectedTask(task);
                                       }
@@ -1265,7 +1268,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                                             ? <><ListFilter className="h-3.5 w-3.5 mr-1" /> View Scope</>
                                             : type === 'contract'
                                               ? <><Scroll className="h-3.5 w-3.5 mr-1" /> View Contract</>
-                                              : <><FileText className="h-3.5 w-3.5 mr-1" /> View</>}
+                                              : type === 'site_map'
+                                                ? <><FolderTree className="h-3.5 w-3.5 mr-1" /> View Site Map</>
+                                                : <><FileText className="h-3.5 w-3.5 mr-1" /> View</>}
                                   </Button>
                                 </div>
                               </div>
