@@ -48,8 +48,8 @@ export default function Header({ onSearch }: HeaderProps) {
   return (
     <header className="bg-white border-b border-gray-200 py-4 px-6 flex justify-between items-center">
       <div className="flex items-center">
-        <Link href="/">
-          <a className="text-xl font-semibold hover:text-primary">Clients</a>
+        <Link href="/" className="text-xl font-semibold hover:text-primary">
+          Clients
         </Link>
       </div>
       
@@ -67,10 +67,8 @@ export default function Header({ onSearch }: HeaderProps) {
           </div>
         </div>
         
-        <Link href="/help">
-          <a className="text-gray-600 hover:text-gray-900">
-            <span>Help Center</span>
-          </a>
+        <Link href="/help" className="text-gray-600 hover:text-gray-900">
+          <span>Help Center</span>
         </Link>
         
         <div className="relative">

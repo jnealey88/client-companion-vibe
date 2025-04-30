@@ -53,13 +53,7 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>('login');
   const { user, loginMutation, registerMutation } = useAuth();
   const [, navigate] = useLocation();
-
-  // Redirect if already logged in
-  if (user) {
-    navigate('/');
-    return null;
-  }
-
+  
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -77,6 +71,12 @@ export default function AuthPage() {
       password: '',
     },
   });
+  
+  // Redirect if already logged in (after all hooks are called)
+  if (user) {
+    navigate('/');
+    return null;
+  }
 
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     loginMutation.mutate(values);
