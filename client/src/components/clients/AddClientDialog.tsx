@@ -90,26 +90,33 @@ export default function AddClientDialog({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
-        <DialogHeader>
-          <DialogTitle>Add New Client</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader className="mb-2">
+          <DialogTitle className="text-xl font-semibold text-primary">Add New Client</DialogTitle>
+          <DialogDescription className="text-gray-500 mt-1">
             Fill in the client details below. All fields marked with * are required.
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <div className="grid grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem className="col-span-2">
-                    <FormLabel>Company Name *</FormLabel>
+                    <FormLabel className="text-base">Company Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter company name" {...field} />
+                      <Input 
+                        placeholder="Enter company name" 
+                        className="py-6" 
+                        {...field} 
+                      />
                     </FormControl>
+                    <FormDescription className="text-xs text-gray-500">
+                      The name of the company or organization
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -120,10 +127,17 @@ export default function AddClientDialog({
                 name="contactName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Name *</FormLabel>
+                    <FormLabel className="text-base">Contact Name *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter contact name" {...field} />
+                      <Input 
+                        placeholder="Enter primary contact name" 
+                        className="py-5"
+                        {...field} 
+                      />
                     </FormControl>
+                    <FormDescription className="text-xs text-gray-500">
+                      Your main contact person at the company
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -134,10 +148,17 @@ export default function AddClientDialog({
                 name="contactTitle"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Title *</FormLabel>
+                    <FormLabel className="text-base">Contact Title *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter title" {...field} />
+                      <Input 
+                        placeholder="Enter job title" 
+                        className="py-5"
+                        {...field} 
+                      />
                     </FormControl>
+                    <FormDescription className="text-xs text-gray-500">
+                      Job position or role of the contact
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -148,10 +169,18 @@ export default function AddClientDialog({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email *</FormLabel>
+                    <FormLabel className="text-base">Email *</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="Enter email" {...field} />
+                      <Input 
+                        type="email" 
+                        placeholder="contact@example.com" 
+                        className="py-5"
+                        {...field} 
+                      />
                     </FormControl>
+                    <FormDescription className="text-xs text-gray-500">
+                      Primary email for client communication
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -162,10 +191,17 @@ export default function AddClientDialog({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone *</FormLabel>
+                    <FormLabel className="text-base">Phone *</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter phone" {...field} />
+                      <Input 
+                        placeholder="(555) 123-4567" 
+                        className="py-5"
+                        {...field} 
+                      />
                     </FormControl>
+                    <FormDescription className="text-xs text-gray-500">
+                      Contact's business phone number
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -185,14 +221,14 @@ export default function AddClientDialog({
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Status *</FormLabel>
+                    <FormLabel className="text-base">Project Phase *</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a status" />
+                        <SelectTrigger className="h-[42px]">
+                          <SelectValue placeholder="Select project phase" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -203,6 +239,9 @@ export default function AddClientDialog({
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormDescription className="text-xs text-gray-500">
+                      Current phase in the client relationship
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -213,16 +252,17 @@ export default function AddClientDialog({
                 name="websiteUrl"
                 render={({ field }) => (
                   <FormItem className="col-span-2">
-                    <FormLabel>Website URL (optional)</FormLabel>
+                    <FormLabel className="text-base">Website URL (optional)</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="Enter website URL" 
+                        placeholder="https://example.com" 
+                        className="py-5"
                         {...field} 
                         value={field.value || ''}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Provide the client's website URL
+                    <FormDescription className="text-xs text-gray-500">
+                      Client's company website address - useful for analysis and research
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
