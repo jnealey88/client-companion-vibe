@@ -56,7 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Client not found" });
       }
       
-      const userId = (req.user as any).id;
+      const userId = (req.user as any).claims.sub;
       await storage.addClientToUser(userId, clientId);
       
       return res.status(201).json({ message: "Client associated with user" });
@@ -69,7 +69,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all clients for the authenticated user
   app.get("/api/user/clients", isAuthenticated, async (req: Request, res: Response) => {
     try {
-      const userId = (req.user as any).id;
+      const userId = (req.user as any).claims.sub;
       const clients = await storage.getUserClients(userId);
       return res.json(clients);
     } catch (error) {
@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/clients", isAuthenticated, async (req: Request, res: Response) => {
     try {
       // Get the authenticated user's ID
-      const userId = (req.user as any).id;
+      const userId = (req.user as any).claims.sub;
       
       // Get clients associated with this user
       const userClients = await storage.getUserClients(userId);
@@ -180,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Verify that this client belongs to the authenticated user
-      const userId = (req.user as any).id;
+      const userId = (req.user as any).claims.sub;
       const userClients = await storage.getUserClients(userId);
       const clientBelongsToUser = userClients.some(c => c.id === client.id);
       
@@ -208,7 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Associate the client with the authenticated user
       try {
-        const userId = (req.user as any).id;
+        const userId = (req.user as any).claims.sub;
         await storage.addClientToUser(userId, newClient.id);
         console.log(`Client ${newClient.id} associated with user ${userId}`);
       } catch (associationError) {
