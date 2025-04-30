@@ -837,7 +837,7 @@ Your Web Professional`);
     // Send the email
     sendEmailMutation.mutate({
       to: recipientEmail,
-      from: "yourname@yourcompany.com", // This should be configured in your SendGrid account
+      from: "contact@fracturedchoices.com", // Configured sender email in SendGrid account
       subject: emailSubject,
       html: emailHtml
     });
