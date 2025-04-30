@@ -364,6 +364,19 @@ Your Web Professional`);
   const [newSectionTags, setNewSectionTags] = useState<string[]>(["Content block"]);
   const [newSectionTagInput, setNewSectionTagInput] = useState("");
   
+  // Predefined tag suggestions
+  const pageTagSuggestions = [
+    "Homepage", "About", "Services", "Products", "Contact", 
+    "Blog", "FAQ", "Testimonials", "Landing Page", "Portfolio",
+    "Login", "Registration", "Account", "Checkout", "E-commerce"
+  ];
+  
+  const sectionTagSuggestions = [
+    "Hero Section", "Content Block", "Feature List", "Call to Action", 
+    "Image Gallery", "Video", "Testimonial", "Contact Form", 
+    "Pricing Table", "Team Members", "Map", "Timeline", "FAQ Accordion"
+  ];
+
   // Helper function to add tags
   const addPageTag = () => {
     if (newPageTagInput.trim() && !newPageTags.includes(newPageTagInput.trim())) {
@@ -385,6 +398,19 @@ Your Web Professional`);
   
   const removeSectionTag = (tag: string) => {
     setNewSectionTags(newSectionTags.filter(t => t !== tag));
+  };
+  
+  // Add a suggested tag
+  const addSuggestedPageTag = (tag: string) => {
+    if (!newPageTags.includes(tag)) {
+      setNewPageTags([...newPageTags, tag]);
+    }
+  };
+  
+  const addSuggestedSectionTag = (tag: string) => {
+    if (!newSectionTags.includes(tag)) {
+      setNewSectionTags([...newSectionTags, tag]);
+    }
   };
   
   // Show the add page dialog
@@ -1470,9 +1496,25 @@ Your Web Professional`);
               />
               <Button type="button" onClick={addPageTag} size="sm">Add</Button>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mb-2">
               Add elements like "Hero Section", "Contact Form", etc.
             </p>
+            
+            <div className="mt-2">
+              <Label className="text-xs mb-2">Suggested Tags:</Label>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {pageTagSuggestions.slice(0, 6).map((tag) => (
+                  <Badge 
+                    key={tag} 
+                    variant="outline" 
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
+                    onClick={() => addSuggestedPageTag(tag)}
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
         

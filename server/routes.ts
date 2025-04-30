@@ -619,29 +619,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { content, context } = req.body;
       
       if (!content) {
-        return res.status(400).json({ message: "Content is required" });
+        return res.status(400).json({ 
+          message: "Content is required", 
+          success: false,
+          originalContent: "",
+          expandedContent: ""
+        });
       }
       
-      console.log("Expanding content with context:", context);
+      // Validate content length
+      if (content.length < 10) {
+        return res.status(400).json({ 
+          message: "Content is too short to expand. Please provide more initial content.", 
+          success: false,
+          originalContent: content,
+          expandedContent: content
+        });
+      }
       
-      // Expand the content using OpenAI
-      const expandedContent = await expandSectionContent(content, context || {});
+      console.log("Expanding content with context:", JSON.stringify(context));
+      console.log("Original content length:", content.length);
       
-      // Log the result for debugging
+      // Add a timeout for the OpenAI call
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Content expansion timed out after 60 seconds")), 60000);
+      });
+      
+      // Expand the content using OpenAI with timeout handling
+      const expandContentPromise = expandSectionContent(content, context || {});
+      const expandedContent = await Promise.race([expandContentPromise, timeoutPromise]) as string;
+      
+      // Validate the expanded content
+      if (!expandedContent || expandedContent.length <= content.length) {
+        console.warn("Expansion returned shorter or same length content");
+        return res.json({ 
+          message: "Content could not be meaningfully expanded",
+          originalContent: content,
+          expandedContent: content,
+          success: false
+        });
+      }
+      
+      // Log the successful result for debugging
       console.log("OpenAI expansion result length:", expandedContent.length);
+      console.log("Expansion ratio:", (expandedContent.length / content.length).toFixed(2) + "x");
       
-      // Return a standardized response
+      // Return a standardized response with detailed success information
       return res.json({ 
         originalContent: content,
         expandedContent: expandedContent,
-        success: true
+        success: true,
+        message: "Content expanded successfully",
+        expansionRatio: expandedContent.length / content.length
       });
     } catch (error) {
       console.error("Error expanding content:", error);
+      
+      // Determine the right error message and status
+      let errorMessage = "Failed to expand content";
+      let statusCode = 500;
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Handle specific error types
+        if (errorMessage.includes("timeout")) {
+          statusCode = 504; // Gateway Timeout
+        } else if (errorMessage.includes("rate limit") || errorMessage.includes("quota")) {
+          statusCode = 429; // Too Many Requests
+        }
+      }
+      
       // Include more details about the error in the response
-      return res.status(500).json({ 
-        message: "Failed to expand content", 
+      // Get the original content from the request body if available
+      const originalContent = req.body?.content || "";
+        
+      return res.status(statusCode).json({ 
+        message: errorMessage, 
         error: error instanceof Error ? error.message : "Unknown error",
+        originalContent: originalContent,
+        expandedContent: originalContent,
         success: false
       });
     }
