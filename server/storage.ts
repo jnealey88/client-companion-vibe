@@ -9,6 +9,7 @@ import {
   User,
   InsertUser,
   UpdateUser,
+  UpsertUser,
   InsertUserClient
 } from "@shared/schema";
 import session from "express-session";
@@ -34,16 +35,17 @@ export interface IStorage {
   deleteCompanionTask(id: number): Promise<boolean>;
   
   // User operations
-  getUser(id: number): Promise<User | undefined>;
+  getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUser(id: number, user: UpdateUser): Promise<User | undefined>;
-  deleteUser(id: number): Promise<boolean>;
+  updateUser(id: string, user: UpdateUser): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
+  upsertUser(user: UpsertUser): Promise<User>;
   
   // User-Client relationship operations
-  addClientToUser(userId: number, clientId: number): Promise<boolean>;
-  removeClientFromUser(userId: number, clientId: number): Promise<boolean>;
-  getUserClients(userId: number): Promise<Client[]>;
+  addClientToUser(userId: string, clientId: number): Promise<boolean>;
+  removeClientFromUser(userId: string, clientId: number): Promise<boolean>;
+  getUserClients(userId: string): Promise<Client[]>;
   
   // Session store
   sessionStore: session.Store;
@@ -334,7 +336,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // User operations
-  async getUser(id: number): Promise<User | undefined> {
+  async getUser(id: string): Promise<User | undefined> {
     try {
       const { db } = await import('./db');
       const { users } = await import('@shared/schema');
@@ -377,10 +379,7 @@ export class DatabaseStorage implements IStorage {
       
       const [newUser] = await db
         .insert(users)
-        .values({
-          ...user,
-          createdAt: new Date()
-        })
+        .values(user)
         .returning();
       
       return newUser;
@@ -390,7 +389,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
-  async updateUser(id: number, updateData: UpdateUser): Promise<User | undefined> {
+  async updateUser(id: string, updateData: UpdateUser): Promise<User | undefined> {
     try {
       const { db } = await import('./db');
       const { users } = await import('@shared/schema');
@@ -398,7 +397,10 @@ export class DatabaseStorage implements IStorage {
       
       const [updatedUser] = await db
         .update(users)
-        .set(updateData)
+        .set({
+          ...updateData,
+          updatedAt: new Date()
+        })
         .where(eq(users.id, id))
         .returning();
       
@@ -409,7 +411,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
-  async deleteUser(id: number): Promise<boolean> {
+  async deleteUser(id: string): Promise<boolean> {
     try {
       const { db } = await import('./db');
       const { users } = await import('@shared/schema');
@@ -427,8 +429,32 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
+  async upsertUser(user: UpsertUser): Promise<User> {
+    try {
+      const { db } = await import('./db');
+      const { users } = await import('@shared/schema');
+      
+      const [upsertedUser] = await db
+        .insert(users)
+        .values(user)
+        .onConflictDoUpdate({
+          target: users.id,
+          set: {
+            ...user,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      
+      return upsertedUser;
+    } catch (error) {
+      console.error("Error upserting user:", error);
+      throw error;
+    }
+  }
+  
   // User-Client relationship operations
-  async addClientToUser(userId: number, clientId: number): Promise<boolean> {
+  async addClientToUser(userId: string, clientId: number): Promise<boolean> {
     try {
       const { db } = await import('./db');
       const { userClients } = await import('@shared/schema');
@@ -448,7 +474,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
-  async removeClientFromUser(userId: number, clientId: number): Promise<boolean> {
+  async removeClientFromUser(userId: string, clientId: number): Promise<boolean> {
     try {
       const { db } = await import('./db');
       const { userClients } = await import('@shared/schema');
@@ -471,7 +497,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
-  async getUserClients(userId: number): Promise<Client[]> {
+  async getUserClients(userId: string): Promise<Client[]> {
     try {
       const { db } = await import('./db');
       const { userClients, clients } = await import('@shared/schema');
