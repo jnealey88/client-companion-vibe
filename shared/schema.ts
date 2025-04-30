@@ -13,30 +13,7 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").notNull().default(new Date()),
 });
 
-// User-client relation
-export const userClients = pgTable("user_clients", {
-  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
-}, (t) => ({
-  pk: primaryKey({ columns: [t.userId, t.clientId] }),
-}));
-
-// Relations
-export const usersRelations = relations(users, ({ many }) => ({
-  userClients: many(userClients)
-}));
-
-export const userClientsRelations = relations(userClients, ({ one }) => ({
-  user: one(users, {
-    fields: [userClients.userId],
-    references: [users.id]
-  }),
-  client: one(clients, {
-    fields: [userClients.clientId],
-    references: [clients.id]
-  })
-}));
-
+// Client table definition
 export const clients = pgTable("clients", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -86,6 +63,30 @@ export const taskStatusEnum = pgEnum("task_status", [
   "in_progress",
   "completed"
 ]);
+
+// User-client relation
+export const userClients = pgTable("user_clients", {
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clientId: integer("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.userId, t.clientId] }),
+}));
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  userClients: many(userClients)
+}));
+
+export const userClientsRelations = relations(userClients, ({ one }) => ({
+  user: one(users, {
+    fields: [userClients.userId],
+    references: [users.id]
+  }),
+  client: one(clients, {
+    fields: [userClients.clientId],
+    references: [clients.id]
+  })
+}));
 
 // Table for client companion tasks
 export const companionTasks = pgTable("companion_tasks", {
