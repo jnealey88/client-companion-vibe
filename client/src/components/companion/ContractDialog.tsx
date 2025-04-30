@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Copy, CheckCircle2, Trash2, Scroll } from "lucide-react";
+import { Copy, CheckCircle2, Send, AlertCircle, Trash2, Scroll } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,10 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { EditorJs } from "@/components/ui/editor-js";
+import { Separator } from "@/components/ui/separator";
 
 interface ContractDialogProps {
   open: boolean;
@@ -290,22 +293,75 @@ export default function ContractDialog({
         
         {error && (
           <Alert variant="destructive" className="my-2">
+            <AlertCircle className="h-4 w-4 mr-2" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
         
         {loading ? (
           <div className="flex flex-col items-center justify-center py-8 space-y-4">
-            <div className="relative w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="absolute top-0 left-0 h-full bg-primary transition-all duration-500 ease-in-out" 
-                style={{ width: `${loadingProgress}%` }}
-              />
+            <div className="w-full max-w-md mx-auto bg-gray-100 rounded-lg p-6 shadow-sm">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Scroll className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium">Generating Contract</h3>
+                    <div className="text-xs text-muted-foreground">Creating a legal document for {client.name}</div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{loadingStage}</span>
+                    <span>{Math.round(loadingProgress)}%</span>
+                  </div>
+                  <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="absolute top-0 left-0 h-full bg-primary transition-all duration-500 ease-in-out" 
+                      style={{ width: `${loadingProgress}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground animate-pulse">{loadingStage}</p>
           </div>
         ) : generatedTask?.content ? (
           <div className="flex-1 overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-1 py-2">
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={copyToClipboard}
+                  title="Copy to clipboard"
+                  className="h-8 w-8"
+                >
+                  {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+                {showRegenerate && (
+                  <Button
+                    variant="outline"
+                    onClick={handleGenerate}
+                    disabled={loading}
+                    className="h-8"
+                    size="sm"
+                  >
+                    <Scroll className="h-3 w-3 mr-1" />
+                    Regenerate
+                  </Button>
+                )}
+              </div>
+              {isEdited && (
+                <div className="text-xs text-muted-foreground bg-amber-100 px-2 py-1 rounded">
+                  Unsaved changes
+                </div>
+              )}
+            </div>
+            
+            <Separator />
+            
             <div className="min-h-[400px] flex flex-col flex-1 overflow-hidden">
               <EditorJs
                 content={contractContent}
@@ -317,63 +373,40 @@ export default function ContractDialog({
         ) : (
           <div className="flex flex-col items-center justify-center py-8 space-y-6">
             <div className="text-center space-y-2">
-              <Scroll className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                <Scroll className="h-8 w-8 text-primary" />
+              </div>
               <h3 className="text-lg font-medium">No Contract Generated Yet</h3>
-              <p className="text-sm text-muted-foreground max-w-md">
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
                 Generate a professional services contract that includes scope of work, payment terms, 
                 timelines, and legal protections based on the existing proposal.
               </p>
             </div>
             
-            <Button onClick={handleGenerate}>
-              <Scroll className="h-4 w-4 mr-2" />
+            <Button onClick={handleGenerate} className="gap-2">
+              <Scroll className="h-4 w-4" />
               Generate Contract
             </Button>
           </div>
         )}
         
-        <DialogFooter className="flex items-center justify-between sm:justify-between flex-row gap-2">
-          <div className="flex items-center gap-2">
-            {generatedTask?.content && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={copyToClipboard}
-                title="Copy to clipboard"
-              >
-                {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            )}
-            
-            {showRegenerate && (
-              <Button
-                variant="outline"
-                onClick={handleGenerate}
-                disabled={loading}
-              >
-                Regenerate
-              </Button>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {generatedTask?.content && isEdited && (
-              <Button 
-                variant="default" 
-                onClick={handleSave}
-                disabled={isSaving}
-              >
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
-            )}
-            
-            <Button
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
+        <DialogFooter className="flex items-center justify-end sm:justify-end flex-row gap-2">
+          {generatedTask?.content && isEdited && (
+            <Button 
+              variant="default" 
+              onClick={handleSave}
+              disabled={isSaving}
             >
-              Close
+              {isSaving ? "Saving..." : "Save Changes"}
             </Button>
-          </div>
+          )}
+          
+          <Button
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+          >
+            {generatedTask?.content ? "Close" : "Cancel"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
