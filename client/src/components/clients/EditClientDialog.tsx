@@ -35,7 +35,6 @@ const formSchema = z.object({
   phone: z.string().optional(),
   websiteUrl: z.string().optional(),
   projectValue: z.coerce.number().min(0, "Value must be a positive number"),
-  notes: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -60,7 +59,7 @@ export default function EditClientDialog({ client, open, onOpenChange }: EditCli
       email: client.email,
       phone: client.phone || "",
       websiteUrl: client.websiteUrl || "",
-      notes: client.notes || "",
+      // We'll exclude notes for now as it's not in the schema
       projectValue: client.projectValue,
     }
   });
@@ -203,19 +202,7 @@ export default function EditClientDialog({ client, open, onOpenChange }: EditCli
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} rows={3} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Notes field removed as it's not in the client schema */}
 
             <DialogFooter>
               <Button 

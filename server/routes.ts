@@ -477,16 +477,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               // If we have pricing data, set up the metadata
               if (proposalResponse.pricingData) {
+                const projectTotalFee = proposalResponse.pricingData.projectTotalFee || client.projectValue || 0;
+                
                 // Update the task with content and metadata in one operation
                 await storage.updateCompanionTask(newTask.id, {
                   content,
                   metadata: JSON.stringify({
-                    projectTotalFee: proposalResponse.pricingData.projectTotalFee || client.projectValue || 0,
+                    projectTotalFee: projectTotalFee,
                     carePlanMonthly: proposalResponse.pricingData.carePlanMonthly || 0,
                     productsMonthlyTotal: proposalResponse.pricingData.productsMonthlyTotal || 0
                   }),
                   status: "completed"
                 });
+                
+                // Update the client's project value if a price was extracted
+                if (projectTotalFee > 0 && projectTotalFee !== client.projectValue) {
+                  try {
+                    await storage.updateClient(clientId, {
+                      projectValue: projectTotalFee
+                    });
+                    console.log(`Updated client ${clientId} project value to ${projectTotalFee}`);
+                  } catch (error) {
+                    console.error(`Failed to update client project value: ${error}`);
+                  }
+                }
                 
                 // Get the updated task and return it
                 const updatedTask = await storage.getCompanionTask(newTask.id);
