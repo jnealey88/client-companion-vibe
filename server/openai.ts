@@ -655,7 +655,7 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
         } else if (serpData.clientPosition && serpData.clientPosition <= 30) {
           keywordInfo.recommendation = "Optimize content";
         } else {
-          keywordInfo.recommendation = "Create targeted content";
+          keywordInfo.recommendation = "Develop targeted content";
         }
       } else {
         // No SERP data available, use volume to determine recommendation
@@ -663,9 +663,9 @@ export async function generateCompanyAnalysis(clientInfo: any): Promise<string> 
           parseInt(keywordInfo.volume.replace(/,/g, '')) : 0;
         
         if (volumeNum > 5000) {
-          keywordInfo.recommendation = "High-value target, create optimized content";
+          keywordInfo.recommendation = "High-value target, develop optimized content";
         } else if (volumeNum > 1000) {
-          keywordInfo.recommendation = "Good opportunity, create relevant content";
+          keywordInfo.recommendation = "Good opportunity, develop relevant content";
         } else {
           keywordInfo.recommendation = "Consider targeting this keyword";
         }
@@ -878,9 +878,8 @@ function generateHtmlReport(analysisData: any, clientInfo: any): string {
           return `<span style="display: inline-block; background-color: #2ecc71; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; margin-left: 5px;">MAINTAIN</span>`;
         } else if (recommendation.includes("Optimize")) {
           return `<span style="display: inline-block; background-color: #3498db; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; margin-left: 5px;">OPTIMIZE</span>`;
-        } else if (recommendation.includes("Create")) {
-          return `<span style="display: inline-block; background-color: #e74c3c; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; margin-left: 5px;">CREATE</span>`;
         }
+        // Removed the CREATE tag as requested
         
         return "";
       };
