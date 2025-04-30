@@ -49,6 +49,7 @@ export const clients = pgTable("clients", {
   status: text("status").notNull().default("discovery"),
   projectName: text("project_name").notNull(),
   projectDescription: text("project_description"),
+  businessDescription: text("business_description"),
   projectStatus: text("project_status").notNull().default("active"),
   projectStartDate: timestamp("project_start_date").notNull().default(new Date()),
   projectEndDate: timestamp("project_end_date"),

@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   Select,
   SelectContent,
@@ -28,7 +29,7 @@ import {
   SelectValue, 
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { insertClientSchema, InsertClient, industryOptions, statusOptions } from "@shared/schema";
+import { insertClientSchema, InsertClient, statusOptions, industryOptions } from "@shared/schema";
 import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -47,7 +48,7 @@ export default function AddClientDialog({
   
   const formSchema = insertClientSchema.extend({
     status: z.string().min(1, "Status is required"),
-    industry: z.string().min(1, "Industry is required"),
+    businessDescription: z.string().optional(),
   });
   
   const form = useForm<z.infer<typeof formSchema>>({
@@ -58,13 +59,13 @@ export default function AddClientDialog({
       contactTitle: "",
       email: "",
       phone: "",
-      industry: "",
+      industry: "Technology", // Set a default industry
       status: "Discovery",
       websiteUrl: "",
-      projectName: "",
-      projectDescription: "",
+      businessDescription: "",
+      projectName: "Website Redesign", // Set a default project name
       projectStatus: "Active",
-      projectValue: 0,
+      projectValue: 5000, // Set a default value
     },
   });
   
@@ -187,7 +188,7 @@ export default function AddClientDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {industryOptions.slice(1).map((industry) => (
+                        {industryOptions.slice(1).map((industry: string) => (
                           <SelectItem key={industry} value={industry}>
                             {industry}
                           </SelectItem>
@@ -215,7 +216,7 @@ export default function AddClientDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {statusOptions.slice(1).map((status) => (
+                        {statusOptions.slice(1).map((status: string) => (
                           <SelectItem key={status} value={status}>
                             {status}
                           </SelectItem>
@@ -250,50 +251,21 @@ export default function AddClientDialog({
               
               <FormField
                 control={form.control}
-                name="projectName"
+                name="businessDescription"
                 render={({ field }) => (
                   <FormItem className="col-span-2">
-                    <FormLabel>Project Name *</FormLabel>
+                    <FormLabel>Business Description</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter project name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="projectDescription"
-                render={({ field }) => (
-                  <FormItem className="col-span-2">
-                    <FormLabel>Project Description (optional)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Enter project description" 
+                      <Textarea 
+                        placeholder="Describe the business operations, goals, and target audience" 
+                        className="min-h-[120px]"
                         {...field} 
                         value={field.value || ''}
                       />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="projectValue"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Project Value *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        placeholder="Enter project value" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      />
-                    </FormControl>
+                    <FormDescription>
+                      Provide information about the client's business to help with project planning
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
