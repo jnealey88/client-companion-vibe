@@ -596,10 +596,11 @@ Your Web Professional`);
         }
         
         // Secondary check for direct string content (some APIs might just return the content directly)
-        if (typeof response === 'string') {
-          // Only use if longer than the original content
-          if (response.length > section.content.length) {
-            handleSectionUpdate(pageId, sectionId, response);
+        if (typeof response === 'string' && response) {
+          const responseText = String(response);
+          // Only use if longer than the original content and not empty
+          if (responseText && responseText.length > section.content.length) {
+            handleSectionUpdate(pageId, sectionId, responseText);
             
             toast({
               title: "Content Expanded",
@@ -646,11 +647,11 @@ Your Web Professional`);
         clearTimeout(requestTimeout);
         throw innerError; // Pass to outer catch block
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error expanding content:", error);
       toast({
         title: "Expansion Failed",
-        description: error.message || "Failed to expand content. Please try again.",
+        description: error?.message || "Failed to expand content. Please try again.",
         variant: "destructive"
       });
     } finally {
