@@ -25,6 +25,7 @@ import Header from "../components/Header";
 import ClientCompanion from "../components/companion/ClientCompanion";
 import GoDaddyProductsManager from "../components/godaddy/GoDaddyProductsManager";
 import RecommendedNextStep from "../components/companion/RecommendedNextStep";
+import EditClientDialog from "../components/clients/EditClientDialog";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -38,6 +39,7 @@ export default function ClientDetail() {
   const [, params] = useRoute("/clients/:id");
   const clientId = params?.id ? parseInt(params.id) : null;
   const [clientInfoOpen, setClientInfoOpen] = useState(false);
+  const [editClientDialogOpen, setEditClientDialogOpen] = useState(false);
   
   const { data: client, isLoading, isError } = useQuery<Client>({
     queryKey: [`/api/clients/${clientId}`],
@@ -201,13 +203,7 @@ export default function ClientDetail() {
                           </div>
                         </div>
                         
-                        <div className="flex items-center">
-                          <Building className="h-4 w-4 text-gray-500 mr-2" />
-                          <div>
-                            <p className="text-sm text-gray-500">Industry</p>
-                            <p className="font-medium">{client.industry}</p>
-                          </div>
-                        </div>
+                        {/* Industry hidden as requested */}
                       </div>
                       
                       <div className="space-y-4">
@@ -247,7 +243,11 @@ export default function ClientDetail() {
                         <Phone className="mr-2 h-4 w-4" />
                         Call
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setEditClientDialogOpen(true)}
+                      >
                         <Edit className="mr-2 h-4 w-4" />
                         Edit Client
                       </Button>
@@ -275,8 +275,15 @@ export default function ClientDetail() {
           </div>
         </main>
       </div>
+      
+      {/* Edit Client Dialog */}
+      {client && (
+        <EditClientDialog 
+          client={client} 
+          open={editClientDialogOpen} 
+          onOpenChange={setEditClientDialogOpen} 
+        />
+      )}
     </div>
   );
 }
-
-

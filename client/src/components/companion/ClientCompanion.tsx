@@ -921,7 +921,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
                   className="px-0 py-3 rounded-none text-base font-medium text-gray-600 data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent data-[state=active]:shadow-none bg-transparent"
                 >
                   <Layers className="h-4 w-4 mr-2" />
-                  Tasks by Phase
+                  AI Tools
                 </TabsTrigger>
                 <TabsTrigger 
                   value="content" 
