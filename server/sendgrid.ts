@@ -3,9 +3,11 @@ import { MailService } from '@sendgrid/mail';
 // Initialize SendGrid mail service if API key is available
 let mailService: MailService | null = null;
 
-if (process.env.SENDGRID_API_KEY) {
+// Check if SENDGRID_API_KEY exists and is not empty
+const apiKey = process.env.SENDGRID_API_KEY || '';
+if (apiKey) {
   mailService = new MailService();
-  mailService.setApiKey(process.env.SENDGRID_API_KEY);
+  mailService.setApiKey(apiKey);
   console.log('SendGrid mail service initialized');
 } else {
   console.warn('SENDGRID_API_KEY environment variable not set. Email functionality will be simulated.');

@@ -156,42 +156,73 @@ Web Design Consultant`;
   const [isSending, setIsSending] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   
-  const handleSend = () => {
+  const handleSend = async () => {
     setIsSending(true);
     
-    // Simulate email sending process
-    setTimeout(() => {
-      // Show success toast
-      toast({
-        title: "Email sent successfully!",
-        description: `Discovery call invitation sent to ${client.contactName}`,
-        variant: "default",
+    try {
+      // Generate the HTML email
+      const formattedHtml = emailHtml.replace('<response clipped>', '');
+      
+      // Send email via API
+      const emailResponse = await fetch('/api/email/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: client.email || 'client@example.com', // Fallback if client email not available
+          from: 'your-email@yourdomain.com', // This should be your verified sender email
+          subject: `Discovery Call Invitation - ${client.name}`,
+          text: emailContent,
+          html: formattedHtml,
+        }),
       });
       
-      setIsSending(false);
-      setEmailSent(true);
-      
-      // Update the task status to completed if it exists
-      if (discoveryTask) {
-        updateTaskMutation.mutate({
-          id: discoveryTask.id,
-          data: {
-            status: "completed",
-            content: emailContent,
-            completedAt: new Date().toISOString(),
-          },
+      if (emailResponse.ok) {
+        // Show success toast
+        toast({
+          title: "Email sent successfully!",
+          description: `Discovery call invitation sent to ${client.contactName}`,
+          variant: "default",
         });
+        
+        setEmailSent(true);
+        
+        // Update the task status to completed if it exists
+        if (discoveryTask) {
+          updateTaskMutation.mutate({
+            id: discoveryTask.id,
+            data: {
+              status: "completed",
+              content: emailContent,
+              completedAt: new Date().toISOString(),
+            },
+          });
+        } else {
+          // If task doesn't exist yet, we'd create it here
+          // For simplicity we're assuming it exists in this implementation
+          console.log("Discovery task not found - would create one");
+        }
+        
+        // Close the dialog after a delay
+        setTimeout(() => {
+          onOpenChange(false);
+        }, 1500);
       } else {
-        // If task doesn't exist yet, we'd create it here
-        // For simplicity we're assuming it exists in this implementation
-        console.log("Discovery task not found - would create one");
+        // Handle email sending failure
+        const errorData = await emailResponse.json();
+        throw new Error(errorData.message || 'Failed to send email');
       }
-      
-      // Close the dialog after a delay
-      setTimeout(() => {
-        onOpenChange(false);
-      }, 1500);
-    }, 1200); // Simulate a slight delay for the email sending
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast({
+        title: "Email sending failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (

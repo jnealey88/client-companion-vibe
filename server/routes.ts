@@ -553,5 +553,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // ===== Email Routes =====
+  
+  // Send email route
+  app.post("/api/email/send", async (req: Request, res: Response) => {
+    try {
+      const { to, from, subject, text, html } = req.body;
+      
+      // Validate required fields
+      if (!to || !from || !subject || (!text && !html)) {
+        return res.status(400).json({ 
+          message: "Missing required fields. Please provide to, from, subject, and either text or html content." 
+        });
+      }
+      
+      // Send the email
+      const emailParams: EmailParams = {
+        to,
+        from,
+        subject,
+        text,
+        html
+      };
+      
+      const success = await sendEmail(emailParams);
+      
+      if (success) {
+        return res.status(200).json({ message: "Email sent successfully" });
+      } else {
+        return res.status(500).json({ message: "Failed to send email" });
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      return res.status(500).json({ message: "An error occurred while sending email" });
+    }
+  });
+
   return httpServer;
 }
