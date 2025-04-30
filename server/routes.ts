@@ -516,7 +516,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             content = await generateContract(client, contractProposalTask?.content);
             break;
           case TaskType.SITE_MAP:
-            content = await generateSiteMap(client);
+            // Find a completed proposal to use for generating the site map
+            const siteMapProposalTasks = await storage.getCompanionTasks(clientId);
+            const siteMapProposalTask = siteMapProposalTasks
+              .find(t => t.type === TaskType.PROPOSAL && t.status === "completed");
+            
+            // Generate site map using the proposal content if available
+            content = await generateSiteMap(client, siteMapProposalTask?.content);
             break;
           case TaskType.SCHEDULE_DISCOVERY:
             // Get the company analysis ID to reference in the email

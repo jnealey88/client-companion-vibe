@@ -1797,7 +1797,18 @@ export async function generateContract(clientInfo: any, proposalContent?: string
   }
 }
 
-export async function generateSiteMap(clientInfo: any): Promise<string> {
+export async function generateSiteMap(clientInfo: any, proposalContent?: string): Promise<string> {
+  // Create a richer context by pulling in proposal data if available
+  let proposalContext = "";
+  if (proposalContent) {
+    proposalContext = `
+  Proposal Information:
+  ${proposalContent}
+  
+  Use the above proposal information to ensure the site map aligns with the project scope and deliverables discussed in the proposal.
+  `;
+  }
+
   const prompt = `Create a detailed website sitemap and content plan for ${clientInfo.name} in the ${clientInfo.industry} industry.
   The project is "${clientInfo.projectName}".
   
@@ -1806,18 +1817,38 @@ export async function generateSiteMap(clientInfo: any): Promise<string> {
   - Website URL: ${clientInfo.websiteUrl || "No website URL provided"}
   - Industry: ${clientInfo.industry || "Not specified"}
   - Project Name: ${clientInfo.projectName}
+  ${proposalContext}
   
-  Include:
-  - Main page structure and navigation
-  - Key content sections with descriptions
-  - Recommended content for each page (placeholder intro text for main sections)
-  - Recommendations for features and functionality
+  Please structure your response as a comprehensive site map with:
   
-  Provide this in a structured format that would be useful for website planning.`;
+  1. Structure and Navigation:
+    - Main navigation menu items
+    - Secondary navigation elements
+    - Site hierarchy with parent-child page relationships
+    
+  2. Page Details - For each page include:
+    - Page title
+    - URL structure recommendation
+    - SEO meta description draft
+    - Key sections of the page
+    - Content requirements (word count, key messages)
+    - Visual elements needed (images, videos, graphics)
+    
+  3. Content Plan:
+    - Recommended content for each page (provide actual sample intro text)
+    - Tone and voice guidelines
+    - Call-to-action recommendations
+    
+  4. Technical Features:
+    - Interactive elements
+    - Functional components needed
+    - Integration requirements
+    
+  Format this as a well-structured HTML document with clear headings, tables for page details, and well-organized sections.`;
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [{ role: "user", content: prompt }],
       max_tokens: 10000,
     });
