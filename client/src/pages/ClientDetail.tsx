@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRoute, Link } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "../lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 import { 
   ArrowLeft, 
   Mail, 
@@ -19,9 +18,7 @@ import {
   FileSearch,
   ArrowRight,
   Zap,
-  AlertCircle,
-  Check,
-  Rocket
+  AlertCircle
 } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
@@ -44,7 +41,6 @@ export default function ClientDetail() {
   const clientId = params?.id ? parseInt(params.id) : null;
   const [clientInfoOpen, setClientInfoOpen] = useState(false);
   const [editClientDialogOpen, setEditClientDialogOpen] = useState(false);
-  const queryClient = useQueryClient();
   
   const { data: client, isLoading, isError } = useQuery<Client>({
     queryKey: [`/api/clients/${clientId}`],
@@ -55,23 +51,6 @@ export default function ClientDetail() {
   const { data: tasks } = useQuery<CompanionTask[]>({
     queryKey: [`/api/clients/${clientId}/companion-tasks`],
     enabled: !!clientId,
-  });
-  
-  // Mutation to update client status to Post Launch Management
-  const updateClientStatusMutation = useMutation({
-    mutationFn: async () => {
-      if (!client || !clientId) return null;
-      return apiRequest(`/api/clients/${clientId}`, {
-        method: 'PATCH',
-        data: {
-          status: 'Post Launch Management'
-        }
-      });
-    },
-    onSuccess: () => {
-      // Invalidate and refetch client data
-      queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}`] });
-    }
   });
   
   if (isLoading) {
@@ -133,19 +112,6 @@ export default function ClientDetail() {
                 <Badge variant="outline" className={`${getStatusClass(client.status)} border px-3 py-1.5 text-sm font-medium`}>
                   {client.status}
                 </Badge>
-                {client.status !== 'Post Launch Management' && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex items-center gap-1 border-gray-200 bg-white hover:bg-gray-50"
-                    onClick={() => updateClientStatusMutation.mutate()}
-                    disabled={updateClientStatusMutation.isPending}
-                  >
-                    <Rocket className="h-4 w-4 mr-1" />
-                    {updateClientStatusMutation.isPending ? 'Updating...' : 'Move to Post Launch'}
-                    {updateClientStatusMutation.isPending && <span className="ml-2 animate-spin">⟳</span>}
-                  </Button>
-                )}
                 <Button 
                   variant="outline" 
                   size="sm" 

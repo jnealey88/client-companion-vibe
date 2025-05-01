@@ -1,16 +1,19 @@
+import React from 'react';
 import { Client, CompanionTask } from '@shared/schema';
 import CarePlanDashboard from './CarePlanDashboard';
 
 interface CarePlanWrapperProps {
   client: Client;
-  tasks?: CompanionTask[];
+  tasks: CompanionTask[];
 }
 
-export default function CarePlanWrapper({ client, tasks = [] }: CarePlanWrapperProps) {
-  // Only show care plan when client is in post launch phase
-  const isPostLaunchPhase = client.status === 'Post Launch Management';
-  
-  if (!isPostLaunchPhase) {
+/**
+ * Wrapper component that conditionally renders the Care Plan Dashboard
+ * only when the client is in the Post Launch Management phase
+ */
+export default function CarePlanWrapper({ client, tasks }: CarePlanWrapperProps) {
+  // Only show the care plan dashboard if the client is in Post Launch Management phase
+  if (client.status !== 'Post Launch Management') {
     return null;
   }
   
