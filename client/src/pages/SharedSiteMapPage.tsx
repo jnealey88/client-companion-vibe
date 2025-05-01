@@ -324,14 +324,14 @@ export default function SharedSiteMapPage() {
             
             {/* Technical Requirements */}
             {parsedContent.technicalRequirements && (
-              <div className="mb-6 border rounded-lg p-4 bg-blue-50">
-                <h3 className="text-lg font-semibold mb-3 text-blue-700">Technical Requirements</h3>
+              <div className="mb-6 border rounded-lg p-4 bg-gray-50">
+                <h3 className="text-lg font-semibold mb-3 text-[#111]">Technical Requirements</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Interactive Elements */}
                   {parsedContent.technicalRequirements.interactiveElements && parsedContent.technicalRequirements.interactiveElements.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium mb-2 text-blue-700">Interactive Elements</h4>
+                      <h4 className="text-sm font-medium mb-2 text-[#111]">Interactive Elements</h4>
                       <ul className="pl-5 list-disc space-y-2">
                         {parsedContent.technicalRequirements.interactiveElements.map((element: string, index: number) => (
                           <li key={index} className="text-sm">{element}</li>
@@ -343,7 +343,7 @@ export default function SharedSiteMapPage() {
                   {/* Integrations */}
                   {parsedContent.technicalRequirements.integrations && parsedContent.technicalRequirements.integrations.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium mb-2 text-blue-700">Integrations</h4>
+                      <h4 className="text-sm font-medium mb-2 text-[#111]">Integrations</h4>
                       <ul className="pl-5 list-disc space-y-2">
                         {parsedContent.technicalRequirements.integrations.map((integration: string, index: number) => (
                           <li key={index} className="text-sm">{integration}</li>

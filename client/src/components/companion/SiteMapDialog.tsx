@@ -1520,7 +1520,7 @@ Your Web Professional`);
                                     <div className="flex items-center text-sm text-muted-foreground mb-4">
                                       <span className="bg-slate-100 px-2 py-1 rounded mr-2">{page.url}</span>
                                       {page.isParent && (
-                                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">Parent Page</span>
+                                        <span className="bg-gray-100 text-[#111] px-2 py-1 rounded text-xs">Parent Page</span>
                                       )}
                                     </div>
                                     <p className="text-sm mb-4">
@@ -1588,7 +1588,7 @@ Your Web Professional`);
                                                 variant={expandingSections[`${page.id}_${section.id}`] ? "outline" : "default"}
                                                 size="sm"
                                                 onClick={() => expandTextWithAI(page.id, section.id)}
-                                                className={`text-xs ${expandingSections[`${page.id}_${section.id}`] ? "" : "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"}`}
+                                                className={`text-xs ${expandingSections[`${page.id}_${section.id}`] ? "" : "bg-[#111] hover:bg-[#333]"}`}
                                                 disabled={expandingSections[`${page.id}_${section.id}`]}
                                               >
                                                 {expandingSections[`${page.id}_${section.id}`] ? (
@@ -1613,7 +1613,7 @@ Your Web Professional`);
                                               <h5 className="text-xs font-medium mb-2">Visual Elements</h5>
                                               <div className="flex flex-wrap gap-2">
                                                 {section.elements.map((element, i) => (
-                                                  <div key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                                                  <div key={i} className="text-xs bg-gray-50 text-[#111] px-2 py-1 rounded">
                                                     {element}
                                                   </div>
                                                 ))}
@@ -1775,11 +1775,11 @@ Your Web Professional`);
               </div>
               <h3 className="text-lg font-medium">No Site Map Generated Yet</h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Generate a comprehensive website sitemap with <span className="font-semibold text-blue-600">production-ready content</span> for all pages 
+                Generate a comprehensive website sitemap with <span className="font-semibold text-[#111]">production-ready content</span> for all pages 
                 and sections. The generated content will be polished and can be used immediately without further editing.
               </p>
               <div className="mt-2 text-xs text-muted-foreground">
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 mb-1">NEW</Badge>
+                <Badge variant="outline" className="bg-gray-50 text-[#111] border-gray-200 mb-1">NEW</Badge>
                 <span> Enhanced site map now includes complete, professional content for each page section</span>
               </div>
             </div>
