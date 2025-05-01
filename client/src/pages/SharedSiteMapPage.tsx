@@ -163,14 +163,54 @@ export default function SharedSiteMapPage() {
                   {page.sections && page.sections.length > 0 && (
                     <div className="mt-3 border-t pt-3">
                       <h4 className="text-sm font-medium mb-2">Sections</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-4">
                         {page.sections.map((section: any, j: number) => (
-                          <div key={j} className="bg-background border rounded p-3">
-                            <h5 className="font-medium text-sm">{section.title}</h5>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              {typeof section.content === 'string' && section.content.length < 100 ? 
-                                section.content :
-                                'Detailed content available'}
+                          <div key={j} className="bg-background border rounded p-4 shadow-sm">
+                            <h5 className="font-semibold text-base mb-2 text-primary/80">{section.title}</h5>
+                            <div className="text-xs text-muted-foreground mt-1 mb-2">
+                              <span className="bg-muted px-2 py-0.5 rounded">
+                                {section.wordCount || 0} words
+                              </span>
+                              {section.elements && section.elements.length > 0 && (
+                                <span className="ml-2 text-primary-foreground">
+                                  {section.elements.join(', ')}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-sm mt-2 prose prose-sm max-w-none whitespace-pre-line">
+                              {(() => {
+                                // Try to extract text content from EditorJS format if applicable
+                                if (typeof section.content === 'string') {
+                                  try {
+                                    // Check if it's in EditorJS format
+                                    const contentObj = JSON.parse(section.content);
+                                    if (contentObj && contentObj.blocks && Array.isArray(contentObj.blocks)) {
+                                      // Extract text from blocks
+                                      return contentObj.blocks
+                                        .map((block: any) => {
+                                          if (block.data && block.data.text) {
+                                            return block.data.text;
+                                          }
+                                          return '';
+                                        })
+                                        .filter(Boolean)
+                                        .join('\n\n');
+                                    }
+                                    // If it's JSON but not Editor.js, try to display in a readable format
+                                    if (typeof contentObj === 'string') {
+                                      return contentObj;
+                                    } else if (contentObj.content) {
+                                      return contentObj.content;
+                                    } else {
+                                      return JSON.stringify(contentObj, null, 2);
+                                    }
+                                  } catch (e) {
+                                    // If not valid JSON, return as is
+                                    return section.content;
+                                  }
+                                }
+                                return 'No content available';
+                              })()}
                             </div>
                           </div>
                         ))}
