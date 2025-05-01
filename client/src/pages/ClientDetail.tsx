@@ -28,15 +28,6 @@ import Header from "../components/Header";
 import ClientCompanion from "../components/companion/ClientCompanion";
 import GoDaddyProductsManager from "../components/godaddy/GoDaddyProductsManager";
 import RecommendedNextStep from "../components/companion/RecommendedNextStep";
-import { useToast } from "../hooks/use-toast";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectValue,
-  SelectItem
-} from "../components/ui/select";
-import { statusOptions } from "@shared/schema";
 import CarePlanWrapper from "../components/care-plan/CarePlanWrapper";
 import EditClientDialog from "../components/clients/EditClientDialog";
 import { Button } from "../components/ui/button";
@@ -54,7 +45,6 @@ export default function ClientDetail() {
   const [clientInfoOpen, setClientInfoOpen] = useState(false);
   const [editClientDialogOpen, setEditClientDialogOpen] = useState(false);
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   
   const { data: client, isLoading, isError } = useQuery<Client>({
     queryKey: [`/api/clients/${clientId}`],
@@ -67,25 +57,20 @@ export default function ClientDetail() {
     enabled: !!clientId,
   });
   
-  // Mutation to update client status to any phase
+  // Mutation to update client status to Post Launch Management
   const updateClientStatusMutation = useMutation({
-    mutationFn: async (newStatus: string) => {
+    mutationFn: async () => {
       if (!client || !clientId) return null;
       return apiRequest(`/api/clients/${clientId}`, {
         method: 'PATCH',
         data: {
-          status: newStatus
+          status: 'Post Launch Management'
         }
       });
     },
     onSuccess: () => {
       // Invalidate and refetch client data
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}`] });
-      
-      toast({
-        title: "Status Updated",
-        description: "Client project phase has been updated.",
-      });
     }
   });
   
@@ -145,43 +130,22 @@ export default function ClientDetail() {
               </Link>
               
               <div className="flex gap-3 items-center">
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={client.status}
-                    onValueChange={(value) => updateClientStatusMutation.mutate(value)}
+                <Badge variant="outline" className={`${getStatusClass(client.status)} border px-3 py-1.5 text-sm font-medium`}>
+                  {client.status}
+                </Badge>
+                {client.status !== 'Post Launch Management' && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1 border-gray-200 bg-white hover:bg-gray-50"
+                    onClick={() => updateClientStatusMutation.mutate()}
                     disabled={updateClientStatusMutation.isPending}
                   >
-                    <SelectTrigger className="w-[220px] h-9">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className={`${getStatusClass(client.status)} border px-2 py-0.5 text-xs font-medium mr-1`}>
-                          Project Phase
-                        </Badge>
-                        <span className="text-sm font-medium">{client.status}</span>
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {statusOptions.filter((status: string) => status !== 'All Status').map((status: string) => (
-                        <SelectItem key={status} value={status}>
-                          {status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  
-                  {client.status !== 'Post Launch Management' && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex items-center gap-1 border-gray-200 bg-white hover:bg-gray-50"
-                      onClick={() => updateClientStatusMutation.mutate('Post Launch Management')}
-                      disabled={updateClientStatusMutation.isPending}
-                    >
-                      <Rocket className="h-4 w-4 mr-1" />
-                      {updateClientStatusMutation.isPending ? 'Updating...' : 'Move to Post Launch'}
-                      {updateClientStatusMutation.isPending && <span className="ml-2 animate-spin">⟳</span>}
-                    </Button>
-                  )}
-                </div>
+                    <Rocket className="h-4 w-4 mr-1" />
+                    {updateClientStatusMutation.isPending ? 'Updating...' : 'Move to Post Launch'}
+                    {updateClientStatusMutation.isPending && <span className="ml-2 animate-spin">⟳</span>}
+                  </Button>
+                )}
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -328,32 +292,18 @@ export default function ClientDetail() {
               </CollapsibleContent>
             </Collapsible>
             
-            {/* Recommended Next Step Card above Client Companion - only shown when not in Post Launch */}
-            {client.status !== 'Post Launch Management' && (
-              <RecommendedNextStep client={client} tasks={tasks || []} />
-            )}
+            {/* Recommended Next Step Card above Client Companion */}
+            <RecommendedNextStep client={client} tasks={tasks || []} />
             
             {/* Care Plan Dashboard for Post Launch Management phase */}
             <CarePlanWrapper client={client} tasks={tasks || []} />
             
-            {/* Client companion and GoDaddy products section - client companion hidden for Post Launch clients */}
+            {/* Two-column layout for Client Companion (2/3) and GoDaddy Products (1/3) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Client Companion takes 2/3 of the width - only shown when not in Post Launch */}
-              {client.status !== 'Post Launch Management' ? (
-                <div className="lg:col-span-2">
-                  <ClientCompanion client={client} />
-                </div>
-              ) : (
-                <div className="lg:col-span-2">
-                  {/* Placeholder for post-launch phase */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Client Companion</CardTitle>
-                      <CardDescription>Client companion is replaced by Care Plan Dashboard in Post Launch phase</CardDescription>
-                    </CardHeader>
-                  </Card>
-                </div>
-              )}
+              {/* Client Companion takes 2/3 of the width */}
+              <div className="lg:col-span-2">
+                <ClientCompanion client={client} />
+              </div>
               
               {/* GoDaddy Products Management takes 1/3 of the width */}
               <div className="lg:col-span-1">

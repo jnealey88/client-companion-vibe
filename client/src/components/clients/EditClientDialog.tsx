@@ -16,8 +16,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { getStatusClass } from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -78,10 +76,7 @@ export default function EditClientDialog({ client, open, onOpenChange }: EditCli
   // Update client mutation
   const updateMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      return apiRequest(`/api/clients/${client.id}`, {
-        method: 'PATCH',
-        data
-      });
+      return apiRequest("PATCH", `/api/clients/${client.id}`, data);
     },
     onSuccess: () => {
       // Invalidate and refetch the client data
@@ -226,20 +221,15 @@ export default function EditClientDialog({ client, open, onOpenChange }: EditCli
                   <FormLabel>Project Phase</FormLabel>
                   <Select 
                     onValueChange={field.onChange} 
-                    value={field.value}
+                    defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger className="h-9">
-                        <div className="flex items-center gap-2">
-                          <div className={`border px-2 py-0.5 text-xs font-medium mr-1 rounded-md ${getStatusClass(field.value)}`}>
-                            Project Phase
-                          </div>
-                          <SelectValue placeholder="Select project phase" />
-                        </div>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select project phase" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {statusOptions.filter(status => status !== 'All Status').map((status) => (
+                      {statusOptions.slice(1).map((status) => (
                         <SelectItem key={status} value={status}>
                           {status}
                         </SelectItem>

@@ -260,10 +260,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   // Client update mutation for changing phase
   const updateClientMutation = useMutation({
     mutationFn: (clientData: any) => {
-      return apiRequest(`/api/clients/${client.id}`, {
-        method: "PATCH", 
-        data: clientData
-      });
+      return apiRequest("PATCH", `/api/clients/${client.id}`, clientData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}`] });
@@ -394,11 +391,9 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
       try {
         // Make the API request with any additional options
         const response = await apiRequest(
+          "POST", 
           `/api/clients/${clientId}/generate/${taskType}`, 
-          {
-            method: "POST",
-            data: options
-          }
+          options
         );
         
         // Extract JSON data from the response
@@ -432,9 +427,7 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
   // Create mutation for deleting content
   const deleteMutation = useMutation({
     mutationFn: async (taskId: number) => {
-      return apiRequest(`/api/companion-tasks/${taskId}`, {
-        method: "DELETE"
-      });
+      return apiRequest("DELETE", `/api/companion-tasks/${taskId}`);
     },
     onSuccess: () => {
       // Clear selected task if it was deleted

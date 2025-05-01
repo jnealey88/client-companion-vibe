@@ -248,10 +248,7 @@ Your Web Professional`);
       // before actually making the API call, to give the user feedback
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      return apiRequest(`/api/clients/${clientId}/generate/site_map`, {
-        method: "POST",
-        data: {}
-      });
+      return apiRequest("POST", `/api/clients/${clientId}/generate/site_map`, {});
     },
     onSuccess: (response: any) => {
       console.log("Site map response:", response);
@@ -312,10 +309,7 @@ Your Web Professional`);
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, content }: { taskId: number, content: string }) => {
       setIsSaving(true);
-      return apiRequest(`/api/companion-tasks/${taskId}`, {
-        method: "PATCH",
-        data: { content }
-      });
+      return apiRequest("PATCH", `/api/companion-tasks/${taskId}`, { content });
     },
     onSuccess: (updatedTask) => {
       setIsSaving(false);
@@ -343,10 +337,7 @@ Your Web Professional`);
   const sendEmailMutation = useMutation({
     mutationFn: async ({ to, from, subject, html }: { to: string, from: string, subject: string, html: string }) => {
       setIsSending(true);
-      return apiRequest("/api/email/send", {
-        method: "POST",
-        data: { to, from, subject, html }
-      });
+      return apiRequest("POST", "/api/email/send", { to, from, subject, html });
     },
     onSuccess: () => {
       setIsSending(false);
@@ -692,13 +683,10 @@ Your Web Professional`);
       }, 15000);
       
       try {
-        const response = await apiRequest(`/api/content/expand`, {
-          method: "POST",
-          data: {
-            content: contentToExpand,
-            context: contextData,
-            isEditorContent: false // Always false since we're using plain text now
-          }
+        const response = await apiRequest("POST", `/api/content/expand`, {
+          content: contentToExpand,
+          context: contextData,
+          isEditorContent: false // Always false since we're using plain text now
         });
         
         clearTimeout(requestTimeout);
