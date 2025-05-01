@@ -22,7 +22,10 @@ import {
   Layers,
   Plus,
   Sparkles,
-  X
+  X,
+  Link as LinkIcon,
+  Clipboard,
+  Info
 } from "lucide-react";
 import {
   Dialog,
@@ -365,8 +368,10 @@ Your Web Professional`);
   const createShareLinkMutation = useMutation({
     mutationFn: async (taskId: number) => {
       setIsCreatingShareLink(true);
+      // Make the API request and handle the response
       const response = await apiRequest("POST", `/api/site-maps/${taskId}/share`, {});
-      return response as { shareToken: string, shareUrl: string };
+      // Extract data from the response
+      return await response.json();
     },
     onSuccess: (response) => {
       setIsCreatingShareLink(false);
@@ -2018,6 +2023,78 @@ Your Web Professional`);
             Cancel
           </Button>
           <Button onClick={confirmAddNewSection}>Add Section</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    
+    {/* Share Link Dialog */}
+    <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Share2 className="h-5 w-5" />
+            Share Site Map
+          </DialogTitle>
+          <DialogDescription>
+            Share this link with your client to let them review the site map directly.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4 py-4">
+          <div className="flex items-center space-x-2">
+            <div className="grid flex-1 gap-2">
+              <Label htmlFor="shareLink" className="sr-only">
+                Share Link
+              </Label>
+              <Input
+                id="shareLink"
+                value={shareUrl}
+                readOnly
+                className="w-full"
+              />
+            </div>
+            <Button onClick={copyShareLink} className="shrink-0" size="sm">
+              <Clipboard className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <Alert className="bg-muted">
+            <Info className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              Anyone with this link can view this site map and provide feedback without needing to log in.
+            </AlertDescription>
+          </Alert>
+        </div>
+        
+        <DialogFooter className="sm:justify-between">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={() => setShareDialogOpen(false)}
+          >
+            Close
+          </Button>
+          
+          <div className="flex space-x-2">
+            <Button 
+              variant="default"
+              size="sm"
+              className="text-xs"
+              onClick={() => {
+                if (recipientEmail && shareUrl) {
+                  const emailSubject = `Site Map for ${client.name} - Please Review`;
+                  const emailBody = `Hi ${client.contactName || "there"},\n\nI've created a detailed sitemap for your website project that I'd like you to review. You can access it directly through this link:\n\n${shareUrl}\n\nPlease take a look and let me know if you have any questions or suggested changes.\n\nBest regards,\nYour Web Professional`;
+                  
+                  window.open(`mailto:${recipientEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`);
+                }
+              }}
+              disabled={!shareUrl || !recipientEmail}
+            >
+              <Mail className="h-3 w-3 mr-1" />
+              Email Link
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
