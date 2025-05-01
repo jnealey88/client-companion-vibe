@@ -33,6 +33,11 @@ export interface IStorage {
   updateCompanionTask(id: number, task: UpdateCompanionTask): Promise<CompanionTask | undefined>;
   deleteCompanionTask(id: number): Promise<boolean>;
   
+  // Site map sharing operations
+  getTaskByShareToken(shareToken: string): Promise<CompanionTask | undefined>;
+  createShareToken(taskId: number): Promise<string>;
+  submitSiteMapFeedback(taskId: number, clientEmail: string, feedback: string, approved: boolean): Promise<boolean>;
+  
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -329,6 +334,80 @@ export class DatabaseStorage implements IStorage {
       return deletedTasks.length > 0;
     } catch (error) {
       console.error(`Error deleting companion task with ID ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  // Site map sharing operations
+  async getTaskByShareToken(shareToken: string): Promise<CompanionTask | undefined> {
+    try {
+      const { db } = await import('./db');
+      const { companionTasks } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const result = await db
+        .select()
+        .from(companionTasks)
+        .where(eq(companionTasks.shareToken, shareToken));
+      
+      return result[0];
+    } catch (error) {
+      console.error(`Error fetching task by share token ${shareToken}:`, error);
+      throw error;
+    }
+  }
+  
+  async createShareToken(taskId: number): Promise<string> {
+    try {
+      const { db } = await import('./db');
+      const { companionTasks } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      // Generate a unique token
+      const crypto = await import('crypto');
+      const shareToken = crypto.randomBytes(16).toString('hex');
+      
+      // Update the task with the new token
+      const [updatedTask] = await db
+        .update(companionTasks)
+        .set({ 
+          shareToken,
+          isShared: true
+        })
+        .where(eq(companionTasks.id, taskId))
+        .returning();
+      
+      if (!updatedTask) {
+        throw new Error(`Task with ID ${taskId} not found`);
+      }
+      
+      return shareToken;
+    } catch (error) {
+      console.error(`Error creating share token for task ${taskId}:`, error);
+      throw error;
+    }
+  }
+  
+  async submitSiteMapFeedback(taskId: number, clientEmail: string, feedback: string, approved: boolean): Promise<boolean> {
+    try {
+      const { db } = await import('./db');
+      const { siteMapFeedback } = await import('@shared/schema');
+      
+      // Create feedback record
+      const [newFeedback] = await db
+        .insert(siteMapFeedback)
+        .values({
+          taskId,
+          clientEmail,
+          feedback,
+          approved,
+          createdAt: new Date()
+        })
+        .returning();
+        
+      return !!newFeedback;
+    } catch (error) {
+      console.error(`Error submitting feedback for task ${taskId}:`, error);
       throw error;
     }
   }

@@ -623,6 +623,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // ===== Site Map Sharing Routes =====
+  
+  // Create a share token for a site map
+  app.post("/api/site-maps/:taskId/share", isAuthenticated, async (req: Request, res: Response) => {
+    try {
+      const taskId = parseInt(req.params.taskId);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ message: "Invalid task ID" });
+      }
+      
+      // Verify task exists and is a site map
+      const task = await storage.getCompanionTask(taskId);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      if (task.type !== 'site_map') {
+        return res.status(400).json({ message: "Only site maps can be shared" });
+      }
+      
+      // Create or get existing share token
+      let shareToken = task.shareToken;
+      if (!shareToken) {
+        shareToken = await storage.createShareToken(taskId);
+      }
+      
+      // Return the share URL
+      const shareUrl = `${req.protocol}://${req.get('host')}/share/site-map/${shareToken}`;
+      return res.json({ shareToken, shareUrl });
+    } catch (error) {
+      console.error("Error creating share token:", error);
+      return res.status(500).json({ message: "Failed to create share token" });
+    }
+  });
+  
+  // Get a shared site map by token (public route, no authentication required)
+  app.get("/api/share/site-map/:shareToken", async (req: Request, res: Response) => {
+    try {
+      const { shareToken } = req.params;
+      if (!shareToken) {
+        return res.status(400).json({ message: "Share token is required" });
+      }
+      
+      // Find the task by share token
+      const task = await storage.getTaskByShareToken(shareToken);
+      if (!task) {
+        return res.status(404).json({ message: "Site map not found or link expired" });
+      }
+      
+      // Get the client information
+      const client = await storage.getClient(task.clientId);
+      if (!client) {
+        return res.status(404).json({ message: "Client information not available" });
+      }
+      
+      // Return the site map content and client info
+      return res.json({
+        taskId: task.id,
+        clientId: task.clientId,
+        clientName: client.name,
+        content: task.content,
+        createdAt: task.createdAt
+      });
+    } catch (error) {
+      console.error("Error fetching shared site map:", error);
+      return res.status(500).json({ message: "Failed to retrieve shared site map" });
+    }
+  });
+  
+  // Submit feedback for a shared site map
+  app.post("/api/share/site-map/:shareToken/feedback", async (req: Request, res: Response) => {
+    try {
+      const { shareToken } = req.params;
+      const { clientEmail, feedback, approved } = req.body;
+      
+      if (!shareToken) {
+        return res.status(400).json({ message: "Share token is required" });
+      }
+      
+      if (!clientEmail) {
+        return res.status(400).json({ message: "Client email is required" });
+      }
+      
+      // Find the task by share token
+      const task = await storage.getTaskByShareToken(shareToken);
+      if (!task) {
+        return res.status(404).json({ message: "Site map not found or link expired" });
+      }
+      
+      // Submit the feedback
+      await storage.submitSiteMapFeedback(
+        task.id,
+        clientEmail,
+        feedback || "",
+        !!approved
+      );
+      
+      return res.json({ message: "Feedback submitted successfully" });
+    } catch (error) {
+      console.error("Error submitting site map feedback:", error);
+      return res.status(500).json({ message: "Failed to submit feedback" });
+    }
+  });
+  
   // ===== Email Routes =====
   
   // Send email route

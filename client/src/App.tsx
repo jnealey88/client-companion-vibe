@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import ClientsPage from "@/pages/ClientsPage";
 import ClientDetail from "@/pages/ClientDetail";
 import AuthPage from "@/pages/auth-page";
+import SharedSiteMapPage from "@/pages/SharedSiteMapPage";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
 
@@ -21,6 +22,9 @@ function Router() {
       </Route>
       <Route path="/auth">
         {() => <AuthPage />}
+      </Route>
+      <Route path="/share/site-map/:shareToken">
+        {() => <SharedSiteMapPage />}
       </Route>
       <Route>
         {() => <NotFound />}
