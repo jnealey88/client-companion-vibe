@@ -17,6 +17,7 @@ import {
   generateSiteMap,
   generateStatusUpdate,
   generateScheduleDiscovery,
+  generateSiteRecommendations,
   expandSectionContent,
   TaskType
 } from "./openai";

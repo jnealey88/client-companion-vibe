@@ -306,6 +306,33 @@ export default function CarePlanDashboard({ client, tasks }: CarePlanDashboardPr
           </div>
         </CardContent>
       </Card>
+      
+      {/* AI Recommendations */}
+      <RecommendationsPanel 
+        client={client} 
+        siteMetrics={{
+          performance: {
+            score: samplePerformanceScore,
+            firstContentfulPaint: "1.2s",
+            largestContentfulPaint: "2.8s",
+            cumulativeLayoutShift: "0.12"
+          },
+          accessibility: { score: sampleAccessibilityScore },
+          seo: {
+            score: sampleSeoScore,
+            ranking: sampleSeoData[sampleSeoData.length - 1].ranking,
+            keywords: ["game development", "indie games", "RPG games"],
+            monthlyVisits: sampleSeoData[sampleSeoData.length - 1].visits,
+            growthRate: 18.5
+          },
+          bestPractices: { score: sampleBestPracticesScore },
+          security: { issues: maintenanceStatus.securityIssues, lastScan: maintenanceStatus.lastBackupDate },
+          maintenance: {
+            pluginsToUpdate: maintenanceStatus.pluginsToUpdate,
+            lastBackupDate: maintenanceStatus.lastBackupDate
+          }
+        }}
+      />
     </div>
   );
 }

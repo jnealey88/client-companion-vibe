@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
-import { LightBulbIcon, Clock, Activity, ChevronDown, ChevronUp, Send, Plus } from 'lucide-react';
+import { Lightbulb, Clock, Activity, ChevronDown, ChevronUp, Send, Plus } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
@@ -65,7 +65,7 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
   // Query to fetch recommendations
   const { data: recommendationsTaskData, isLoading, isError } = useQuery({
     queryKey: [`/api/clients/${client.id}/companion-tasks`],
-    select: (tasks) => tasks.find((task: any) => task.type === 'site_optimizer' && task.status === 'completed')
+    select: (tasks: any[]) => tasks.find((task) => task.type === 'site_optimizer' && task.status === 'completed')
   });
 
   // Mutation to generate recommendations
@@ -186,7 +186,7 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
         <ul style="padding-left: 20px;">
     `;
     
-    selectedRecommendations.forEach(rec => {
+    selectedRecommendations.forEach((rec: Recommendation) => {
       html += `
         <li style="margin-bottom: 15px;">
           <strong>${rec.title}</strong><br>
@@ -269,7 +269,7 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <LightBulbIcon className="h-5 w-5 text-amber-500" />
+            <Lightbulb className="h-5 w-5 text-amber-500" />
             <span>Website Recommendations</span>
           </CardTitle>
           <CardDescription>AI-generated improvement suggestions</CardDescription>
@@ -290,7 +290,7 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <LightBulbIcon className="h-5 w-5 text-amber-500" />
+            <Lightbulb className="h-5 w-5 text-amber-500" />
             <span>Website Recommendations</span>
           </CardTitle>
           <CardDescription>AI-generated improvement suggestions</CardDescription>
@@ -309,7 +309,7 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
                 </>
               ) : (
                 <>
-                  <LightBulbIcon className="mr-2 h-4 w-4" />
+                  <Lightbulb className="mr-2 h-4 w-4" />
                   Generate Recommendations
                 </>
               )}
@@ -325,7 +325,7 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
       <CardHeader>
         <CardTitle className="text-lg flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <LightBulbIcon className="h-5 w-5 text-amber-500" />
+            <Lightbulb className="h-5 w-5 text-amber-500" />
             <span>Website Recommendations</span>
           </div>
           <div className="flex gap-2">
@@ -367,9 +367,9 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
                   <h3 className="font-medium text-gray-900">{categoryMap[categoryId]}</h3>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-500">
-                      {recommendations.filter(rec => 
+                      {(recommendations as Recommendation[]).filter(rec => 
                         selectedRecommendations.some(r => r.title === rec.title)
-                      ).length} of {recommendations.length} selected
+                      ).length} of {(recommendations as Recommendation[]).length} selected
                     </span>
                     {isExpanded ? (
                       <ChevronUp className="h-5 w-5 text-gray-500" />
@@ -381,7 +381,7 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
                 
                 {isExpanded && (
                   <div className="p-3 border-t space-y-3">
-                    {recommendations.map((recommendation, index) => {
+                    {(recommendations as Recommendation[]).map((recommendation: Recommendation, index: number) => {
                       const isSelected = selectedRecommendations.some(
                         r => r.title === recommendation.title
                       );
