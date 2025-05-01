@@ -292,18 +292,32 @@ export default function ClientDetail() {
               </CollapsibleContent>
             </Collapsible>
             
-            {/* Recommended Next Step Card above Client Companion */}
-            <RecommendedNextStep client={client} tasks={tasks || []} />
+            {/* Recommended Next Step Card above Client Companion - only shown when not in Post Launch */}
+            {client.status !== 'Post Launch Management' && (
+              <RecommendedNextStep client={client} tasks={tasks || []} />
+            )}
             
             {/* Care Plan Dashboard for Post Launch Management phase */}
             <CarePlanWrapper client={client} tasks={tasks || []} />
             
-            {/* Two-column layout for Client Companion (2/3) and GoDaddy Products (1/3) */}
+            {/* Client companion and GoDaddy products section - client companion hidden for Post Launch clients */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Client Companion takes 2/3 of the width */}
-              <div className="lg:col-span-2">
-                <ClientCompanion client={client} />
-              </div>
+              {/* Client Companion takes 2/3 of the width - only shown when not in Post Launch */}
+              {client.status !== 'Post Launch Management' ? (
+                <div className="lg:col-span-2">
+                  <ClientCompanion client={client} />
+                </div>
+              ) : (
+                <div className="lg:col-span-2">
+                  {/* Placeholder for post-launch phase */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Client Companion</CardTitle>
+                      <CardDescription>Client companion is replaced by Care Plan Dashboard in Post Launch phase</CardDescription>
+                    </CardHeader>
+                  </Card>
+                </div>
+              )}
               
               {/* GoDaddy Products Management takes 1/3 of the width */}
               <div className="lg:col-span-1">
