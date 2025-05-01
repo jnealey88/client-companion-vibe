@@ -247,10 +247,145 @@ export default function SharedSiteMapPage() {
                 </div>
               </div>
             )}
+            
+            {/* Content Guidelines */}
+            {parsedContent.contentGuidelines && (
+              <div className="mt-6 pt-6 border-t">
+                <h3 className="text-lg font-medium mb-3">Content Guidelines</h3>
+                
+                {/* Tone and Voice */}
+                {parsedContent.contentGuidelines.tone && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium mb-2">Tone and Voice</h4>
+                    <p className="text-sm text-muted-foreground">{parsedContent.contentGuidelines.tone}</p>
+                  </div>
+                )}
+                
+                {/* Call to Action Style */}
+                {parsedContent.contentGuidelines.callToAction && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium mb-2">Call-to-Action Style</h4>
+                    <div className="p-3 bg-primary/10 rounded-md border border-primary/20 text-sm font-medium text-primary">
+                      {parsedContent.contentGuidelines.callToAction}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Key Messages */}
+                {parsedContent.contentGuidelines.keyMessages && parsedContent.contentGuidelines.keyMessages.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Key Messages</h4>
+                    <ul className="pl-5 space-y-2">
+                      {parsedContent.contentGuidelines.keyMessages.map((message: string, i: number) => (
+                        <li key={i} className="text-sm">{message}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="pages-structure">
             <h2 className="text-xl font-semibold mb-4">Pages Structure</h2>
+            
+            {/* Technical Requirements */}
+            {parsedContent.technicalRequirements && (
+              <div className="mb-6 border rounded-lg p-4 bg-blue-50">
+                <h3 className="text-lg font-semibold mb-3 text-blue-700">Technical Requirements</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Interactive Elements */}
+                  {parsedContent.technicalRequirements.interactiveElements && parsedContent.technicalRequirements.interactiveElements.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-2 text-blue-700">Interactive Elements</h4>
+                      <ul className="pl-5 list-disc space-y-2">
+                        {parsedContent.technicalRequirements.interactiveElements.map((element: string, index: number) => (
+                          <li key={index} className="text-sm">{element}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {/* Integrations */}
+                  {parsedContent.technicalRequirements.integrations && parsedContent.technicalRequirements.integrations.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium mb-2 text-blue-700">Integrations</h4>
+                      <ul className="pl-5 list-disc space-y-2">
+                        {parsedContent.technicalRequirements.integrations.map((integration: string, index: number) => (
+                          <li key={index} className="text-sm">{integration}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            {/* Site-wide Design System */}
+            {parsedContent.designSystem && (
+              <div className="mb-6 border rounded-lg p-4 bg-primary/5">
+                <h3 className="text-lg font-semibold mb-3 text-primary">Design System Recommendations</h3>
+                
+                {/* Color palette */}
+                {parsedContent.designSystem.colorPalette && parsedContent.designSystem.colorPalette.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium mb-2">Color Palette</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {parsedContent.designSystem.colorPalette.map((color: string, index: number) => (
+                        <div key={index} className="px-3 py-2 rounded-md bg-white text-sm border">
+                          {color}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Typography */}
+                {parsedContent.designSystem.typography && (
+                  <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {parsedContent.designSystem.typography.headings && (
+                      <div className="p-3 bg-white rounded-md border">
+                        <h5 className="text-sm font-medium mb-1">Headings</h5>
+                        <p className="text-xs text-muted-foreground">{parsedContent.designSystem.typography.headings}</p>
+                      </div>
+                    )}
+                    {parsedContent.designSystem.typography.bodyText && (
+                      <div className="p-3 bg-white rounded-md border">
+                        <h5 className="text-sm font-medium mb-1">Body Text</h5>
+                        <p className="text-xs text-muted-foreground">{parsedContent.designSystem.typography.bodyText}</p>
+                      </div>
+                    )}
+                    {parsedContent.designSystem.typography.buttons && (
+                      <div className="p-3 bg-white rounded-md border">
+                        <h5 className="text-sm font-medium mb-1">Buttons</h5>
+                        <p className="text-xs text-muted-foreground">{parsedContent.designSystem.typography.buttons}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Component Styles and Spacing */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {parsedContent.designSystem.componentStyles && parsedContent.designSystem.componentStyles.length > 0 && (
+                    <div className="p-3 bg-white rounded-md border">
+                      <h5 className="text-sm font-medium mb-1">Component Styles</h5>
+                      <ul className="text-xs text-muted-foreground pl-5 list-disc space-y-1">
+                        {parsedContent.designSystem.componentStyles.map((style: string, index: number) => (
+                          <li key={index}>{style}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {parsedContent.designSystem.spacingSystem && (
+                    <div className="p-3 bg-white rounded-md border">
+                      <h5 className="text-sm font-medium mb-1">Spacing System</h5>
+                      <p className="text-xs text-muted-foreground">{parsedContent.designSystem.spacingSystem}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             
             <div className="space-y-4">
               {parsedContent.pages?.map((page: any, i: number) => (
@@ -262,6 +397,35 @@ export default function SharedSiteMapPage() {
                   <h3 className="text-lg font-medium">{page.title}</h3>
                   <p className="text-sm text-muted-foreground mb-2">{page.url}</p>
                   <p className="text-sm mb-2">{page.metaDescription}</p>
+                  
+                  {/* Design Suggestions for this Page */}
+                  {page.designSuggestions && (
+                    <div className="mb-4 mt-2 bg-muted/10 p-3 rounded-md">
+                      <h4 className="text-sm font-medium mb-2 text-primary">Design Suggestions</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {page.designSuggestions.colorPalette && (
+                          <div className="text-xs border rounded-md p-2 bg-white">
+                            <span className="font-medium">Color Palette:</span> {page.designSuggestions.colorPalette}
+                          </div>
+                        )}
+                        {page.designSuggestions.typography && (
+                          <div className="text-xs border rounded-md p-2 bg-white">
+                            <span className="font-medium">Typography:</span> {page.designSuggestions.typography}
+                          </div>
+                        )}
+                        {page.designSuggestions.visualElements && (
+                          <div className="text-xs border rounded-md p-2 bg-white">
+                            <span className="font-medium">Visual Elements:</span> {page.designSuggestions.visualElements}
+                          </div>
+                        )}
+                        {page.designSuggestions.responsiveConsiderations && (
+                          <div className="text-xs border rounded-md p-2 bg-white">
+                            <span className="font-medium">Responsive Design:</span> {page.designSuggestions.responsiveConsiderations}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   
                   {page.sections && page.sections.length > 0 && (
                     <div className="mt-3 border-t pt-3">
@@ -357,41 +521,96 @@ export default function SharedSiteMapPage() {
                                 />
                               </div>
                             ) : (
-                              <div className="text-sm mt-2 prose prose-sm max-w-none whitespace-pre-line">
-                                {(() => {
-                                  // Try to extract text content from EditorJS format if applicable
-                                  if (typeof section.content === 'string') {
-                                    try {
-                                      // Check if it's in EditorJS format
-                                      const contentObj = JSON.parse(section.content);
-                                      if (contentObj && contentObj.blocks && Array.isArray(contentObj.blocks)) {
-                                        // Extract text from blocks
-                                        return contentObj.blocks
-                                          .map((block: any) => {
-                                            if (block.data && block.data.text) {
-                                              return block.data.text;
-                                            }
-                                            return '';
-                                          })
-                                          .filter(Boolean)
-                                          .join('\n\n');
+                              <>
+                                <div className="text-sm mt-2 prose prose-sm max-w-none whitespace-pre-line">
+                                  {(() => {
+                                    // Try to extract text content from EditorJS format if applicable
+                                    if (typeof section.content === 'string') {
+                                      try {
+                                        // Check if it's in EditorJS format
+                                        const contentObj = JSON.parse(section.content);
+                                        if (contentObj && contentObj.blocks && Array.isArray(contentObj.blocks)) {
+                                          // Extract text from blocks
+                                          return contentObj.blocks
+                                            .map((block: any) => {
+                                              if (block.data && block.data.text) {
+                                                return block.data.text;
+                                              }
+                                              return '';
+                                            })
+                                            .filter(Boolean)
+                                            .join('\n\n');
+                                        }
+                                        // If it's JSON but not Editor.js, try to display in a readable format
+                                        if (typeof contentObj === 'string') {
+                                          return contentObj;
+                                        } else if (contentObj.content) {
+                                          return contentObj.content;
+                                        } else {
+                                          return JSON.stringify(contentObj, null, 2);
+                                        }
+                                      } catch (e) {
+                                        // If not valid JSON, return as is
+                                        return section.content;
                                       }
-                                      // If it's JSON but not Editor.js, try to display in a readable format
-                                      if (typeof contentObj === 'string') {
-                                        return contentObj;
-                                      } else if (contentObj.content) {
-                                        return contentObj.content;
-                                      } else {
-                                        return JSON.stringify(contentObj, null, 2);
-                                      }
-                                    } catch (e) {
-                                      // If not valid JSON, return as is
-                                      return section.content;
                                     }
-                                  }
-                                  return 'No content available';
-                                })()}
-                              </div>
+                                    return 'No content available';
+                                  })()}
+                                </div>
+                                
+                                {/* AI-generated layout suggestions */}
+                                {section.layoutSuggestion && (
+                                  <div className="mt-4 border-t pt-4">
+                                    <h6 className="text-sm font-medium mb-2 text-primary">Layout Suggestion</h6>
+                                    <p className="text-sm text-muted-foreground">{section.layoutSuggestion}</p>
+                                  </div>
+                                )}
+                                
+                                {/* Heading & Subheading Options */}
+                                {(section.headingOptions || section.subheadingOptions) && (
+                                  <div className="mt-4 border-t pt-4">
+                                    {section.headingOptions && section.headingOptions.length > 0 && (
+                                      <div className="mb-3">
+                                        <h6 className="text-sm font-medium mb-2 text-primary">Heading Options</h6>
+                                        <div className="grid gap-2">
+                                          {section.headingOptions.map((heading: string, index: number) => (
+                                            <div key={index} className="p-2 border rounded bg-muted/30 text-sm">
+                                              {heading}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    
+                                    {section.subheadingOptions && section.subheadingOptions.length > 0 && (
+                                      <div>
+                                        <h6 className="text-sm font-medium mb-2 text-primary">Subheading Options</h6>
+                                        <div className="grid gap-2">
+                                          {section.subheadingOptions.map((subheading: string, index: number) => (
+                                            <div key={index} className="p-2 border rounded bg-muted/30 text-sm">
+                                              {subheading}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {/* CTA Text */}
+                                {section.ctaText && section.ctaText.length > 0 && (
+                                  <div className="mt-4 border-t pt-4">
+                                    <h6 className="text-sm font-medium mb-2 text-primary">Call-to-Action Options</h6>
+                                    <div className="grid gap-2">
+                                      {section.ctaText.map((cta: string, index: number) => (
+                                        <div key={index} className="p-2 border rounded bg-primary/10 text-primary text-sm font-medium">
+                                          {cta}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
                         ))}
