@@ -1,4 +1,8 @@
 import type { Express, Request, Response, NextFunction } from "express";
+import crypto from "crypto";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
+import { companionTasks } from "@shared/schema";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { 
