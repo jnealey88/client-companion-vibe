@@ -231,9 +231,9 @@ export default function EditClientDialog({ client, open, onOpenChange }: EditCli
                     <FormControl>
                       <SelectTrigger className="h-9">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`border px-2 py-0.5 text-xs font-medium mr-1 ${getStatusClass(field.value)}`}>
+                          <div className={`border px-2 py-0.5 text-xs font-medium mr-1 rounded-md ${getStatusClass(field.value)}`}>
                             Project Phase
-                          </Badge>
+                          </div>
                           <SelectValue placeholder="Select project phase" />
                         </div>
                       </SelectTrigger>
