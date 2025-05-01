@@ -365,9 +365,10 @@ Your Web Professional`);
   const createShareLinkMutation = useMutation({
     mutationFn: async (taskId: number) => {
       setIsCreatingShareLink(true);
-      return apiRequest("POST", `/api/site-maps/${taskId}/share`, {});
+      const response = await apiRequest("POST", `/api/site-maps/${taskId}/share`, {});
+      return response as { shareToken: string, shareUrl: string };
     },
-    onSuccess: (response: { shareToken: string, shareUrl: string }) => {
+    onSuccess: (response) => {
       setIsCreatingShareLink(false);
       setShareUrl(response.shareUrl);
       setShareDialogOpen(true);
@@ -1408,6 +1409,26 @@ Your Web Professional`);
                     </div>
                   </PopoverContent>
                 </Popover>
+                
+                <Button
+                  variant="outline"
+                  className="h-8"
+                  size="sm"
+                  onClick={handleCreateShareLink}
+                  disabled={isCreatingShareLink || !generatedTask?.id}
+                >
+                  {isCreatingShareLink ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="h-3 w-3 mr-1" />
+                      Create Share Link
+                    </>
+                  )}
+                </Button>
               </div>
               {isEdited && (
                 <div className="text-xs text-muted-foreground bg-amber-100 px-2 py-1 rounded">
