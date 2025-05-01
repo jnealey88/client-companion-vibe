@@ -43,6 +43,51 @@ const categoryMap: Record<CategoryId, string> = {
   contentStrategy: 'Content Strategy'
 };
 
+// Available Airo tools
+const airoTools = {
+  logoGenerator: 'Logo Generator',
+  marketingConsultant: 'Marketing Consultant',
+  seoOptimizer: 'SEO Optimizer',
+  socialMedia: 'Social Media Manager',
+  paidAds: 'Paid Ads Creator',
+  contentCreation: 'Content Creator'
+};
+
+// Function to determine which Airo tool to recommend based on the recommendation title/content
+function getRecommendationAiroTool(title: string): string | null {
+  const titleLower = title.toLowerCase();
+  
+  if (titleLower.includes('seo') || titleLower.includes('search engine') || titleLower.includes('keyword')) {
+    return airoTools.seoOptimizer;
+  }
+  if (titleLower.includes('logo') || titleLower.includes('brand')) {
+    return airoTools.logoGenerator;
+  }
+  if (titleLower.includes('content') || titleLower.includes('blog') || titleLower.includes('article')) {
+    return airoTools.contentCreation;
+  }
+  if (titleLower.includes('social media') || titleLower.includes('facebook') || titleLower.includes('instagram')) {
+    return airoTools.socialMedia;
+  }
+  if (titleLower.includes('ad') || titleLower.includes('campaign') || titleLower.includes('ppc')) {
+    return airoTools.paidAds;
+  }
+  if (titleLower.includes('marketing') || titleLower.includes('strategy') || titleLower.includes('conversion')) {
+    return airoTools.marketingConsultant;
+  }
+  
+  // If no specific match, assign by category
+  if (title.includes('SEO')) {
+    return airoTools.seoOptimizer;
+  }
+  if (title.includes('Content')) {
+    return airoTools.contentCreation;
+  }
+  
+  // Return null if no matching tool found
+  return null;
+}
+
 /**
  * Component for displaying and selecting AI-generated website recommendations
  */
@@ -421,6 +466,42 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
                                 <div className="flex items-center gap-1 text-gray-600 italic">
                                   <Clock className="h-3.5 w-3.5" />
                                   <span>Tip: {recommendation.implementationTip}</span>
+                                </div>
+                                
+                                {/* Action buttons */}
+                                <div className="mt-3 flex gap-2">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    className="text-xs h-7 px-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toast({
+                                        title: "Implementation requested",
+                                        description: `Your team will implement '${recommendation.title}' for this client.`,
+                                        variant: "default"
+                                      });
+                                    }}
+                                  >
+                                    Do it for me
+                                  </Button>
+                                  
+                                  {getRecommendationAiroTool(recommendation.title) && (
+                                    <Button 
+                                      size="sm"
+                                      className="text-xs h-7 px-2 bg-gradient-to-r from-blue-600 to-indigo-600"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toast({
+                                          title: `Airo ${getRecommendationAiroTool(recommendation.title)}`,
+                                          description: `Launching AI-powered ${getRecommendationAiroTool(recommendation.title)} tool for this recommendation.`,
+                                          variant: "default"
+                                        });
+                                      }}
+                                    >
+                                      Use Airo {getRecommendationAiroTool(recommendation.title)}
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             </div>
