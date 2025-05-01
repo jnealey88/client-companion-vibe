@@ -693,6 +693,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Submit feedback for a shared site map
+  app.post("/api/share/site-map/:shareToken/update-content", async (req: Request, res: Response) => {
+    try {
+      const { shareToken } = req.params;
+      const { content } = req.body;
+      
+      // Validate content
+      if (!content) {
+        return res.status(400).json({ message: "Content is required" });
+      }
+      
+      // Find the site map using the share token
+      const shareInfo = await storage.getSiteMapByShareToken(shareToken);
+      
+      if (!shareInfo) {
+        return res.status(404).json({ message: "Site map not found" });
+      }
+      
+      // Update the task content
+      const updatedTask = await storage.updateCompanionTaskContent(shareInfo.taskId, content);
+      
+      if (!updatedTask) {
+        return res.status(500).json({ message: "Failed to update content" });
+      }
+      
+      return res.status(200).json({ message: "Content updated successfully" });
+    } catch (error) {
+      console.error("Error updating site map content:", error);
+      return res.status(500).json({ message: "Server error updating content" });
+    }
+  });
+
   app.post("/api/share/site-map/:shareToken/feedback", async (req: Request, res: Response) => {
     try {
       const { shareToken } = req.params;

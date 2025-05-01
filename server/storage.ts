@@ -35,6 +35,8 @@ export interface IStorage {
   
   // Site map sharing operations
   getTaskByShareToken(shareToken: string): Promise<CompanionTask | undefined>;
+  getSiteMapByShareToken(shareToken: string): Promise<CompanionTask | undefined>;
+  updateCompanionTaskContent(taskId: number, content: string): Promise<CompanionTask | undefined>;
   createShareToken(taskId: number): Promise<string>;
   submitSiteMapFeedback(taskId: number, clientEmail: string, feedback: string, approved: boolean): Promise<boolean>;
   
@@ -339,6 +341,33 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Site map sharing operations
+  async getSiteMapByShareToken(shareToken: string): Promise<CompanionTask | undefined> {
+    // This is just an alias for getTaskByShareToken
+    return this.getTaskByShareToken(shareToken);
+  }
+  
+  async updateCompanionTaskContent(taskId: number, content: string): Promise<CompanionTask | undefined> {
+    try {
+      const { db } = await import('./db');
+      const { companionTasks } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const [updatedTask] = await db
+        .update(companionTasks)
+        .set({ 
+          content: content,
+          updatedAt: new Date()
+        })
+        .where(eq(companionTasks.id, taskId))
+        .returning();
+      
+      return updatedTask;
+    } catch (error) {
+      console.error(`Error updating content for task ${taskId}:`, error);
+      throw error;
+    }
+  }
+  
   async getTaskByShareToken(shareToken: string): Promise<CompanionTask | undefined> {
     try {
       const { db } = await import('./db');

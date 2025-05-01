@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, CheckCircle, ThumbsUp, ThumbsDown, Send } from "lucide-react";
+import { ArrowLeft, CheckCircle, ThumbsUp, ThumbsDown, Send, Edit, Save, X } from "lucide-react";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -30,6 +30,11 @@ export default function SharedSiteMapPage() {
   const [approved, setApproved] = useState<boolean | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  
+  // Edit mode state
+  const [editMode, setEditMode] = useState<Record<string, boolean>>({});
+  const [editedContent, setEditedContent] = useState<Record<string, string>>({});
+  const [savingSection, setSavingSection] = useState<Record<string, boolean>>({});
   
   // Parse site map content if JSON
   const parsedContent = siteMapData?.content ? (() => {
@@ -70,6 +75,104 @@ export default function SharedSiteMapPage() {
     fetchSharedSiteMap();
   }, [shareToken]);
   
+  // Function to handle editing a section
+  const toggleEditMode = (sectionId: string, initialContent: string) => {
+    if (editMode[sectionId]) {
+      // If already in edit mode, cancel and reset
+      setEditMode(prev => ({ ...prev, [sectionId]: false }));
+    } else {
+      // Enter edit mode and set initial content
+      setEditMode(prev => ({ ...prev, [sectionId]: true }));
+      setEditedContent(prev => ({ ...prev, [sectionId]: initialContent }));
+    }
+  };
+  
+  // Function to update edited content
+  const handleContentChange = (sectionId: string, newContent: string) => {
+    setEditedContent(prev => ({ ...prev, [sectionId]: newContent }));
+  };
+  
+  // Function to save section content
+  const saveSection = async (pageIdx: number, sectionIdx: number, sectionId: string) => {
+    if (!shareToken || !siteMapData) return;
+    
+    try {
+      setSavingSection(prev => ({ ...prev, [sectionId]: true }));
+      
+      // Create a deep copy of the parsed content
+      const updatedContent = JSON.parse(JSON.stringify(parsedContent));
+      
+      // Update the section content
+      if (updatedContent && updatedContent.pages && updatedContent.pages[pageIdx]) {
+        const section = updatedContent.pages[pageIdx].sections[sectionIdx];
+        
+        if (section) {
+          // Update the content based on the format
+          let content = section.content;
+          try {
+            // If content is in JSON format, update only the relevant part
+            const contentObj = JSON.parse(content);
+            
+            if (contentObj && contentObj.blocks && Array.isArray(contentObj.blocks)) {
+              // Update EditorJS blocks
+              contentObj.blocks = [{
+                type: "paragraph",
+                data: {
+                  text: editedContent[sectionId]
+                }
+              }];
+              section.content = JSON.stringify(contentObj);
+            } else if (typeof contentObj === 'object') {
+              // For other JSON objects, update content property if exists
+              if (contentObj.content) {
+                contentObj.content = editedContent[sectionId];
+                section.content = JSON.stringify(contentObj);
+              } else {
+                // If no content property, replace with plain text
+                section.content = editedContent[sectionId];
+              }
+            }
+          } catch (e) {
+            // If content is not JSON, just update the plain text
+            section.content = editedContent[sectionId];
+          }
+          
+          // Update word count
+          section.wordCount = editedContent[sectionId].split(/\s+/).filter(Boolean).length;
+        }
+      }
+      
+      // Call API to update content on the server
+      await apiRequest("POST", `/api/share/site-map/${shareToken}/update-content`, {
+        content: JSON.stringify(updatedContent)
+      });
+      
+      // Update state with new content
+      setSiteMapData({
+        ...siteMapData,
+        content: JSON.stringify(updatedContent)
+      });
+      
+      // Exit edit mode
+      setEditMode(prev => ({ ...prev, [sectionId]: false }));
+      
+      toast({
+        title: "Content updated",
+        description: "Your changes have been saved."
+      });
+    } catch (err) {
+      console.error("Error updating section content:", err);
+      
+      toast({
+        title: "Update failed",
+        description: err instanceof Error ? err.message : "Failed to update content",
+        variant: "destructive"
+      });
+    } finally {
+      setSavingSection(prev => ({ ...prev, [sectionId]: false }));
+    }
+  };
+
   // Submit feedback
   const handleSubmitFeedback = async () => {
     if (!shareToken) return;
@@ -167,51 +270,129 @@ export default function SharedSiteMapPage() {
                         {page.sections.map((section: any, j: number) => (
                           <div key={j} className="bg-background border rounded p-4 shadow-sm">
                             <h5 className="font-semibold text-base mb-2 text-primary/80">{section.title}</h5>
-                            <div className="text-xs text-muted-foreground mt-1 mb-2">
-                              <span className="bg-muted px-2 py-0.5 rounded">
-                                {section.wordCount || 0} words
-                              </span>
-                              {section.elements && section.elements.length > 0 && (
-                                <span className="ml-2 text-primary-foreground">
-                                  {section.elements.join(', ')}
+                            <div className="flex justify-between items-center">
+                              <div className="text-xs text-muted-foreground mt-1 mb-2">
+                                <span className="bg-muted px-2 py-0.5 rounded">
+                                  {section.wordCount || 0} words
                                 </span>
+                                {section.elements && section.elements.length > 0 && (
+                                  <span className="ml-2 text-primary-foreground">
+                                    {section.elements.join(', ')}
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {editMode[`${page.id}-${section.id}`] ? (
+                                <div className="flex gap-2">
+                                  <Button 
+                                    onClick={() => toggleEditMode(`${page.id}-${section.id}`, '')}
+                                    variant="outline" 
+                                    size="sm"
+                                    className="h-8"
+                                  >
+                                    <X className="h-3.5 w-3.5 mr-1" />
+                                    Cancel
+                                  </Button>
+                                  <Button 
+                                    onClick={() => saveSection(i, j, `${page.id}-${section.id}`)}
+                                    variant="default" 
+                                    size="sm"
+                                    className="h-8"
+                                    disabled={savingSection[`${page.id}-${section.id}`]}
+                                  >
+                                    {savingSection[`${page.id}-${section.id}`] ? (
+                                      <>
+                                        <div className="mr-1 h-3.5 w-3.5 animate-spin rounded-full border-2 border-background border-t-transparent"></div>
+                                        Saving...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Save className="h-3.5 w-3.5 mr-1" />
+                                        Save
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button 
+                                  onClick={() => {
+                                    // Extract the content to edit
+                                    let contentToEdit = '';
+                                    try {
+                                      const contentObj = JSON.parse(section.content);
+                                      if (contentObj && contentObj.blocks && Array.isArray(contentObj.blocks)) {
+                                        contentToEdit = contentObj.blocks
+                                          .map((block: any) => block.data?.text || '')
+                                          .filter(Boolean)
+                                          .join('\n\n');
+                                      } else if (typeof contentObj === 'string') {
+                                        contentToEdit = contentObj;
+                                      } else if (contentObj.content) {
+                                        contentToEdit = contentObj.content;
+                                      } else {
+                                        contentToEdit = section.content;
+                                      }
+                                    } catch {
+                                      contentToEdit = section.content;
+                                    }
+                                    toggleEditMode(`${page.id}-${section.id}`, contentToEdit);
+                                  }}
+                                  variant="outline" 
+                                  size="sm"
+                                  className="h-8"
+                                >
+                                  <Edit className="h-3.5 w-3.5 mr-1" />
+                                  Edit
+                                </Button>
                               )}
                             </div>
-                            <div className="text-sm mt-2 prose prose-sm max-w-none whitespace-pre-line">
-                              {(() => {
-                                // Try to extract text content from EditorJS format if applicable
-                                if (typeof section.content === 'string') {
-                                  try {
-                                    // Check if it's in EditorJS format
-                                    const contentObj = JSON.parse(section.content);
-                                    if (contentObj && contentObj.blocks && Array.isArray(contentObj.blocks)) {
-                                      // Extract text from blocks
-                                      return contentObj.blocks
-                                        .map((block: any) => {
-                                          if (block.data && block.data.text) {
-                                            return block.data.text;
-                                          }
-                                          return '';
-                                        })
-                                        .filter(Boolean)
-                                        .join('\n\n');
+                            
+                            {editMode[`${page.id}-${section.id}`] ? (
+                              <div className="mt-2">
+                                <Textarea
+                                  value={editedContent[`${page.id}-${section.id}`] || ''}
+                                  onChange={(e) => handleContentChange(`${page.id}-${section.id}`, e.target.value)}
+                                  className="w-full min-h-[200px] font-mono text-sm"
+                                  placeholder="Enter section content..."
+                                />
+                              </div>
+                            ) : (
+                              <div className="text-sm mt-2 prose prose-sm max-w-none whitespace-pre-line">
+                                {(() => {
+                                  // Try to extract text content from EditorJS format if applicable
+                                  if (typeof section.content === 'string') {
+                                    try {
+                                      // Check if it's in EditorJS format
+                                      const contentObj = JSON.parse(section.content);
+                                      if (contentObj && contentObj.blocks && Array.isArray(contentObj.blocks)) {
+                                        // Extract text from blocks
+                                        return contentObj.blocks
+                                          .map((block: any) => {
+                                            if (block.data && block.data.text) {
+                                              return block.data.text;
+                                            }
+                                            return '';
+                                          })
+                                          .filter(Boolean)
+                                          .join('\n\n');
+                                      }
+                                      // If it's JSON but not Editor.js, try to display in a readable format
+                                      if (typeof contentObj === 'string') {
+                                        return contentObj;
+                                      } else if (contentObj.content) {
+                                        return contentObj.content;
+                                      } else {
+                                        return JSON.stringify(contentObj, null, 2);
+                                      }
+                                    } catch (e) {
+                                      // If not valid JSON, return as is
+                                      return section.content;
                                     }
-                                    // If it's JSON but not Editor.js, try to display in a readable format
-                                    if (typeof contentObj === 'string') {
-                                      return contentObj;
-                                    } else if (contentObj.content) {
-                                      return contentObj.content;
-                                    } else {
-                                      return JSON.stringify(contentObj, null, 2);
-                                    }
-                                  } catch (e) {
-                                    // If not valid JSON, return as is
-                                    return section.content;
                                   }
-                                }
-                                return 'No content available';
-                              })()}
-                            </div>
+                                  return 'No content available';
+                                })()}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
