@@ -2085,7 +2085,7 @@ export async function generateStatusUpdate(clientInfo: any, taskStatus: any): Pr
 export async function generateSiteRecommendations(clientInfo: any, siteMetrics: any): Promise<any> {
   try {
     // Construct a comprehensive prompt with all available metrics
-    const prompt = `Generate strategic website improvement recommendations for ${clientInfo.name} (${clientInfo.industry || "unspecified industry"}).
+    const prompt = `Generate strategic website improvement and business growth recommendations for ${clientInfo.name} (${clientInfo.industry || "unspecified industry"}).
 
 WEBSITE METRICS AND DATA:
 ${JSON.stringify(siteMetrics, null, 2)}
@@ -2096,10 +2096,14 @@ Generate 2-3 actionable recommendations for each of these categories:
 3. User Experience Improvements
 4. Conversion Rate Optimization
 5. Content Strategy
+6. Social Media Marketing
+7. Growth & Acquisition Strategies
+
+Ensure recommendations focus on both technical improvements and business growth opportunities (marketing, social media, customer acquisition). Help the client's business grow, not just improve their website metrics.
 
 For each recommendation:
 - Provide a clear, specific action item (not generic advice)
-- Explain the expected business impact (traffic, conversions, etc.)
+- Explain the expected business impact (traffic, conversions, revenue growth, etc.)
 - Include an estimated effort level (Low, Medium, High)
 - Add a brief implementation tip
 
@@ -2115,7 +2119,9 @@ Response format must be valid JSON following this exact structure:
   "seo": [...],
   "userExperience": [...],
   "conversionOptimization": [...],
-  "contentStrategy": [...]
+  "contentStrategy": [...],
+  "socialMediaMarketing": [...],
+  "growthStrategies": [...]
 }`;
 
     // Call OpenAI API with structured prompt
@@ -2123,7 +2129,7 @@ Response format must be valid JSON following this exact structure:
       model: "gpt-4o",
       messages: [{
         role: "system",
-        content: "You are a web optimization expert who provides practical, data-driven recommendations to improve website performance, SEO, and business results. Provide recommendations in JSON format exactly as requested."
+        content: "You are a business growth strategist and web optimization expert who provides practical, data-driven recommendations to improve website performance, SEO, marketing strategies, and overall business results. Focus on both technical improvements and business growth opportunities through marketing, social media, and customer acquisition. Provide recommendations in JSON format exactly as requested."
       }, {
         role: "user",
         content: prompt

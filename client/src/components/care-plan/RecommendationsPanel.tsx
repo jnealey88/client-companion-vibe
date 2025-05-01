@@ -26,6 +26,8 @@ interface RecommendationsData {
   userExperience: Recommendation[];
   conversionOptimization: Recommendation[];
   contentStrategy: Recommendation[];
+  socialMediaMarketing: Recommendation[];
+  growthStrategies: Recommendation[];
 }
 
 interface RecommendationsPanelProps {
@@ -40,7 +42,9 @@ const categoryMap: Record<CategoryId, string> = {
   seo: 'Search Engine Optimization',
   userExperience: 'User Experience',
   conversionOptimization: 'Conversion Optimization',
-  contentStrategy: 'Content Strategy'
+  contentStrategy: 'Content Strategy',
+  socialMediaMarketing: 'Social Media Marketing',
+  growthStrategies: 'Growth & Acquisition Strategies'
 };
 
 // Available Airo tools
@@ -104,7 +108,9 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
     seo: true,
     userExperience: false,
     conversionOptimization: false,
-    contentStrategy: false
+    contentStrategy: false,
+    socialMediaMarketing: false,
+    growthStrategies: false
   });
 
   // Query to fetch recommendations
