@@ -389,7 +389,7 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
         </CardHeader>
         <CardContent>
           <div className="text-center py-6">
-            <p className="text-gray-600 mb-4">No recommendations available. Generate AI-powered suggestions to improve the website.</p>
+            <p className="text-gray-600 mb-4"> Generate AI-powered suggestions to improve the website.</p>
             <Button
               onClick={() => generateRecommendationsMutation.mutate()}
               disabled={generateRecommendationsMutation.isPending}
