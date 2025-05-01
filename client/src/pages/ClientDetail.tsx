@@ -28,6 +28,15 @@ import Header from "../components/Header";
 import ClientCompanion from "../components/companion/ClientCompanion";
 import GoDaddyProductsManager from "../components/godaddy/GoDaddyProductsManager";
 import RecommendedNextStep from "../components/companion/RecommendedNextStep";
+import { useToast } from "../hooks/use-toast";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+  SelectItem
+} from "../components/ui/select";
+import { statusOptions } from "@shared/schema";
 import CarePlanWrapper from "../components/care-plan/CarePlanWrapper";
 import EditClientDialog from "../components/clients/EditClientDialog";
 import { Button } from "../components/ui/button";
@@ -45,6 +54,7 @@ export default function ClientDetail() {
   const [clientInfoOpen, setClientInfoOpen] = useState(false);
   const [editClientDialogOpen, setEditClientDialogOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   const { data: client, isLoading, isError } = useQuery<Client>({
     queryKey: [`/api/clients/${clientId}`],
@@ -57,20 +67,25 @@ export default function ClientDetail() {
     enabled: !!clientId,
   });
   
-  // Mutation to update client status to Post Launch Management
+  // Mutation to update client status to any phase
   const updateClientStatusMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (newStatus: string) => {
       if (!client || !clientId) return null;
       return apiRequest(`/api/clients/${clientId}`, {
         method: 'PATCH',
         data: {
-          status: 'Post Launch Management'
+          status: newStatus
         }
       });
     },
     onSuccess: () => {
       // Invalidate and refetch client data
       queryClient.invalidateQueries({ queryKey: [`/api/clients/${clientId}`] });
+      
+      toast({
+        title: "Status Updated",
+        description: "Client project phase has been updated.",
+      });
     }
   });
   
@@ -130,22 +145,44 @@ export default function ClientDetail() {
               </Link>
               
               <div className="flex gap-3 items-center">
-                <Badge variant="outline" className={`${getStatusClass(client.status)} border px-3 py-1.5 text-sm font-medium`}>
-                  {client.status}
-                </Badge>
-                {client.status !== 'Post Launch Management' && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex items-center gap-1 border-gray-200 bg-white hover:bg-gray-50"
-                    onClick={() => updateClientStatusMutation.mutate()}
-                    disabled={updateClientStatusMutation.isPending}
-                  >
-                    <Rocket className="h-4 w-4 mr-1" />
-                    {updateClientStatusMutation.isPending ? 'Updating...' : 'Move to Post Launch'}
-                    {updateClientStatusMutation.isPending && <span className="ml-2 animate-spin">⟳</span>}
-                  </Button>
-                )}
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className={`${getStatusClass(client.status)} border px-3 py-1.5 text-sm font-medium`}>
+                    {client.status}
+                  </Badge>
+                  
+                  <div className="flex items-center gap-2">
+                    <Select
+                      defaultValue={client.status}
+                      onValueChange={(value) => updateClientStatusMutation.mutate(value)}
+                      disabled={updateClientStatusMutation.isPending}
+                    >
+                      <SelectTrigger className="w-[180px] h-9">
+                        <SelectValue placeholder="Change phase" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.filter((status: string) => status !== 'All Status').map((status: string) => (
+                          <SelectItem key={status} value={status}>
+                            {status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    
+                    {client.status !== 'Post Launch Management' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex items-center gap-1 border-gray-200 bg-white hover:bg-gray-50"
+                        onClick={() => updateClientStatusMutation.mutate('Post Launch Management')}
+                        disabled={updateClientStatusMutation.isPending}
+                      >
+                        <Rocket className="h-4 w-4 mr-1" />
+                        {updateClientStatusMutation.isPending ? 'Updating...' : 'Move to Post Launch'}
+                        {updateClientStatusMutation.isPending && <span className="ml-2 animate-spin">⟳</span>}
+                      </Button>
+                    )}
+                  </div>
+                </div>
                 <Button 
                   variant="outline" 
                   size="sm" 
