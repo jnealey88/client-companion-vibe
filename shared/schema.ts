@@ -98,6 +98,18 @@ export const companionTasks = pgTable("companion_tasks", {
   metadata: text("metadata"), // For storing additional data like pricing information
   createdAt: timestamp("created_at").notNull().default(new Date()),
   completedAt: timestamp("completed_at"),
+  shareToken: text("share_token").unique(), // Token for sharing with clients
+  isShared: boolean("is_shared").default(false),
+});
+
+// Table for site map feedback from clients
+export const siteMapFeedback = pgTable("site_map_feedback", {
+  id: serial("id").primaryKey(),
+  taskId: integer("task_id").notNull().references(() => companionTasks.id, { onDelete: "cascade" }),
+  clientEmail: text("client_email").notNull(),
+  feedback: text("feedback"),
+  approved: boolean("approved").default(false),
+  createdAt: timestamp("created_at").notNull().default(new Date()),
 });
 
 // Client Schemas
@@ -165,6 +177,23 @@ export const companionTaskSchema = z.object({
   metadata: z.string().nullable(),
   createdAt: z.date(),
   completedAt: z.date().nullable(),
+  shareToken: z.string().nullable(),
+  isShared: z.boolean().default(false),
+});
+
+// Site Map Feedback Schema
+export const siteMapFeedbackSchema = z.object({
+  id: z.number(),
+  taskId: z.number(),
+  clientEmail: z.string().email(),
+  feedback: z.string().nullable(),
+  approved: z.boolean().default(false),
+  createdAt: z.date(),
+});
+
+export const insertSiteMapFeedbackSchema = createInsertSchema(siteMapFeedback).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const updateCompanionTaskSchema = insertCompanionTaskSchema.partial();
@@ -178,6 +207,9 @@ export type ClientWithProject = z.infer<typeof clientSchema>;
 export type InsertCompanionTask = z.infer<typeof insertCompanionTaskSchema>;
 export type UpdateCompanionTask = z.infer<typeof updateCompanionTaskSchema>;
 export type CompanionTask = typeof companionTasks.$inferSelect;
+
+export type InsertSiteMapFeedback = z.infer<typeof insertSiteMapFeedbackSchema>;
+export type SiteMapFeedback = typeof siteMapFeedback.$inferSelect;
 
 // Filters/Sorting
 export type ClientFilters = {
