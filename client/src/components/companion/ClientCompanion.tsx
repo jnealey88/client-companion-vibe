@@ -985,52 +985,54 @@ export default function ClientCompanion({ client }: ClientCompanionProps) {
             
             <TabsContent value="tasks" className="mt-4">
               <div className="space-y-6">
-                {/* Phase filter pills */}
-                <div className="flex flex-wrap gap-3 pb-4 mb-6 border-b">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <div className="flex h-8 items-center px-3 text-sm font-medium text-gray-500">Filter by:</div>
-                    <Button 
-                      variant={selectedPhase === null ? "default" : "outline"}
-                      size="sm"
-                      className="rounded-full shadow-sm flex items-center gap-1.5 px-4 h-8 text-sm"
-                      onClick={() => setSelectedPhase(null)}
-                    >
-                      <Layers className="h-3.5 w-3.5" />
-                      All Tools
-                    </Button>
-                    
-                    {projectPhases.map(phase => {
-                      const isCurrentPhase = client.status === phase;
-                      const isSelected = selectedPhase === phase;
+                {/* Phase filter pills - Only shown when not in Post Launch Management phase */}
+                {client.status !== 'Post Launch Management' && (
+                  <div className="flex flex-wrap gap-3 pb-4 mb-6 border-b">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex h-8 items-center px-3 text-sm font-medium text-gray-500">Filter by:</div>
+                      <Button 
+                        variant={selectedPhase === null ? "default" : "outline"}
+                        size="sm"
+                        className="rounded-full shadow-sm flex items-center gap-1.5 px-4 h-8 text-sm"
+                        onClick={() => setSelectedPhase(null)}
+                      >
+                        <Layers className="h-3.5 w-3.5" />
+                        All Tools
+                      </Button>
                       
-                      let phaseIcon;
-                      if (phase === "Discovery") phaseIcon = <FileSearch className="h-3.5 w-3.5" />;
-                      else if (phase === "Planning") phaseIcon = <ListFilter className="h-3.5 w-3.5" />;
-                      else if (phase === "Design and Development") phaseIcon = <FolderTree className="h-3.5 w-3.5" />;
-                      else if (phase === "Post Launch Management") phaseIcon = <Settings className="h-3.5 w-3.5" />;
-                      
-                      return (
-                        <Button 
-                          key={phase}
-                          variant={isSelected ? "default" : "outline"}
-                          size="sm"
-                          className={`rounded-full shadow-sm flex items-center gap-1.5 px-4 h-8 text-sm
-                            ${isCurrentPhase ? "border-green-200" : ""}`}
-                          onClick={() => setSelectedPhase(phase)}
-                        >
-                          {phaseIcon}
-                          {phase}
-                          {isCurrentPhase && (
-                            <span className="ml-1 relative flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                            </span>
-                          )}
-                        </Button>
-                      );
-                    })}
+                      {projectPhases.map(phase => {
+                        const isCurrentPhase = client.status === phase;
+                        const isSelected = selectedPhase === phase;
+                        
+                        let phaseIcon;
+                        if (phase === "Discovery") phaseIcon = <FileSearch className="h-3.5 w-3.5" />;
+                        else if (phase === "Planning") phaseIcon = <ListFilter className="h-3.5 w-3.5" />;
+                        else if (phase === "Design and Development") phaseIcon = <FolderTree className="h-3.5 w-3.5" />;
+                        else if (phase === "Post Launch Management") phaseIcon = <Settings className="h-3.5 w-3.5" />;
+                        
+                        return (
+                          <Button 
+                            key={phase}
+                            variant={isSelected ? "default" : "outline"}
+                            size="sm"
+                            className={`rounded-full shadow-sm flex items-center gap-1.5 px-4 h-8 text-sm
+                              ${isCurrentPhase ? "border-green-200" : ""}`}
+                            onClick={() => setSelectedPhase(phase)}
+                          >
+                            {phaseIcon}
+                            {phase}
+                            {isCurrentPhase && (
+                              <span className="ml-1 relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                              </span>
+                            )}
+                          </Button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
                 
                 {/* Display tasks from selected phase or all phases */}
                 {(selectedPhase ? [selectedPhase] : projectPhases).map(phase => {
