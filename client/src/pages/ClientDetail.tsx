@@ -258,8 +258,10 @@ export default function ClientDetail() {
               </CollapsibleContent>
             </Collapsible>
             
-            {/* Recommended Next Step Card above Client Companion */}
-            <RecommendedNextStep client={client} tasks={tasks || []} />
+            {/* Recommended Next Step Card above Client Companion - only shown when not in Post Launch phase */}
+            {client.status !== 'Post Launch Management' && (
+              <RecommendedNextStep client={client} tasks={tasks || []} />
+            )}
             
             {/* Care Plan Dashboard for Post Launch Management phase */}
             <CarePlanWrapper client={client} tasks={tasks || []} />
