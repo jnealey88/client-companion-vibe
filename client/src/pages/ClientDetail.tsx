@@ -145,43 +145,42 @@ export default function ClientDetail() {
               </Link>
               
               <div className="flex gap-3 items-center">
-                <div className="flex items-center space-x-2">
-                  <Badge variant="outline" className={`${getStatusClass(client.status)} border px-3 py-1.5 text-sm font-medium`}>
-                    {client.status}
-                  </Badge>
+                <div className="flex items-center gap-2">
+                  <Select
+                    defaultValue={client.status}
+                    onValueChange={(value) => updateClientStatusMutation.mutate(value)}
+                    disabled={updateClientStatusMutation.isPending}
+                  >
+                    <SelectTrigger className="w-[220px] h-9">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className={`${getStatusClass(client.status)} border px-2 py-0.5 text-xs font-medium mr-1`}>
+                          Project Phase
+                        </Badge>
+                        <SelectValue placeholder="Change phase" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.filter((status: string) => status !== 'All Status').map((status: string) => (
+                        <SelectItem key={status} value={status}>
+                          {status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   
-                  <div className="flex items-center gap-2">
-                    <Select
-                      defaultValue={client.status}
-                      onValueChange={(value) => updateClientStatusMutation.mutate(value)}
+                  {client.status !== 'Post Launch Management' && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex items-center gap-1 border-gray-200 bg-white hover:bg-gray-50"
+                      onClick={() => updateClientStatusMutation.mutate('Post Launch Management')}
                       disabled={updateClientStatusMutation.isPending}
                     >
-                      <SelectTrigger className="w-[180px] h-9">
-                        <SelectValue placeholder="Change phase" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions.filter((status: string) => status !== 'All Status').map((status: string) => (
-                          <SelectItem key={status} value={status}>
-                            {status}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    
-                    {client.status !== 'Post Launch Management' && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex items-center gap-1 border-gray-200 bg-white hover:bg-gray-50"
-                        onClick={() => updateClientStatusMutation.mutate('Post Launch Management')}
-                        disabled={updateClientStatusMutation.isPending}
-                      >
-                        <Rocket className="h-4 w-4 mr-1" />
-                        {updateClientStatusMutation.isPending ? 'Updating...' : 'Move to Post Launch'}
-                        {updateClientStatusMutation.isPending && <span className="ml-2 animate-spin">⟳</span>}
-                      </Button>
-                    )}
-                  </div>
+                      <Rocket className="h-4 w-4 mr-1" />
+                      {updateClientStatusMutation.isPending ? 'Updating...' : 'Move to Post Launch'}
+                      {updateClientStatusMutation.isPending && <span className="ml-2 animate-spin">⟳</span>}
+                    </Button>
+                  )}
                 </div>
                 <Button 
                   variant="outline" 
