@@ -147,7 +147,7 @@ export default function ClientDetail() {
               <div className="flex gap-3 items-center">
                 <div className="flex items-center gap-2">
                   <Select
-                    defaultValue={client.status}
+                    value={client.status}
                     onValueChange={(value) => updateClientStatusMutation.mutate(value)}
                     disabled={updateClientStatusMutation.isPending}
                   >
@@ -156,7 +156,7 @@ export default function ClientDetail() {
                         <Badge variant="outline" className={`${getStatusClass(client.status)} border px-2 py-0.5 text-xs font-medium mr-1`}>
                           Project Phase
                         </Badge>
-                        <SelectValue placeholder="Change phase" />
+                        <span className="text-sm font-medium">{client.status}</span>
                       </div>
                     </SelectTrigger>
                     <SelectContent>
