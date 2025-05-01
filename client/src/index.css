@@ -18,9 +18,9 @@
   --input: 220 13% 91%;
   --primary: 0 0% 6.7%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 219 17% 35%;
+  --secondary: 0 0% 7%;
   --secondary-foreground: 0 0% 100%;
-  --accent: 209 84% 40%;
+  --accent: 0 0% 7%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 60 9.1% 97.8%;
@@ -254,5 +254,10 @@
   
   .status-badge-post-launch-management {
     @apply bg-green-100 text-green-800;
+  }
+  
+  /* Custom button styles */
+  .btn-dark {
+    @apply bg-[#111] text-white hover:bg-[#333];
   }
 }

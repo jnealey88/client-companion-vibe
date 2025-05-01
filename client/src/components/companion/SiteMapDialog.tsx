@@ -1784,7 +1784,7 @@ Your Web Professional`);
               </div>
             </div>
             
-            <Button onClick={handleGenerate} className="gap-2 bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleGenerate} className="gap-2 bg-[#111] hover:bg-[#333] text-white">
               <LayoutGrid className="h-4 w-4" />
               Generate Production-Ready Site Map
             </Button>
