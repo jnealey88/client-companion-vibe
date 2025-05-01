@@ -2076,6 +2076,77 @@ export async function generateStatusUpdate(clientInfo: any, taskStatus: any): Pr
 
 // Generate an email for scheduling a discovery call with the client
 // Includes references to the company analysis that was already generated
+/**
+ * Generate website improvement recommendations based on site metrics
+ * @param clientInfo Client information including name, website, industry
+ * @param siteMetrics Current website metrics (performance, SEO, etc.)
+ * @returns JSON formatted recommendations organized by category
+ */
+export async function generateSiteRecommendations(clientInfo: any, siteMetrics: any): Promise<any> {
+  try {
+    // Construct a comprehensive prompt with all available metrics
+    const prompt = `Generate strategic website improvement recommendations for ${clientInfo.name} (${clientInfo.industry || "unspecified industry"}).
+
+WEBSITE METRICS AND DATA:
+${JSON.stringify(siteMetrics, null, 2)}
+
+Generate 2-3 actionable recommendations for each of these categories:
+1. Performance Optimization
+2. Search Engine Optimization (SEO)
+3. User Experience Improvements
+4. Conversion Rate Optimization
+5. Content Strategy
+
+For each recommendation:
+- Provide a clear, specific action item (not generic advice)
+- Explain the expected business impact (traffic, conversions, etc.)
+- Include an estimated effort level (Low, Medium, High)
+- Add a brief implementation tip
+
+Response format must be valid JSON following this exact structure:
+{
+  "performanceOptimization": [{
+    "title": "Implement Image Compression",
+    "description": "Compress all product images to reduce page load time by up to 40%",
+    "businessImpact": "Faster page loads can increase conversion rates by 7%",
+    "effort": "Low",
+    "implementationTip": "Use WebP format and lazy loading for best results"
+  }],
+  "seo": [...],
+  "userExperience": [...],
+  "conversionOptimization": [...],
+  "contentStrategy": [...]
+}`;
+
+    // Call OpenAI API with structured prompt
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{
+        role: "system",
+        content: "You are a web optimization expert who provides practical, data-driven recommendations to improve website performance, SEO, and business results. Provide recommendations in JSON format exactly as requested."
+      }, {
+        role: "user",
+        content: prompt
+      }],
+      temperature: 0.7,
+      response_format: { type: "json_object" }
+    });
+
+    // Parse the response into a JSON object
+    try {
+      const recommendationsText = response.choices[0].message.content;
+      const recommendations = JSON.parse(recommendationsText || "{}");
+      return recommendations;
+    } catch (parseError) {
+      console.error("Error parsing recommendations JSON:", parseError);
+      throw new Error("Failed to parse recommendations data");
+    }
+  } catch (error) {
+    console.error("Error generating site recommendations:", error);
+    throw new Error("Failed to generate website recommendations");
+  }
+}
+
 export async function expandSectionContent(content: string, context: any): Promise<string> {
   try {
     console.log("Expanding content with context:", context);

@@ -556,6 +556,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
             };
             content = await generateStatusUpdate(client, taskStatus);
             break;
+            
+          case TaskType.SITE_OPTIMIZER:
+            // Generate AI recommendations based on site metrics
+            // Extract site metrics from request body if provided, or build default metrics
+            const siteMetrics = req.body?.siteMetrics || {
+              performance: {
+                score: 86,
+                firstContentfulPaint: "1.2s",
+                largestContentfulPaint: "2.8s",
+                cumulativeLayoutShift: "0.12"
+              },
+              accessibility: { score: 92 },
+              seo: {
+                score: 88,
+                ranking: 12,
+                keywords: ["web development", "web design", "digital marketing"],
+                monthlyVisits: 3200,
+                growthRate: 18.5
+              },
+              bestPractices: { score: 78 },
+              security: { issues: 0, lastScan: new Date().toISOString() },
+              maintenance: {
+                pluginsToUpdate: 2,
+                lastBackupDate: new Date().toISOString()
+              }
+            };
+            
+            // Generate recommendations using OpenAI
+            const recommendations = await generateSiteRecommendations(client, siteMetrics);
+            content = JSON.stringify(recommendations, null, 2);
+            break;
         }
         
         // For all task types, update the content and status

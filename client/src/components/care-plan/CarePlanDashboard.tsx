@@ -5,6 +5,7 @@ import { Badge } from '../ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 import { ArrowUpCircle, ArrowDownCircle, AlertCircle, ShieldCheck, Activity, Search, Zap, Lock, BarChart2, Award } from 'lucide-react';
+import RecommendationsPanel from './RecommendationsPanel';
 
 interface CarePlanDashboardProps {
   client: Client;
