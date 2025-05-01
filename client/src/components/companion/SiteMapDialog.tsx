@@ -218,6 +218,11 @@ Please take a look and let me know if you have any questions or suggested change
 
 Best regards,
 Your Web Professional`);
+  
+  // Share link state
+  const [shareUrl, setShareUrl] = useState<string>("");
+  const [isCreatingShareLink, setIsCreatingShareLink] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   // Generation task
   const [generatedTask, setGeneratedTask] = useState<CompanionTask | null>(null);
@@ -351,6 +356,31 @@ Your Web Professional`);
       toast({
         title: "Failed to send email",
         description: "There was an error sending the email. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Create share link mutation
+  const createShareLinkMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      setIsCreatingShareLink(true);
+      return apiRequest("POST", `/api/site-maps/${taskId}/share`, {});
+    },
+    onSuccess: (response: { shareToken: string, shareUrl: string }) => {
+      setIsCreatingShareLink(false);
+      setShareUrl(response.shareUrl);
+      setShareDialogOpen(true);
+      toast({
+        title: "Share link created",
+        description: "A public link to this site map has been created.",
+      });
+    },
+    onError: () => {
+      setIsCreatingShareLink(false);
+      toast({
+        title: "Failed to create share link",
+        description: "There was an error creating the share link. Please try again.",
         variant: "destructive"
       });
     }
@@ -985,6 +1015,41 @@ Your Web Professional`);
       subject: emailSubject,
       html: emailHtml
     });
+  };
+  
+  // Create and show a sharable link
+  const handleCreateShareLink = () => {
+    if (!generatedTask || !generatedTask.id) {
+      toast({
+        title: "No sitemap available",
+        description: "Please save the site map first before creating a share link.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create a share link for the site map
+    createShareLinkMutation.mutate(generatedTask.id);
+  };
+  
+  // Copy share link to clipboard
+  const copyShareLink = () => {
+    if (!shareUrl) return;
+    
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => {
+        toast({
+          title: "Link copied",
+          description: "Share link copied to clipboard.",
+        });
+      })
+      .catch(() => {
+        toast({
+          title: "Failed to copy",
+          description: "Could not copy link to clipboard. Please try again.",
+          variant: "destructive"
+        });
+      });
   };
   
   // Parse JSON site map data
