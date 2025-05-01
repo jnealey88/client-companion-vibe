@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { Badge } from '../ui/badge';
-import { Lightbulb, Clock, Activity, ChevronDown, ChevronUp, Send, Plus } from 'lucide-react';
+import { Lightbulb, Clock, Activity, ChevronDown, ChevronUp, Send, Plus, RotateCcw } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
@@ -140,6 +140,47 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
       toast({
         title: 'Error',
         description: `Failed to generate recommendations: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: 'destructive'
+      });
+    }
+  });
+  
+  // Mutation to reset recommendations
+  const resetRecommendationsMutation = useMutation({
+    mutationFn: async () => {
+      // Find the existing site_optimizer task
+      if (!recommendationsTaskData?.id) {
+        throw new Error('No recommendations to reset');
+      }
+      
+      // Delete the task
+      const response = await fetch(`/api/companion-tasks/${recommendationsTaskData.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to reset recommendations');
+      }
+      
+      return true;
+    },
+    onSuccess: () => {
+      // Clear selected recommendations
+      setSelectedRecommendations([]);
+      
+      // Invalidate the query to refresh the data
+      queryClient.invalidateQueries({ queryKey: [`/api/clients/${client.id}/companion-tasks`] });
+      
+      toast({
+        title: 'Recommendations Reset',
+        description: 'Website recommendations have been reset.',
+        variant: 'default'
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to reset recommendations: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: 'destructive'
       });
     }
@@ -374,6 +415,15 @@ export default function RecommendationsPanel({ client, siteMetrics }: Recommenda
             <span>Website Recommendations</span>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => resetRecommendationsMutation.mutate()}
+              disabled={resetRecommendationsMutation.isPending || !recommendationsTaskData}
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Reset
+            </Button>
             <Button
               variant="outline"
               size="sm"
