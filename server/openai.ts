@@ -1934,17 +1934,37 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
             "title": "Hero Section",
             "content": "WRITE UNIQUE HERO CONTENT HERE. Include a powerful headline, engaging subheading, and compelling paragraph that captures attention. This must be different from all other sections and specifically focused on the hero area's purpose of making an immediate impact. Include a clear call-to-action statement.",
             "wordCount": 150,
-            "elements": ["hero image", "call to action button"]
+            "elements": ["hero image", "call to action button"],
+            "layoutSuggestion": "Detailed suggestion for the visual layout of this section, including grid arrangement, spacing, and responsive considerations",
+            "headingOptions": ["Primary heading option 1", "Primary heading option 2"],
+            "subheadingOptions": ["Subheading option 1", "Subheading option 2"],
+            "ctaText": [
+              "Primary CTA text",
+              "Secondary CTA text (if applicable)"
+            ]
           },
           {
             "id": "features",
             "title": "Features Section",
             "content": "WRITE COMPLETELY DIFFERENT CONTENT HERE that focuses specifically on features. This section must not repeat any content from the hero section. Write unique headings, subheadings, and compelling descriptions for each key feature. Each feature description should highlight benefits and value to customers.",
             "wordCount": 250,
-            "elements": ["feature images", "icon set"]
+            "elements": ["feature images", "icon set"],
+            "layoutSuggestion": "Detailed suggestion for the visual layout of this section, including grid arrangement, spacing, and responsive considerations",
+            "headingOptions": ["Primary heading option 1", "Primary heading option 2"],
+            "subheadingOptions": ["Subheading option 1", "Subheading option 2"],
+            "ctaText": [
+              "Primary CTA text",
+              "Secondary CTA text (if applicable)"
+            ]
           }
         ],
-        "technicalFeatures": ["Slider", "Animation", "etc"]
+        "technicalFeatures": ["Slider", "Animation", "etc"],
+        "designSuggestions": {
+          "colorPalette": "Recommendation for color scheme based on client's industry and branding",
+          "typography": "Suggested font pairings and text hierarchy",
+          "visualElements": "Recommendations for imagery, icons, and visual style",
+          "responsiveConsiderations": "Specific notes for mobile and tablet adaptations"
+        }
       }
     ],
     "contentGuidelines": {
@@ -1955,10 +1975,22 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
     "technicalRequirements": {
       "interactiveElements": ["Element 1 with detailed description", "Element 2 with detailed description"],
       "integrations": ["Integration 1 with implementation notes", "Integration 2 with implementation notes"]
+    },
+    "designSystem": {
+      "colorPalette": ["Primary color with hex code", "Secondary color with hex code", "Accent colors with hex codes"],
+      "typography": {
+        "headings": "Font family and sizing recommendations",
+        "bodyText": "Font family and sizing recommendations",
+        "buttons": "Font treatment for buttons and calls to action"
+      },
+      "componentStyles": ["Style recommendations for common UI components"],
+      "spacingSystem": "Recommendations for consistent spacing throughout the site"
     }
   }
 
   Create a comprehensive site map with ALL NECESSARY PAGES and DETAILED CONTENT SECTIONS for ${clientInfo.name}'s website. Include COMPLETE, PRODUCTION-READY CONTENT for each section that requires no further editing. The site map should provide all website copy needed for development, including headlines, body text, calls-to-action, and meta descriptions.
+  
+  Make sure to provide detailed layout suggestions, multiple heading/subheading options, and compelling CTA text for each section. Additionally, include design system recommendations that align with the client's industry and brand.
   
   FINAL REMINDER: EVERY SECTION OF EVERY PAGE MUST HAVE COMPLETELY UNIQUE CONTENT. Do not repeat content across sections. Each section must address its specific purpose with content tailored to that purpose only.`;
 
