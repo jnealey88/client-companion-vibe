@@ -39,9 +39,42 @@ export default function SharedSiteMapPage() {
   // Parse site map content if JSON
   const parsedContent = siteMapData?.content ? (() => {
     try {
+      console.log("EDITOR DEBUG - Content received:", siteMapData.content);
+      console.log("EDITOR DEBUG - Content type:", typeof siteMapData.content);
+      console.log("EDITOR DEBUG - Content length:", siteMapData.content.length);
+      
+      // Check if the content is already in JSON format
+      if (typeof siteMapData.content === 'string' && 
+          (siteMapData.content.startsWith('{') || siteMapData.content.startsWith('[')))
+      {
+        console.log("EDITOR DEBUG - Detected JSON format content");
+        const parsed = JSON.parse(siteMapData.content);
+        
+        // Check if the parsed content is Editor.js format or our custom JSON format
+        if (parsed.time && parsed.blocks) {
+          console.log("EDITOR DEBUG - Content is Editor.js format");
+        } else if (parsed.siteOverview) {
+          console.log("EDITOR DEBUG - Content is site map JSON format");
+          
+          // Extra debug: Check if sections have the expected properties
+          if (parsed.pages && parsed.pages.length > 0 && parsed.pages[0].sections && parsed.pages[0].sections.length > 0) {
+            const firstSection = parsed.pages[0].sections[0];
+            console.log("EDITOR DEBUG - First section properties:", Object.keys(firstSection));
+            console.log("EDITOR DEBUG - layoutSuggestion:", firstSection.layoutSuggestion);
+            console.log("EDITOR DEBUG - headingOptions:", firstSection.headingOptions);
+            console.log("EDITOR DEBUG - ctaText:", firstSection.ctaText);
+          }
+        } else {
+          console.log("EDITOR DEBUG - Content is JSON but not Editor.js format, converting");
+        }
+        
+        return parsed;
+      }
+      
       return JSON.parse(siteMapData.content);
     } catch (e) {
       // Return the raw content if not JSON
+      console.error("EDITOR DEBUG - Error parsing JSON:", e);
       return null;
     }
   })() : null;

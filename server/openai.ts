@@ -1999,9 +1999,8 @@ export async function generateSiteMap(clientInfo: any, proposalContent?: string)
       model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
       messages: [{ role: "user", content: prompt }],
       temperature: 0.7,
-      max_tokens: 4000,
       response_format: { type: "json_object" },
-      max_tokens: 15000, // Increased token limit for more detailed content
+      max_tokens: 15000 // Increased token limit for more detailed content
     });
 
     const jsonResponse = response.choices[0].message.content;
