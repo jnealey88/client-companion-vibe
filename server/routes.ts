@@ -33,6 +33,41 @@ function isAuthenticated(req: Request, res: Response, next: NextFunction) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Test endpoint for viewing the latest site map content
+  app.get("/test-site-map", async (req: Request, res: Response) => {
+    try {
+      const task = await db.query.companionTasks.findFirst({
+        where: eq(companionTasks.type, 'site_map'),
+        orderBy: [desc(companionTasks.id)]
+      });
+      
+      if (!task) {
+        return res.status(404).json({ message: "No site map found" });
+      }
+      
+      // Create a token for this task
+      const randomString = crypto.randomBytes(16).toString('hex');
+      const now = new Date();
+      
+      await db.update(companionTasks)
+        .set({ 
+          shareToken: randomString,
+          isShared: true,
+          metadata: JSON.stringify({
+            sharedAt: now.toISOString(),
+            sharedBy: 'system-test'
+          })
+        })
+        .where(eq(companionTasks.id, task.id));
+        
+      // Redirect to the share page
+      res.redirect(`/share/site-map/${randomString}`);
+    } catch (error) {
+      console.error("Error in test endpoint:", error);
+      res.status(500).json({ message: "Server error" });
+    }
+  });
+
   // Set up authentication routes and middleware
   setupAuth(app);
   
