@@ -5,10 +5,13 @@
 
 .tiptap-toolbar {
   border-bottom: none;
+  flex-wrap: wrap;
 }
 
 .tiptap-editor-wrapper .ProseMirror {
   outline: none;
+  min-height: 150px;
+  padding: 0.5rem;
 }
 
 /* Placeholder text */
@@ -30,6 +33,7 @@
   font-weight: bold;
   margin-top: 1.5rem;
   margin-bottom: 1rem;
+  color: #111827;
 }
 
 .tiptap-editor-wrapper .ProseMirror h2 {
@@ -37,6 +41,7 @@
   font-weight: bold;
   margin-top: 1.5rem;
   margin-bottom: 1rem;
+  color: #111827;
 }
 
 .tiptap-editor-wrapper .ProseMirror h3 {
@@ -44,6 +49,7 @@
   font-weight: bold;
   margin-top: 1.25rem;
   margin-bottom: 0.75rem;
+  color: #111827;
 }
 
 .tiptap-editor-wrapper .ProseMirror h4 {
@@ -51,6 +57,7 @@
   font-weight: bold;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
+  color: #111827;
 }
 
 .tiptap-editor-wrapper .ProseMirror h5,
@@ -59,11 +66,13 @@
   font-weight: bold;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
+  color: #111827;
 }
 
 .tiptap-editor-wrapper .ProseMirror p {
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
+  line-height: 1.6;
 }
 
 .tiptap-editor-wrapper .ProseMirror ul,
@@ -82,11 +91,12 @@
 }
 
 .tiptap-editor-wrapper .ProseMirror blockquote {
-  border-left: 3px solid #e5e7eb;
-  padding-left: 1rem;
-  margin-left: 0;
-  margin-right: 0;
+  border-left: 4px solid #e5e7eb;
+  padding: 0.5rem 0 0.5rem 1rem;
+  margin: 1rem 0;
+  background-color: #f9fafb;
   font-style: italic;
+  color: #4b5563;
 }
 
 .tiptap-editor-wrapper .ProseMirror pre {
@@ -95,6 +105,7 @@
   padding: 0.75rem;
   font-family: monospace;
   overflow-x: auto;
+  margin: 1rem 0;
 }
 
 .tiptap-editor-wrapper .ProseMirror code {
@@ -110,9 +121,64 @@
   text-decoration: underline;
 }
 
+/* Table styles */
+.tiptap-editor-wrapper .ProseMirror table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.tiptap-editor-wrapper .ProseMirror table td,
+.tiptap-editor-wrapper .ProseMirror table th {
+  border: 2px solid #e5e7eb;
+  padding: 0.5rem;
+  position: relative;
+  vertical-align: top;
+}
+
+.tiptap-editor-wrapper .ProseMirror table th {
+  background-color: #f3f4f6;
+  font-weight: bold;
+}
+
+/* Resizable tables */
+.tiptap-editor-wrapper .ProseMirror .tableWrapper {
+  overflow-x: auto;
+  padding: 0.5rem 0;
+}
+
+/* Image styles */
+.tiptap-editor-wrapper .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+  border-radius: 0.25rem;
+}
+
+/* Link styles with better visual feedback */
+.tiptap-editor-wrapper .ProseMirror a:hover {
+  text-decoration: none;
+  background-color: rgba(37, 99, 235, 0.1);
+  border-radius: 0.25rem;
+}
+
+/* Selection highlighting */
+.tiptap-editor-wrapper .ProseMirror ::selection {
+  background: rgba(37, 99, 235, 0.2);
+}
+
 /* Handle contenteditable false for read-only mode */
 .tiptap-editor-wrapper .ProseMirror[contenteditable=false] {
   user-select: text;
   cursor: default;
   opacity: 0.9;
+  background-color: #f9fafb;
+}
+
+/* More prominent focus style */
+.tiptap-editor-wrapper .ProseMirror:focus {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+  border-radius: 0.25rem;
 }
