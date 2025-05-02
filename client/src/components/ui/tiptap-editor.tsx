@@ -169,6 +169,104 @@ export function TiptapEditor({
 
   return (
     <div className={`tiptap-editor-wrapper ${className}`}>
+      {/* Bubble menu that appears when text is selected */}
+      {editor && !readOnly && (
+        <BubbleMenu 
+          editor={editor} 
+          tippyOptions={{ duration: 100 }}
+          className="bg-white shadow-lg border border-gray-200 rounded-md flex gap-1 p-1"
+        >
+          <button
+            onClick={() => editor.chain().focus().toggleBold().run()}
+            className={`p-1 rounded hover:bg-gray-100 ${editor.isActive('bold') ? 'bg-gray-200' : ''}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+              <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+            </svg>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+            className={`p-1 rounded hover:bg-gray-100 ${editor.isActive('italic') ? 'bg-gray-200' : ''}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="19" y1="4" x2="10" y2="4"></line>
+              <line x1="14" y1="20" x2="5" y2="20"></line>
+              <line x1="15" y1="4" x2="9" y2="20"></line>
+            </svg>
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+            className={`p-1 rounded hover:bg-gray-100 ${editor.isActive('underline') ? 'bg-gray-200' : ''}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"></path>
+              <line x1="4" y1="21" x2="20" y2="21"></line>
+            </svg>
+          </button>
+          <span className="border-r border-gray-300 mx-1"></span>
+          <button
+            onClick={() => {
+              const url = window.prompt('Enter the URL:');
+              if (url) {
+                editor.chain().focus().setLink({ href: url }).run();
+              }
+            }}
+            className={`p-1 rounded hover:bg-gray-100 ${editor.isActive('link') ? 'bg-gray-200' : ''}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </button>
+        </BubbleMenu>
+      )}
+
+      {/* Floating menu that appears when the editor is empty */}
+      {editor && !readOnly && (
+        <FloatingMenu 
+          editor={editor} 
+          tippyOptions={{ duration: 100 }}
+          className="bg-white shadow-lg border border-gray-200 rounded-md py-2 px-1 flex flex-col gap-1"
+        >
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+            className="px-3 py-1 hover:bg-gray-100 rounded text-left flex items-center"
+          >
+            <span className="font-bold mr-2">H1</span> Heading 1
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+            className="px-3 py-1 hover:bg-gray-100 rounded text-left flex items-center"
+          >
+            <span className="font-bold mr-2">H2</span> Heading 2
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+            className="px-3 py-1 hover:bg-gray-100 rounded text-left flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+            Bullet List
+          </button>
+          <button
+            onClick={() => editor.chain().focus().toggleBlockquote().run()}
+            className="px-3 py-1 hover:bg-gray-100 rounded text-left flex items-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Quote
+          </button>
+        </FloatingMenu>
+      )}
+      
       {/* Enhanced toolbar with visual editing features */}
       {!readOnly && (
         <div className="tiptap-toolbar flex flex-wrap gap-1 p-2 bg-gray-50 border border-gray-200 rounded-t-md">

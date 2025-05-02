@@ -83,3 +83,33 @@ export function editorJsToHtml(editorJsContent: any): string {
     return typeof editorJsContent === 'string' ? editorJsContent : '';
   }
 }
+
+/**
+ * Detect if content is in EditorJS format
+ */
+export function isEditorJsFormat(content: string): boolean {
+  try {
+    if (!content.trim().startsWith('{') || !content.trim().endsWith('}')) {
+      return false;
+    }
+    
+    const parsed = JSON.parse(content);
+    return !!(parsed.blocks && Array.isArray(parsed.blocks));
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Process content for display, converting from EditorJS format if needed
+ */
+export function processContent(content: string): string {
+  if (!content) return '';
+  
+  if (isEditorJsFormat(content)) {
+    return editorJsToHtml(content);
+  }
+  
+  // If it's already HTML or plain text, return as is
+  return content;
+}
