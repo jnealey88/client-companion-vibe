@@ -17,6 +17,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import { Button } from './button';
+import { processContent } from '../../lib/content-utils';
 import './tiptap-editor-styles.css';
 
 interface TiptapEditorProps {
@@ -83,58 +84,6 @@ export function TiptapEditor({
       onChange(html);
     },
   });
-
-  // Process the input content to ensure it's HTML
-  function processContent(inputContent: string): string {
-    if (!inputContent) {
-      return '';
-    }
-
-    // If content appears to be JSON (like EditorJS output)
-    if (inputContent.trim().startsWith('{') && inputContent.trim().endsWith('}')) {
-      try {
-        const parsedContent = JSON.parse(inputContent);
-        
-        // If it's EditorJS format with blocks
-        if (parsedContent.blocks && Array.isArray(parsedContent.blocks)) {
-          let htmlContent = '';
-          
-          parsedContent.blocks.forEach((block: any) => {
-            if (block.type === 'header') {
-              const level = block.data.level || 2;
-              htmlContent += `<h${level}>${block.data.text}</h${level}>`;
-            } else if (block.type === 'paragraph') {
-              htmlContent += `<p>${block.data.text}</p>`;
-            } else if (block.type === 'list') {
-              const listTag = block.data.style === 'ordered' ? 'ol' : 'ul';
-              htmlContent += `<${listTag}>`;
-              block.data.items.forEach((item: string) => {
-                htmlContent += `<li>${item}</li>`;
-              });
-              htmlContent += `</${listTag}>`;
-            } else if (block.type === 'quote') {
-              htmlContent += `<blockquote>${block.data.text}</blockquote>`;
-            } else if (block.type === 'code') {
-              htmlContent += `<pre><code>${block.data.code}</code></pre>`;
-            } else if (block.data && block.data.text) {
-              htmlContent += block.data.text;
-            }
-          });
-          
-          return htmlContent;
-        }
-        
-        // Not EditorJS format, return the stringified JSON as code
-        return `<pre><code>${JSON.stringify(parsedContent, null, 2)}</code></pre>`;
-      } catch (e) {
-        // Not valid JSON, just return as is
-        return inputContent;
-      }
-    }
-    
-    // Already HTML or plain text
-    return inputContent;
-  }
 
   useEffect(() => {
     if (editor) {
