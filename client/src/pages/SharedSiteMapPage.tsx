@@ -3,6 +3,7 @@ import { useRoute } from "wouter";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, CheckCircle, ThumbsUp, ThumbsDown, Send, Edit, Save, X } from "lucide-react";
 import { Link } from "wouter";
@@ -546,10 +547,10 @@ export default function SharedSiteMapPage() {
                             
                             {editMode[`${page.id}-${section.id}`] ? (
                               <div className="mt-2">
-                                <Textarea
-                                  value={editedContent[`${page.id}-${section.id}`] || ''}
-                                  onChange={(e) => handleContentChange(`${page.id}-${section.id}`, e.target.value)}
-                                  className="w-full min-h-[200px] font-mono text-sm"
+                                <RichTextEditor
+                                  content={editedContent[`${page.id}-${section.id}`] || ''}
+                                  onChange={(content) => handleContentChange(`${page.id}-${section.id}`, content)}
+                                  className="w-full font-mono text-sm"
                                   placeholder="Enter section content..."
                                 />
                               </div>

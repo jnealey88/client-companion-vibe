@@ -46,7 +46,8 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { EditorJs } from "@/components/ui/editor-js";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { EditorJs } from "@/components/ui/editor-js"; // Keep for type compatibility
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -1749,7 +1750,7 @@ Your Web Professional`);
                 </Tabs>
                 
                 <div className="hidden">
-                  <EditorJs
+                  <RichTextEditor
                     content={siteMapContent}
                     onChange={handleEditorUpdate}
                     readOnly={false}
@@ -1759,10 +1760,10 @@ Your Web Professional`);
               </div>
             ) : (
               <div className="editor-container">
-                <Textarea
-                  value={siteMapContent}
-                  onChange={(e) => handleEditorUpdate(e.target.value)}
-                  className="prose max-w-none w-full min-h-[400px]"
+                <RichTextEditor
+                  content={siteMapContent}
+                  onChange={handleEditorUpdate}
+                  className="prose max-w-none w-full"
                 />
               </div>
             )}
