@@ -2,6 +2,24 @@ import React, { useEffect, useRef, useState, Suspense } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
 import './editor-js-styles.css';
 
+// Import the safe wrapper functions for EditorJS tools
+import {
+  loadReactEditorJS,
+  loadHeaderTool,
+  loadListTool,
+  loadParagraphTool,
+  loadQuoteTool,
+  loadChecklistTool,
+  loadLinkTool,
+  loadTableTool,
+  loadDelimiterTool,
+  loadWarningTool,
+  loadImageTool,
+  loadMarkerTool,
+  loadCodeTool,
+  loadEmbedTool
+} from '../../lib/editor-js-wrappers';
+
 // Import a basic textarea editor as fallback
 import { RichTextEditor } from './rich-text-editor';
 
@@ -145,17 +163,10 @@ export function EditorJs({
   useEffect(() => {
     const loadEditor = async () => {
       try {
-        // Wrap dynamic imports in try-catch blocks to handle potential errors
-        // Dynamically import the editor
-        let ReactEditorJS;
-        try {
-          // Use dynamic import with a fallback for production builds
-          const reactEditorJS = await import('react-editor-js');
-          const { createReactEditorJS } = reactEditorJS;
-          ReactEditorJS = createReactEditorJS();
-        } catch (e) {
-          console.error('Error loading react-editor-js:', e);
-          // Set the error flag to trigger the fallback UI
+        // Load the ReactEditorJS component using our wrapper function
+        const ReactEditorJS = await loadReactEditorJS();
+        if (!ReactEditorJS) {
+          console.error('Failed to load ReactEditorJS component');
           setEditorLoadError(true);
           return;
         }
@@ -164,30 +175,27 @@ export function EditorJs({
         editorComponentRef.current = ReactEditorJS;
         
         // Load tools with proper error handling
-        let Header, List, Paragraph, Quote, Checklist, LinkTool, 
-            Table, Delimiter, Warning, Image, Marker, Code, Embed;
-            
-        try {
-          // Using a safer dynamic import approach with individual error handling
-          [Header, List, Paragraph, Quote, Checklist, LinkTool, 
-           Table, Delimiter, Warning, Image, Marker, Code, Embed] = await Promise.all([
-            import('@editorjs/header').then(m => m.default || m),
-            import('@editorjs/list').then(m => m.default || m),
-            import('@editorjs/paragraph').then(m => m.default || m),
-            import('@editorjs/quote').then(m => m.default || m),
-            import('@editorjs/checklist').then(m => m.default || m),
-            import('@editorjs/link').then(m => m.default || m),
-            import('@editorjs/table').then(m => m.default || m),
-            import('@editorjs/delimiter').then(m => m.default || m),
-            import('@editorjs/warning').then(m => m.default || m),
-            import('@editorjs/image').then(m => m.default || m),
-            import('@editorjs/marker').then(m => m.default || m),
-            import('@editorjs/code').then(m => m.default || m),
-            import('@editorjs/embed').then(m => m.default || m)
-          ]);
-        } catch (e) {
-          console.error('Error loading editor tools:', e);
-          // Set the error flag to trigger the fallback UI
+        const [Header, List, Paragraph, Quote, Checklist, LinkTool, 
+               Table, Delimiter, Warning, Image, Marker, Code, Embed] = await Promise.all([
+          loadHeaderTool(),
+          loadListTool(),
+          loadParagraphTool(),
+          loadQuoteTool(),
+          loadChecklistTool(),
+          loadLinkTool(),
+          loadTableTool(),
+          loadDelimiterTool(),
+          loadWarningTool(),
+          loadImageTool(),
+          loadMarkerTool(),
+          loadCodeTool(),
+          loadEmbedTool()
+        ]);
+        
+        // Check if any tools failed to load
+        if (!Header || !List || !Paragraph || !Quote || !Checklist || !LinkTool ||
+            !Table || !Delimiter || !Warning || !Image || !Marker || !Code || !Embed) {
+          console.error('Failed to load some editor tools');
           setEditorLoadError(true);
           return;
         }
