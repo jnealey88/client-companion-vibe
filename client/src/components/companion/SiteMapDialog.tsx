@@ -47,7 +47,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { EditorJs } from "@/components/ui/editor-js-wrapper"; // Using wrapper for compatibility across environments
+import { EditorJs } from "@/components/ui/editor-js"; // Keep for type compatibility
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
