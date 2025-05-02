@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState, Suspense } from 'react';
 import type { OutputData } from '@editorjs/editorjs';
 import './editor-js-styles.css';
 
+// Import a basic textarea editor as fallback
+import { RichTextEditor } from './rich-text-editor';
+
 // Define the props interface for our EditorJs component
 interface EditorJsProps {
   content: string;
@@ -19,6 +22,8 @@ export function EditorJs({
   readOnly = false,
   placeholder = 'Start writing...'
 }: EditorJsProps) {
+  // Define a fallback mechanism when editor fails to load
+  const [editorLoadError, setEditorLoadError] = useState<boolean>(false);
   // Essential state
   const editorCore = useRef(null);
   const [editorData, setEditorData] = useState<OutputData | null>(null);
@@ -140,33 +145,48 @@ export function EditorJs({
   useEffect(() => {
     const loadEditor = async () => {
       try {
+        // Wrap dynamic imports in try-catch blocks to handle potential errors
         // Dynamically import the editor
-        const reactEditorJS = await import('react-editor-js');
-        const { createReactEditorJS } = reactEditorJS;
-        const ReactEditorJS = createReactEditorJS();
+        let ReactEditorJS;
+        try {
+          // Use dynamic import with a fallback for production builds
+          const reactEditorJS = await import('react-editor-js');
+          const { createReactEditorJS } = reactEditorJS;
+          ReactEditorJS = createReactEditorJS();
+        } catch (e) {
+          console.error('Error loading react-editor-js:', e);
+          return;
+        }
         
         // Store the editor component in the ref
         editorComponentRef.current = ReactEditorJS;
         
-        // Dynamically import all tools
-        const [
-          Header, List, Paragraph, Quote, Checklist, LinkTool, 
-          Table, Delimiter, Warning, Image, Marker, Code, Embed
-        ] = await Promise.all([
-          import('@editorjs/header').then(m => m.default),
-          import('@editorjs/list').then(m => m.default),
-          import('@editorjs/paragraph').then(m => m.default),
-          import('@editorjs/quote').then(m => m.default),
-          import('@editorjs/checklist').then(m => m.default),
-          import('@editorjs/link').then(m => m.default),
-          import('@editorjs/table').then(m => m.default),
-          import('@editorjs/delimiter').then(m => m.default),
-          import('@editorjs/warning').then(m => m.default),
-          import('@editorjs/image').then(m => m.default),
-          import('@editorjs/marker').then(m => m.default),
-          import('@editorjs/code').then(m => m.default),
-          import('@editorjs/embed').then(m => m.default)
-        ]);
+        // Load tools with proper error handling
+        let Header, List, Paragraph, Quote, Checklist, LinkTool, 
+            Table, Delimiter, Warning, Image, Marker, Code, Embed;
+            
+        try {
+          // Using a safer dynamic import approach with individual error handling
+          [Header, List, Paragraph, Quote, Checklist, LinkTool, 
+           Table, Delimiter, Warning, Image, Marker, Code, Embed] = await Promise.all([
+            import('@editorjs/header').then(m => m.default || m),
+            import('@editorjs/list').then(m => m.default || m),
+            import('@editorjs/paragraph').then(m => m.default || m),
+            import('@editorjs/quote').then(m => m.default || m),
+            import('@editorjs/checklist').then(m => m.default || m),
+            import('@editorjs/link').then(m => m.default || m),
+            import('@editorjs/table').then(m => m.default || m),
+            import('@editorjs/delimiter').then(m => m.default || m),
+            import('@editorjs/warning').then(m => m.default || m),
+            import('@editorjs/image').then(m => m.default || m),
+            import('@editorjs/marker').then(m => m.default || m),
+            import('@editorjs/code').then(m => m.default || m),
+            import('@editorjs/embed').then(m => m.default || m)
+          ]);
+        } catch (e) {
+          console.error('Error loading editor tools:', e);
+          return;
+        }
 
         // Configure the tools
         const tools = {
@@ -271,6 +291,7 @@ export function EditorJs({
         setIsLoaded(true);
       } catch (error) {
         console.error('Error loading editor:', error);
+        setEditorLoadError(true);
       }
     };
 
