@@ -47,7 +47,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { EditorJs } from "@/components/ui/editor-js"; // Keep for type compatibility
+import { AdaptiveEditor } from "@/components/ui/adaptive-editor";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -1750,7 +1750,7 @@ Your Web Professional`);
                 </Tabs>
                 
                 <div className="hidden">
-                  <RichTextEditor
+                  <AdaptiveEditor
                     content={siteMapContent}
                     onChange={handleEditorUpdate}
                     readOnly={false}
@@ -1760,7 +1760,7 @@ Your Web Professional`);
               </div>
             ) : (
               <div className="editor-container">
-                <RichTextEditor
+                <AdaptiveEditor
                   content={siteMapContent}
                   onChange={handleEditorUpdate}
                   className="prose max-w-none w-full"

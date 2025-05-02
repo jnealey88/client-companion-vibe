@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { EditorJs } from "@/components/ui/editor-js";
+import { AdaptiveEditor } from "@/components/ui/adaptive-editor";
 import { Separator } from "@/components/ui/separator";
 
 interface ContractDialogProps {
@@ -363,7 +363,7 @@ export default function ContractDialog({
             <Separator />
             
             <div className="editor-js-container">
-              <EditorJs
+              <AdaptiveEditor
                 content={contractContent}
                 onChange={handleEditorUpdate}
                 readOnly={false}

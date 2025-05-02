@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { EditorJs } from "@/components/ui/editor-js";
+import { AdaptiveEditor } from "@/components/ui/adaptive-editor";
 import { Separator } from "@/components/ui/separator";
 
 interface ProjectScopeDialogProps {
@@ -365,7 +365,7 @@ export default function ProjectScopeDialog({
             <Separator />
             
             <div className="editor-js-container">
-              <EditorJs
+              <AdaptiveEditor
                 content={scopeContent}
                 onChange={handleEditorUpdate}
                 readOnly={false}

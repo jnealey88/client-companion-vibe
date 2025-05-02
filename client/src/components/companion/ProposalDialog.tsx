@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { EditorJs } from "@/components/ui/editor-js";
+import { AdaptiveEditor } from "@/components/ui/adaptive-editor";
 import PaymentSummaryWidget from "./PaymentSummaryWidget";
 import { formatCurrency } from "@/lib/utils";
 
@@ -544,7 +544,7 @@ export default function ProposalDialog({
                 <div className="md:col-span-2">
                   {/* AI Proposal Content */}
                   <div>
-                    <EditorJs
+                    <AdaptiveEditor
                       content={editedContent}
                       onChange={handleEditorChange}
                       className="prose max-w-none"
