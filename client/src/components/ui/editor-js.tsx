@@ -20,8 +20,8 @@ import {
   loadEmbedTool
 } from '../../lib/editor-js-wrappers';
 
-// Import a basic textarea editor as fallback
-import { RichTextEditor } from './rich-text-editor';
+// Import TipTap as our more reliable editor fallback
+import { TiptapEditor } from './tiptap-editor';
 
 // Define the props interface for our EditorJs component
 interface EditorJsProps {
@@ -796,9 +796,9 @@ export function EditorJs({
       {editorLoadError && (
         <div>
           <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
-            <p className="text-amber-800 text-sm">Rich text editor unavailable. Using simple editor.</p>
+            <p className="text-amber-800 text-sm">Using TipTap editor for better compatibility.</p>
           </div>
-          <RichTextEditor
+          <TiptapEditor
             content={extractTextContent()}
             onChange={onChange}
             className={className}
