@@ -155,6 +155,8 @@ export function EditorJs({
           ReactEditorJS = createReactEditorJS();
         } catch (e) {
           console.error('Error loading react-editor-js:', e);
+          // Set the error flag to trigger the fallback UI
+          setEditorLoadError(true);
           return;
         }
         
@@ -185,6 +187,8 @@ export function EditorJs({
           ]);
         } catch (e) {
           console.error('Error loading editor tools:', e);
+          // Set the error flag to trigger the fallback UI
+          setEditorLoadError(true);
           return;
         }
 
@@ -731,10 +735,42 @@ export function EditorJs({
     };
   }, []);
   
-  // Render editor with loading state
+  // Try to extract text content from EditorJS JSON for fallback
+  const extractTextContent = () => {
+    if (!content) return '';
+    
+    try {
+      // Try to parse the content as JSON
+      if (content.startsWith('{') && content.endsWith('}')) {
+        const parsed = JSON.parse(content);
+        
+        // Check if it's EditorJS format
+        if (parsed.blocks && Array.isArray(parsed.blocks)) {
+          // Extract text from all blocks
+          return parsed.blocks.map((block: any) => {
+            if (block.data && block.data.text) {
+              return block.data.text;
+            } else if (block.data && block.data.items && Array.isArray(block.data.items)) {
+              return block.data.items.join('\n');
+            }
+            return '';
+          }).join('\n\n');
+        }
+      }
+      
+      // If not valid JSON or not EditorJS format, return the content as is
+      return content;
+    } catch (e) {
+      // If parsing fails, return the content as is
+      return content;
+    }
+  };
+  
+  // Render editor with loading state or fallback UI
   return (
     <div className={`editor-js-wrapper ${className}`}>
-      {!isLoaded && (
+      {/* Show loading animation when editor is loading */}
+      {!isLoaded && !editorLoadError && (
         <div className="p-4 bg-gray-50 rounded border">
           <div className="animate-pulse flex space-x-4">
             <div className="flex-1 space-y-4 py-1">
@@ -748,7 +784,24 @@ export function EditorJs({
         </div>
       )}
       
-      {isLoaded && editorComponentRef.current && editorTools && editorData && (
+      {/* Show fallback UI when editor fails to load - only in production */}
+      {editorLoadError && (
+        <div>
+          <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-md">
+            <p className="text-amber-800 text-sm">Rich text editor unavailable. Using simple editor.</p>
+          </div>
+          <RichTextEditor
+            content={extractTextContent()}
+            onChange={onChange}
+            className={className}
+            readOnly={readOnly}
+            placeholder={placeholder}
+          />
+        </div>
+      )}
+      
+      {/* Show actual EditorJS when successfully loaded */}
+      {isLoaded && !editorLoadError && editorComponentRef.current && editorTools && editorData && (
         <Suspense fallback={<div>Loading editor...</div>}>
           {React.createElement(editorComponentRef.current, {
             onInitialize: handleInitialize,
