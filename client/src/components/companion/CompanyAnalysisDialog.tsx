@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Client, CompanionTask } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { EditorJs } from "@/components/ui/editor-js-fallback";
+import { EditorJs } from "@/components/ui/editor-js-wrapper";
 import StrategicActionCards from "./StrategicActionCards";
 import { Separator } from "@/components/ui/separator";
 
